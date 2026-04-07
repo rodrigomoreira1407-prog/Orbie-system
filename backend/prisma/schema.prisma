@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String        @id @default(cuid())
+  name                 String
+  email                String        @unique
+  password             String
+  crp                  String?
+  phone                String?
+  specialty            String?
+  bio                  String?
+  plan                 String        @default("NONE")
+  planExpiresAt        DateTime?
+  emailVerified        Boolean       @default(false)
+  emailVerifyToken     String?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  stripeCustomerId     String?
+  stripeSubId          String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  patients             Patient[]
+  appointments         Appointment[]
+  records              Record[]
+  financials           Financial[]
+}
+
+model Patient {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          String        @default("ADULT")
+  name          String
+  birthDate     DateTime?
+  gender        String?
+  cpf           String?
+  rg            String?
+  phone         String?
+  email         String?
+  address       String?
+  city          String?
+  state         String?
+  complaint     String?
+  notes         String?
+  status        String        @default("ACTIVE")
+  emergName     String?
+  emergPhone    String?
+  emergRelation String?
+  resp1Name     String?
+  resp1Phone    String?
+  resp1Relation String?
+  resp1Cpf      String?
+  resp2Name     String?
+  resp2Phone    String?
+  resp2Relation String?
+  school        String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  appointments  Appointment[]
+  records       Record[]
+  financials    Financial[]
+}
+
+model Appointment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  title     String   @default("Consulta")
+  date      DateTime
+  duration  Int      @default(50)
+  type      String   @default("ONLINE")
+  status    String   @default("SCHEDULED")
+  value     Float    @default(0)
+  meetLink  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Record {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  sessionDate DateTime @default(now())
+  sessionNum  Int      @default(1)
+  content     String
+  techniques  String?
+  evolution   String?
+  goals       String?
+  risks       String?
+  mood        Int?
+  aiGenerated Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Financial {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patientId   String?
+  patient     Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  type        String   @default("INCOME")
+  description String
+  value       Float
+  date        DateTime @default(now())
+  status      String   @default("PENDING")
+  method      String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
