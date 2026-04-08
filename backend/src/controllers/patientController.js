@@ -48,9 +48,19 @@ async function get(req, res) {
 
 async function create(req, res) {
   try {
-    const patient = await prisma.patient.create({
-      data: { ...req.body, userId: req.user.id },
-    });
+    const data = { ...req.body, userId: req.user.id };
+    
+    // Garantir que birthDate seja um objeto Date válido se for enviado
+    if (data.birthDate && typeof data.birthDate === 'string') {
+      const d = new Date(data.birthDate);
+      if (!isNaN(d.getTime())) {
+        data.birthDate = d.toISOString();
+      } else {
+        delete data.birthDate; // Se a data for inválida, remove para evitar erro do Prisma
+      }
+    }
+
+    const patient = await prisma.patient.create({ data });
     res.status(201).json(patient);
   } catch (err) {
     console.error('❌ Erro ao criar paciente:', err);

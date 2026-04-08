@@ -1080,6 +1080,10 @@ async function createPatient() {
       } else {
         formattedDate = rawDate;
       }
+      // Adicionar o horário para satisfazer o formato ISO-8601 esperado pelo Prisma
+      if (formattedDate && formattedDate.length === 10) {
+        formattedDate = formattedDate + 'T00:00:00.000Z';
+      }
     }
     var body = {
       type: document.getElementById('npat-type').value,
