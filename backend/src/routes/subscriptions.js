@@ -21,13 +21,16 @@ router.post('/checkout', auth, async (req, res) => {
       customerId = customer.id;
       await prisma.user.update({ where: { id: req.user.id }, data: { stripeCustomerId: customerId } });
     }
+    // Garantir que a URL base não tenha barra no final para evitar URLs inválidas
+    const baseUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+    
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: process.env.FRONTEND_URL + '/payment-success?session={CHECKOUT_SESSION_ID}',
-      cancel_url: process.env.FRONTEND_URL + '/plans',
+      success_url: `${baseUrl}/payment-success?session={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/plans`,
       metadata: { userId: req.user.id, plan },
     });
     res.json({ url: session.url });
