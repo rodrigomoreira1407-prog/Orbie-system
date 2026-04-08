@@ -41,7 +41,7 @@ app.use('/api/', rateLimit({
 // ── Rate limiting para auth
 app.use('/api/auth/', rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 100,
   message: { error: 'Muitas tentativas de autenticação.' }
 }));
 
