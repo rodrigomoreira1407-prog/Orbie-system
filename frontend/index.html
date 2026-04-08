@@ -837,9 +837,9 @@ async function doRegister() {
   btn.disabled = true; btn.textContent = 'Criando conta...';
   try {
     await api('POST', '/auth/register', { name, email, password: pass });
-    STATE.verifyEmail = email;
-    showScreen('verify');
-    document.getElementById('verify-email-text').textContent = 'Enviamos um link para ' + email + '. Verifique sua caixa de entrada e clique no link para ativar sua conta.';
+    toast('✅ Conta criada com sucesso!');
+    showScreen('login');
+    document.getElementById('login-email').value = email;
   } catch(e) {
     errEl.textContent = e.message || 'Erro ao criar conta';
     errEl.classList.remove('hidden');

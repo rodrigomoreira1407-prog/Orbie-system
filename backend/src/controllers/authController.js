@@ -32,16 +32,20 @@ async function register(req, res) {
         name,
         email: email.toLowerCase(),
         password: hashed,
-        emailVerifyToken: verifyToken,
+        emailVerifyToken: null,
+        emailVerified: true,
       },
     });
+    // O envio de email foi desativado temporariamente para facilitar o onboarding
+    /*
     try {
       await sendVerificationEmail(user.email, user.name, verifyToken);
     } catch (emailErr) {
       console.error('Erro ao enviar email:', emailErr.message);
     }
+    */
     res.status(201).json({
-      message: 'Conta criada! Verifique seu email para confirmar o cadastro.',
+      message: 'Conta criada com sucesso! Você já pode fazer login.',
       userId: user.id,
     });
   } catch (err) {
