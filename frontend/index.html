@@ -1071,12 +1071,22 @@ async function createPatient() {
   if (!name) { errEl.textContent = 'Nome é obrigatório'; errEl.classList.remove('hidden'); return; }
   btn.disabled = true; btn.textContent = 'Cadastrando...';
   try {
+    var rawDate = document.getElementById('npat-birth').value;
+    var formattedDate = null;
+    if (rawDate) {
+      if (rawDate.includes('/')) {
+        var parts = rawDate.split('/');
+        if (parts.length === 3) formattedDate = parts[2] + '-' + parts[1] + '-' + parts[0];
+      } else {
+        formattedDate = rawDate;
+      }
+    }
     var body = {
       type: document.getElementById('npat-type').value,
       name: name,
       cpf: document.getElementById('npat-cpf').value,
       rg: document.getElementById('npat-rg').value,
-      birthDate: document.getElementById('npat-birth').value || null,
+      birthDate: formattedDate,
       gender: document.getElementById('npat-gender').value,
       phone: document.getElementById('npat-phone').value,
       email: document.getElementById('npat-email').value,

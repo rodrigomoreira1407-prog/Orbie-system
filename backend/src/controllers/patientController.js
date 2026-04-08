@@ -53,7 +53,8 @@ async function create(req, res) {
     });
     res.status(201).json(patient);
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao criar paciente' });
+    console.error('❌ Erro ao criar paciente:', err);
+    res.status(500).json({ error: 'Erro ao criar paciente: ' + err.message });
   }
 }
 

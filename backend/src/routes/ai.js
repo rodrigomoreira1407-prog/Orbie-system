@@ -19,7 +19,7 @@ router.post('/generate-record', auth, requirePlan(['PRO']), async (req, res) => 
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-3-5-sonnet-20240620',
         max_tokens: 1000,
         system: 'Voce e um assistente especializado em psicologia clinica. Transforme anotacoes informais de sessoes em prontuarios clinicos estruturados e profissionais em portugues do Brasil. Estruture com: 1. RELATO DA SESSAO  2. INTERVENCOES REALIZADAS  3. EVOLUCAO OBSERVADA  4. ENCAMINHAMENTOS E TAREFAS. Maximo 300 palavras.',
         messages: [{ role: 'user', content: 'Gere um prontuario clinico com base nestas notas: "' + content + '"' }],
@@ -29,7 +29,8 @@ router.post('/generate-record', auth, requirePlan(['PRO']), async (req, res) => 
     if (data.content && data.content[0] && data.content[0].text) {
       res.json({ text: data.content[0].text });
     } else {
-      res.status(500).json({ error: 'Erro na geracao do prontuario' });
+      console.error('Anthropic Error:', data);
+      res.status(500).json({ error: 'Erro na geracao do prontuario: ' + (data.error ? data.error.message : 'Erro desconhecido') });
     }
   } catch (err) {
     console.error('AI error:', err);
