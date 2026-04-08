@@ -654,7 +654,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO — altere para a URL do seu backend
 // ══════════════════════════════════════════════
-const API = window.location.hostname === 'localhost'
+const API = window.location.hostname === 'localhost' ? 'http://localhost:3001/api' : 'https://orbie-api.onrender.com/api';
   ? 'http://localhost:3001/api'
   : '/api'; // Em produção, backend e frontend no mesmo domínio
 
