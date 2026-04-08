@@ -21,8 +21,11 @@ router.post('/checkout', auth, async (req, res) => {
       customerId = customer.id;
       await prisma.user.update({ where: { id: req.user.id }, data: { stripeCustomerId: customerId } });
     }
-    // Garantir que a URL base não tenha barra no final para evitar URLs inválidas
-    const baseUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+    // Garantir que a URL base seja válida, absoluta e sem barra no final
+    let rawUrl = process.env.FRONTEND_URL || req.headers.origin || 'https://orbie-system-4a5t.vercel.app';
+    if (rawUrl === '*') rawUrl = req.headers.origin || 'https://orbie-system-4a5t.vercel.app';
+    
+    const baseUrl = rawUrl.trim().replace(/\/$/, '');
     
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
