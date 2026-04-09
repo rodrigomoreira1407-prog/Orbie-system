@@ -22,7 +22,6 @@ async function list(req, res) {
         email: true, cpf: true, birthDate: true, emergName: true, emergPhone: true,
         resp1Name: true, resp1Phone: true, resp1Relation: true,
         address: true, addressNum: true, addressComp: true, addressCep: true,
-        complaint: true, anamnesis: true, observations: true, attachments: true,
         createdAt: true, updatedAt: true,
         _count: { select: { appointments: true, records: true } },
       },

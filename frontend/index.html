@@ -1148,10 +1148,10 @@ async function createPatient() {
       gender: document.getElementById('npat-gender').value,
       phone: document.getElementById('npat-phone').value,
       email: document.getElementById('npat-email').value,
-      cep: document.getElementById('npat-cep').value,
+      addressCep: document.getElementById('npat-cep').value,
       address: document.getElementById('npat-address').value,
-      number: document.getElementById('npat-number').value,
-      complement: document.getElementById('npat-complement').value,
+      addressNum: document.getElementById('npat-number').value,
+      addressComp: document.getElementById('npat-complement').value,
       emergName: document.getElementById('npat-en').value,
       emergPhone: document.getElementById('npat-ep').value,
       emergRelation: document.getElementById('npat-er').value,
@@ -1188,7 +1188,7 @@ async function viewPatient(id) {
     '<div class="ir"><div class="il">✉️ E-mail</div><div class="iv">' + (p.email || '—') + '</div></div>' +
     '<div class="ir"><div class="il">📄 CPF</div><div class="iv">' + (p.cpf || '—') + '</div></div>' +
     '<div class="ir"><div class="il">📍 Endereço</div><div class="iv">' + 
-      (p.address ? (p.address + (p.number ? ', ' + p.number : '') + (p.complement ? ' (' + p.complement + ')' : '') + (p.cep ? ' - CEP: ' + p.cep : '')) : '—') + 
+      (p.address ? (p.address + (p.addressNum ? ', ' + p.addressNum : '') + (p.addressComp ? ' (' + p.addressComp + ')' : '') + (p.addressCep ? ' - CEP: ' + p.addressCep : '')) : '—') + 
     '</div></div>' +
     '</div>' +
     (p.emergName ? '<div class="ebox" style="margin-top:10px"><div class="etl">🚨 Emergência</div>' +
