@@ -45,9 +45,15 @@ model Patient {
   phone         String?
   email         String?
   address       String?
+  addressNum    String?
+  addressComp   String?
+  addressCep    String?
   city          String?
   state         String?
   complaint     String?
+  anamnesis     String?
+  observations  String?
+  attachments   String?
   notes         String?
   status        String        @default("ACTIVE")
   emergName     String?

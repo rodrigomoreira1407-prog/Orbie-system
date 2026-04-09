@@ -444,7 +444,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
       <div class="chips" id="pat-chips">
         <div class="chip on" onclick="filterByType('',this)">Todos</div>
         <div class="chip" onclick="filterByType('ADULT',this)">🧑 Adultos</div>
-        <div class="chip" onclick="filterByType('CHILD',this)">👶 Infantis</div>
+        <div class="chip" onclick="filterByType('CHILD',this)">👶 Infantil</div>
         <div class="chip" onclick="filterByStatus('ACTIVE',this)">Ativos</div>
         <div class="chip" onclick="filterByStatus('INACTIVE',this)">Inativos</div>
       </div>
@@ -454,6 +454,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <!-- APPOINTMENTS -->
     <div id="pg-appointments" class="page">
       <div class="ph"><div><div class="ptt">Agenda</div><div class="pst2" id="appt-date-title">Hoje</div></div><button class="abtn" onclick="openM('m-appt')">+ Nova</button></div>
+      <input class="inp" id="appt-search" placeholder="🔍  Buscar por nome do paciente..." style="margin-bottom:12px" oninput="filterAppointments()"/>
       <div class="tabs"><div class="tab on" onclick="loadAppointments('today',this)">Hoje</div><div class="tab" onclick="loadAppointments('week',this)">Semana</div><div class="tab" onclick="loadAppointments('all',this)">Todas</div></div>
       <div id="appt-list"><div style="text-align:center;padding:40px;color:var(--dm)">Carregando consultas...</div></div>
     </div>
@@ -483,7 +484,17 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <!-- REPORTS -->
     <div id="pg-reports" class="page">
       <div class="ph"><div><div class="ptt">Relatórios</div><div class="pst2">Exporte os dados</div></div></div>
-      <div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:10px">📅 Período</div><div class="fg"><div><label class="lbl">De</label><input type="date" class="inp" id="rep-from"/></div><div><label class="lbl">Até</label><input type="date" class="inp" id="rep-to"/></div></div></div>
+      <div class="card" style="margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">📅 Filtros</div>
+        <div class="fg">
+          <div><label class="lbl">De</label><input type="date" class="inp" id="rep-from"/></div>
+          <div><label class="lbl">Até</label><input type="date" class="inp" id="rep-to"/></div>
+        </div>
+        <div class="fr" style="margin-top:10px">
+          <label class="lbl">Paciente (Opcional para Prontuários)</label>
+          <select class="sel" id="rep-pat-sel"><option value="">Todos os pacientes</option></select>
+        </div>
+      </div>
       <div class="g2">
         <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">👥</div><div style="font-size:13px;font-weight:700">Pacientes</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Lista completa</div><button class="btn bp fw" style="font-size:11px" onclick="exportPDF('patients')">Gerar PDF</button></div>
         <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">📅</div><div style="font-size:13px;font-weight:700">Consultas</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Histórico</div><button class="btn bp fw" style="font-size:11px" onclick="exportPDF('appointments')">Gerar PDF</button></div>
@@ -572,7 +583,14 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <div class="fg"><div><label class="lbl">CPF</label><input class="inp" id="npat-cpf" placeholder="000.000.000-00"/></div><div><label class="lbl">RG</label><input class="inp" id="npat-rg" placeholder="00.000.000-0"/></div></div>
     <div class="fg"><div><label class="lbl">Data de nascimento</label><input type="date" class="inp" id="npat-birth"/></div><div><label class="lbl">Gênero</label><select class="sel" id="npat-gender"><option value="">Selecione</option><option>Masculino</option><option>Feminino</option><option>Outro</option></select></div></div>
     <div class="fg"><div><label class="lbl">Telefone</label><input class="inp" id="npat-phone" placeholder="(11) 99999-9999"/></div><div><label class="lbl">E-mail</label><input class="inp" id="npat-email" placeholder="email@email.com"/></div></div>
-    <div class="fr"><label class="lbl">Endereço</label><input class="inp" id="npat-address" placeholder="Rua, número, bairro, cidade"/></div>
+    <div class="fg">
+      <div style="flex:2"><label class="lbl">Endereço</label><input class="inp" id="npat-address" placeholder="Rua, Av..."/></div>
+      <div style="flex:1"><label class="lbl">Número</label><input class="inp" id="npat-address-num" placeholder="123"/></div>
+    </div>
+    <div class="fg">
+      <div style="flex:1"><label class="lbl">Complemento</label><input class="inp" id="npat-address-comp" placeholder="Apto, Bloco..."/></div>
+      <div style="flex:1"><label class="lbl">CEP</label><input class="inp" id="npat-address-cep" placeholder="00000-000"/></div>
+    </div>
     <div id="npat-child-fields" class="hidden">
       <div class="sdv" style="color:#0891b2;border-color:rgba(8,145,178,.15)">👩 Responsável Principal</div>
       <div class="fg"><div><label class="lbl">Nome *</label><input class="inp" id="npat-r1n" placeholder="Nome do responsável"/></div><div><label class="lbl">Parentesco</label><input class="inp" id="npat-r1r" placeholder="Mãe, Pai..."/></div></div>
@@ -932,6 +950,12 @@ async function openPortal() {
 var sbOpen = false;
 var TITLES = {dashboard:'Dashboard',patients:'Pacientes',appointments:'Agenda',records:'Prontuários',financial:'Financeiro',reports:'Relatórios',settings:'Configurações'};
 function toggleSB() { sbOpen = !sbOpen; document.getElementById('sb').classList.toggle('open', sbOpen); }
+function swPTab(id, el) {
+  document.querySelectorAll('.ptab').forEach(function(t){ t.classList.add('hidden'); });
+  el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
+  document.getElementById('ptab-' + id).classList.remove('hidden');
+  el.classList.add('on');
+}
 function go(pg, el) {
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('on'); });
   var t = document.getElementById('pg-' + pg);
@@ -1047,7 +1071,7 @@ function applyFilters() {
 }
 
 function populatePatientSelects() {
-  var selects = ['appt-pat', 'rec-pat-new', 'fin-pat', 'rec-pat-sel'];
+  var selects = ['appt-pat', 'rec-pat-new', 'fin-pat', 'rec-pat-sel', 'rep-pat-sel'];
   selects.forEach(function(id) {
     var el = document.getElementById(id);
     if (!el) return;
@@ -1098,6 +1122,9 @@ async function createPatient() {
       phone: document.getElementById('npat-phone').value,
       email: document.getElementById('npat-email').value,
       address: document.getElementById('npat-address').value,
+      addressNum: document.getElementById('npat-address-num').value,
+      addressComp: document.getElementById('npat-address-comp').value,
+      addressCep: document.getElementById('npat-address-cep').value,
       emergName: document.getElementById('npat-en').value,
       emergPhone: document.getElementById('npat-ep').value,
       emergRelation: document.getElementById('npat-er').value,
@@ -1112,7 +1139,7 @@ async function createPatient() {
     closeM('m-npat');
     toast('✅ Paciente cadastrado!');
     // Clear fields
-    ['npat-name','npat-cpf','npat-rg','npat-phone','npat-email','npat-address','npat-en','npat-ep','npat-er','npat-complaint'].forEach(function(id){ document.getElementById(id).value=''; });
+    ['npat-name','npat-cpf','npat-rg','npat-phone','npat-email','npat-address','npat-address-num','npat-address-comp','npat-address-cep','npat-en','npat-ep','npat-er','npat-complaint'].forEach(function(id){ var el = document.getElementById(id); if(el) el.value=''; });
   } catch(e) {
     errEl.textContent = e.message || 'Erro ao cadastrar';
     errEl.classList.remove('hidden');
@@ -1125,18 +1152,34 @@ async function viewPatient(id) {
   var ini = p.name.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
   var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6','#06b6d4'];
   var color = colors[p.name.charCodeAt(0) % colors.length];
+  var fullAddr = p.address || '—';
+  if (p.addressNum) fullAddr += ', ' + p.addressNum;
+  if (p.addressComp) fullAddr += ' (' + p.addressComp + ')';
+  if (p.addressCep) fullAddr += ' - CEP: ' + p.addressCep;
+
   var h = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">' +
     '<div class="av avl" style="background:' + color + '">' + ini + '</div>' +
     '<div style="flex:1"><div style="font-size:17px;font-weight:800">' + p.name + '</div>' +
     '<div style="font-size:12px;color:var(--mt);margin-top:2px">' + (p.birthDate ? new Date(p.birthDate).getFullYear() : '—') + ' · ' + (p.type === 'CHILD' ? 'Infantil' : 'Adulto') + '</div></div>' +
     '<span class="bx ' + (p.status === 'ACTIVE' ? 'bgn' : 'bgr') + '">' + (p.status === 'ACTIVE' ? 'Ativo' : 'Inativo') + '</span></div>' +
+    '<div class="tabs"><div class="tab on" onclick="swPTab(\'info\',this)">Info</div><div class="tab" onclick="swPTab(\'clinico\',this)">Clínico</div><div class="tab" onclick="swPTab(\'obs\',this)">Observações</div></div>' +
+    '<div id="ptab-info" class="ptab">' +
     '<div class="ibox">' +
     '<div class="ir"><div class="il">📞 Telefone</div><div class="iv">' + (p.phone || '—') + '</div></div>' +
     '<div class="ir"><div class="il">✉️ E-mail</div><div class="iv">' + (p.email || '—') + '</div></div>' +
     '<div class="ir"><div class="il">📄 CPF</div><div class="iv">' + (p.cpf || '—') + '</div></div>' +
-    '<div class="ir"><div class="il">📍 Endereço</div><div class="iv">' + (p.address || '—') + '</div></div>' +
+    '<div class="ir"><div class="il">📍 Endereço</div><div class="iv">' + fullAddr + '</div></div>' +
+    '</div></div>' +
+    '<div id="ptab-clinico" class="ptab hidden">' +
+    '<div class="ibox">' +
     '<div class="ir"><div class="il">💬 Queixa</div><div class="iv">' + (p.complaint || '—') + '</div></div>' +
-    '</div>' +
+    '<div class="ir"><div class="il">📋 Anamnese</div><div class="iv">' + (p.anamnesis || '—') + '</div></div>' +
+    '</div></div>' +
+    '<div id="ptab-obs" class="ptab hidden">' +
+    '<div class="ibox">' +
+    '<div class="ir"><div class="il">📝 Obs</div><div class="iv">' + (p.observations || '—') + '</div></div>' +
+    '<div class="ir"><div class="il">📎 Anexos</div><div class="iv">' + (p.attachments || 'Nenhum anexo') + '</div></div>' +
+    '</div></div>' +
     (p.emergName ? '<div class="ebox" style="margin-top:10px"><div class="etl">🚨 Emergência</div>' +
     '<div class="ir"><div class="il">Nome</div><div class="iv">' + p.emergName + '</div></div>' +
     '<div class="ir"><div class="il">Telefone</div><div class="iv">' + (p.emergPhone || '—') + '</div></div>' +
@@ -1180,7 +1223,9 @@ function renderAppointments(list) {
     var borderColor = color;
     var statusBadge = a.status === 'CONFIRMED' ? '<span class="bx bgn">Confirmada</span>' : a.status === 'COMPLETED' ? '<span class="bx bgr">Concluída</span>' : a.status === 'CANCELLED' ? '<span class="bx brd">Cancelada</span>' : '<span class="bx bbl">Agendada</span>';
     var typeBadge = a.type === 'ONLINE' ? '<span class="bx bbl">Online</span>' : '<span class="bx bpu">Presencial</span>';
-    
+    var sessNum = a.patient && a.patient._count ? a.patient._count.records : 0;
+    var sessBadge = '<span class="bx bbl" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0">Sessão ' + (sessNum + 1) + '</span>';
+
     // Preparar link do WhatsApp
     var waLink = '';
     if (a.patient && a.patient.phone) {
@@ -1193,7 +1238,7 @@ function renderAppointments(list) {
     return '<div class="acard" style="border-left:3px solid ' + borderColor + '">' +
       '<div style="display:flex;align-items:center;gap:10px">' +
       '<div class="av avm" style="background:' + color + '">' + ini + '</div>' +
-      '<div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700">' + patName + '</span>' + statusBadge + typeBadge + '</div>' +
+      '<div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700">' + patName + '</span>' + statusBadge + typeBadge + sessBadge + '</div>' +
       '<div class="rs" style="margin-top:3px">' + timeStr + ' · ' + a.duration + 'min · R$ ' + a.value.toFixed(2) + '</div></div>' +
       (waLink ? '<a href="' + waLink + '" target="_blank" title="Enviar lembrete WhatsApp" style="color:#25D366;font-size:22px;display:inline-flex;align-items:center;justify-content:center;padding:8px;border-radius:50%;background:#f0fdf4;margin-left:8px;text-decoration:none;transition:all 0.2s" onmouseover="this.style.background=\'#dcfce7\'" onmouseout="this.style.background=\'#f0fdf4\'"><i class="fa-brands fa-whatsapp"></i></a>' : '') +
       '</div>' +
@@ -1240,6 +1285,13 @@ async function updateApptStatus(id, status) {
     toast(status === 'COMPLETED' ? '✅ Consulta concluída!' : 'Consulta cancelada');
   } catch(e) { toast('Erro ao atualizar consulta'); }
 }
+function filterAppointments() {
+  var q = document.getElementById('appt-search').value.toLowerCase();
+  var filtered = STATE.appointments.filter(function(a) {
+    return (a.patient && a.patient.name.toLowerCase().indexOf(q) > -1);
+  });
+  renderAppointments(filtered);
+}
 
 // ══════════════════════════════════════════════
 // RECORDS
@@ -1282,7 +1334,13 @@ async function createRecord() {
     await api('POST', '/records', {
       patientId: patId,
       content: content,
-      sessionDate: document.getElementById('rec-date').value || new Date().toISOString(),
+      sessionDate: (function(){
+        var d = document.getElementById('rec-date').value;
+        if(!d) return new Date().toISOString();
+        // Se for datetime-local (contém T), já está quase pronto
+        if(d.indexOf('T') > -1) return d + ':00.000Z';
+        return d;
+      })(),
       mood: parseInt(document.getElementById('mv').textContent) || null,
       techniques: document.getElementById('rec-tech').value,
       evolution: document.getElementById('rec-evol').value,
@@ -1431,8 +1489,8 @@ async function exportPDF(type) {
       const data = await api('GET', '/financial?month=' + (now.getMonth()+1) + '&year=' + now.getFullYear());
       body = data.items.map(f => [new Date(f.date).toLocaleDateString('pt-BR'), f.description, f.type === 'INCOME' ? 'Receita' : 'Despesa', 'R$ ' + f.value.toFixed(2), f.status === 'PAID' ? 'Pago' : 'Pendente']);
     } else if (type === 'records') {
-      const patId = document.getElementById('rec-pat-sel').value;
-      if (!patId) { toast('⚠️ Selecione um paciente na tela de Prontuários primeiro'); return; }
+      const patId = document.getElementById('rep-pat-sel').value || document.getElementById('rec-pat-sel').value;
+      if (!patId) { toast('⚠️ Selecione um paciente no filtro acima'); return; }
       const pat = STATE.patients.find(p => p.id === patId);
       title = 'Prontuário Clínico: ' + (pat ? pat.name : '');
       head = [['Data', 'Sessão', 'Humor', 'Evolução']];

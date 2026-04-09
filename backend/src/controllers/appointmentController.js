@@ -21,7 +21,17 @@ async function list(req, res) {
     }
     const appointments = await prisma.appointment.findMany({
       where, orderBy: { date: 'asc' },
-      include: { patient: { select: { id: true, name: true, type: true } } },
+      include: { 
+        patient: { 
+          select: { 
+            id: true, 
+            name: true, 
+            type: true, 
+            phone: true,
+            _count: { select: { records: true } } 
+          } 
+        } 
+      },
     });
     res.json(appointments);
   } catch (err) {

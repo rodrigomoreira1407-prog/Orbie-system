@@ -21,7 +21,9 @@ async function list(req, res) {
         id: true, name: true, type: true, status: true, phone: true,
         email: true, cpf: true, birthDate: true, emergName: true, emergPhone: true,
         resp1Name: true, resp1Phone: true, resp1Relation: true,
-        createdAt: true,
+        address: true, addressNum: true, addressComp: true, addressCep: true,
+        complaint: true, anamnesis: true, observations: true, attachments: true,
+        createdAt: true, updatedAt: true,
         _count: { select: { appointments: true, records: true } },
       },
     });
