@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const anamnesisController = require('../controllers/anamnesisController');
 const attachmentController = require('../controllers/attachmentController');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 
 // Apply auth middleware to all clinical routes
 router.use(auth);
