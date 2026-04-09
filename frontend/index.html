@@ -751,13 +751,279 @@ const API = window.location.hostname === 'localhost'
 // ESTADO GLOBAL
 // ══════════════════════════════════════════════
 var STATE = {
-  token: localStorage.getItem('orbie_token'),
+  token: localStorage.getItem('orbie-token'),
   user: null,
   patients: [],
   appointments: [],
   records: [],
-  financials: [],
-  currentPatient: null,
+  financial: [],
+  plans: []
+};
+
+const ANAMNESIS_FORMS = {
+  ADULT: {
+    sections: [
+      {
+        title: "1. Identificação",
+        fields: [
+          { name: "fullName", label: "Nome completo", type: "text", required: true },
+          { name: "birthDate", label: "Data de nascimento", type: "date" },
+          { name: "age", label: "Idade", type: "number" },
+          { name: "gender", label: "Sexo", type: "select", options: ["Masculino", "Feminino", "Outro"] },
+          { name: "maritalStatus", label: "Estado civil", type: "select", options: ["Solteiro", "Casado", "Divorciado", "Viúvo", "União estável"] },
+          { name: "profession", label: "Profissão", type: "text" },
+          { name: "phone", label: "Telefone", type: "text" },
+          { name: "address", label: "Endereço", type: "text" },
+          { name: "responsible", label: "Nome do responsável (se necessário)", type: "text" }
+        ]
+      },
+      {
+        title: "2. Queixa Principal (QP)",
+        fields: [
+          { name: "mainComplaint", label: "Motivo da consulta", type: "textarea", required: true },
+          { name: "durationTime", label: "Tempo de duração", type: "text" }
+        ]
+      },
+      {
+        title: "3. História da Doença Atual (HDA)",
+        fields: [
+          { name: "symptomsStart", label: "Início dos sintomas", type: "text" },
+          { name: "evolution", label: "Evolução", type: "textarea" },
+          { name: "intensity", label: "Intensidade", type: "select", options: ["Leve", "Moderada", "Grave"] },
+          { name: "aggravatingFactors", label: "Fatores que pioram", type: "textarea" },
+          { name: "improvingFactors", label: "Fatores que melhoram", type: "textarea" },
+          { name: "associatedSymptoms", label: "Sintomas associados", type: "textarea" },
+          { name: "previousTreatment", label: "Já realizou tratamento?", type: "textarea" }
+        ]
+      },
+      {
+        title: "4. Histórico Médico Pessoal",
+        fields: [
+          { name: "previousDiseases", label: "Doenças prévias", type: "textarea" },
+          { name: "hospitalizations", label: "Internações", type: "textarea" },
+          { name: "surgeries", label: "Cirurgias", type: "textarea" },
+          { name: "allergies", label: "Alergias", type: "textarea" },
+          { name: "continuousMedications", label: "Uso de medicamentos contínuos", type: "textarea" },
+          { name: "chronicDiseases", label: "Doenças crônicas (hipertensão, diabetes, etc.)", type: "textarea" }
+        ]
+      },
+      {
+        title: "5. Histórico Familiar",
+        fields: [
+          { name: "familyDiseases", label: "Doenças na família", type: "textarea" },
+          { name: "hereditaryDiseases", label: "Histórico de doenças hereditárias", type: "textarea" }
+        ]
+      },
+      {
+        title: "6. Hábitos de Vida",
+        fields: [
+          { name: "diet", label: "Alimentação", type: "textarea" },
+          { name: "waterConsumption", label: "Consumo de água", type: "text" },
+          { name: "physicalActivity", label: "Atividade física", type: "textarea" },
+          { name: "sleep", label: "Sono", type: "textarea" },
+          { name: "alcoholUse", label: "Uso de álcool", type: "select", options: ["Não", "Ocasional", "Frequente", "Diário"] },
+          { name: "smoking", label: "Tabagismo", type: "select", options: ["Não", "Ex-fumante", "Fumante ocasional", "Fumante regular"] },
+          { name: "drugUse", label: "Uso de drogas", type: "textarea" }
+        ]
+      },
+      {
+        title: "7. Aspectos Psicossociais",
+        fields: [
+          { name: "dailyRoutine", label: "Rotina diária", type: "textarea" },
+          { name: "stressLevel", label: "Nível de estresse", type: "select", options: ["Baixo", "Moderado", "Alto", "Muito alto"] },
+          { name: "emotionalHealth", label: "Saúde emocional", type: "textarea" },
+          { name: "familySupport", label: "Apoio familiar", type: "textarea" }
+        ]
+      },
+      {
+        title: "8. Revisão de Sistemas",
+        fields: [
+          { name: "cardiovascular", label: "Sistema cardiovascular", type: "textarea" },
+          { name: "respiratory", label: "Sistema respiratório", type: "textarea" },
+          { name: "digestive", label: "Sistema digestivo", type: "textarea" },
+          { name: "urinary", label: "Sistema urinário", type: "textarea" },
+          { name: "neurological", label: "Sistema neurológico", type: "textarea" },
+          { name: "musculoskeletal", label: "Sistema musculoesquelético", type: "textarea" }
+        ]
+      },
+      {
+        title: "9. Avaliação Física",
+        fields: [
+          { name: "bloodPressure", label: "Pressão arterial", type: "text" },
+          { name: "heartRate", label: "Frequência cardíaca", type: "text" },
+          { name: "weight", label: "Peso (kg)", type: "number" },
+          { name: "height", label: "Altura (cm)", type: "number" },
+          { name: "imc", label: "IMC", type: "number" }
+        ]
+      },
+      {
+        title: "10. Diagnóstico / Hipótese Diagnóstica",
+        fields: [
+          { name: "diagnosis", label: "Diagnóstico", type: "textarea" }
+        ]
+      },
+      {
+        title: "11. Plano de Tratamento",
+        fields: [
+          { name: "conduct", label: "Conduta", type: "textarea" },
+          { name: "prescriptions", label: "Prescrições", type: "textarea" },
+          { name: "requestedExams", label: "Exames solicitados", type: "textarea" }
+        ]
+      },
+      {
+        title: "12. Observações Gerais",
+        fields: [
+          { name: "generalObservations", label: "Observações", type: "textarea" }
+        ]
+      }
+    ]
+  },
+  CHILD: {
+    sections: [
+      {
+        title: "1. Identificação",
+        fields: [
+          { name: "childName", label: "Nome da criança", type: "text", required: true },
+          { name: "birthDate", label: "Data de nascimento", type: "date" },
+          { name: "age", label: "Idade", type: "number" },
+          { name: "gender", label: "Sexo", type: "select", options: ["Masculino", "Feminino", "Outro"] },
+          { name: "responsibles", label: "Nome dos responsáveis", type: "textarea", required: true },
+          { name: "phone", label: "Telefone", type: "text" },
+          { name: "address", label: "Endereço", type: "text" }
+        ]
+      },
+      {
+        title: "2. Queixa Principal (QP)",
+        fields: [
+          { name: "mainComplaint", label: "Motivo da consulta", type: "textarea", required: true },
+          { name: "durationTime", label: "Tempo de duração", type: "text" }
+        ]
+      },
+      {
+        title: "3. História da Doença Atual (HDA)",
+        fields: [
+          { name: "symptomsStart", label: "Início dos sintomas", type: "text" },
+          { name: "evolution", label: "Evolução", type: "textarea" },
+          { name: "associatedSymptoms", label: "Sintomas associados", type: "textarea" },
+          { name: "previousTreatment", label: "Tratamentos já realizados", type: "textarea" }
+        ]
+      },
+      {
+        title: "4. Histórico Gestacional e Nascimento",
+        fields: [
+          { name: "laborType", label: "Tipo de parto", type: "select", options: ["Normal", "Cesárea", "Fórceps", "Outro"] },
+          { name: "gestationalAge", label: "Idade gestacional", type: "text" },
+          { name: "pregnancyComplications", label: "Complicações na gestação", type: "textarea" },
+          { name: "birthWeight", label: "Peso ao nascer (kg)", type: "number" },
+          { name: "apgar", label: "APGAR (se disponível)", type: "text" }
+        ]
+      },
+      {
+        title: "5. Desenvolvimento Neuropsicomotor",
+        fields: [
+          { name: "headControl", label: "Sustentou a cabeça", type: "text" },
+          { name: "sitting", label: "Sentou", type: "text" },
+          { name: "crawling", label: "Engatinhou", type: "text" },
+          { name: "walking", label: "Andou", type: "text" },
+          { name: "speaking", label: "Falou", type: "text" }
+        ]
+      },
+      {
+        title: "6. Histórico Médico",
+        fields: [
+          { name: "previousDiseases", label: "Doenças prévias", type: "textarea" },
+          { name: "hospitalizations", label: "Internações", type: "textarea" },
+          { name: "surgeries", label: "Cirurgias", type: "textarea" },
+          { name: "allergies", label: "Alergias", type: "textarea" },
+          { name: "medications", label: "Uso de medicamentos", type: "textarea" }
+        ]
+      },
+      {
+        title: "7. Vacinação",
+        fields: [
+          { name: "vaccinationUpdated", label: "Carteira de vacinação atualizada?", type: "select", options: ["Sim", "Não", "Parcialmente"] },
+          { name: "pendingVaccines", label: "Vacinas pendentes", type: "textarea" }
+        ]
+      },
+      {
+        title: "8. Alimentação",
+        fields: [
+          { name: "breastfeeding", label: "Aleitamento materno", type: "select", options: ["Exclusivo", "Misto", "Não"] },
+          { name: "foodIntroduction", label: "Introdução alimentar", type: "textarea" },
+          { name: "currentDiet", label: "Alimentação atual", type: "textarea" }
+        ]
+      },
+      {
+        title: "9. Sono",
+        fields: [
+          { name: "sleepHours", label: "Horas de sono", type: "text" },
+          { name: "sleepQuality", label: "Qualidade do sono", type: "textarea" }
+        ]
+      },
+      {
+        title: "10. Hábitos e Rotina",
+        fields: [
+          { name: "schoolAttendance", label: "Frequenta escola/creche?", type: "select", options: ["Sim", "Não"] },
+          { name: "dailyActivities", label: "Atividades diárias", type: "textarea" },
+          { name: "screenTime", label: "Uso de telas", type: "textarea" }
+        ]
+      },
+      {
+        title: "11. Histórico Familiar",
+        fields: [
+          { name: "familyDiseases", label: "Doenças familiares", type: "textarea" },
+          { name: "geneticHistory", label: "Histórico genético", type: "textarea" }
+        ]
+      },
+      {
+        title: "12. Aspectos Comportamentais",
+        fields: [
+          { name: "socialInteraction", label: "Interação social", type: "textarea" },
+          { name: "behavior", label: "Comportamento", type: "textarea" },
+          { name: "emotionalDevelopment", label: "Desenvolvimento emocional", type: "textarea" }
+        ]
+      },
+      {
+        title: "13. Revisão de Sistemas",
+        fields: [
+          { name: "respiratory", label: "Sistema respiratório", type: "textarea" },
+          { name: "digestive", label: "Sistema digestivo", type: "textarea" },
+          { name: "urinary", label: "Sistema urinário", type: "textarea" },
+          { name: "neurological", label: "Sistema neurológico", type: "textarea" }
+        ]
+      },
+      {
+        title: "14. Avaliação Física",
+        fields: [
+          { name: "weight", label: "Peso (kg)", type: "number" },
+          { name: "height", label: "Altura (cm)", type: "number" },
+          { name: "headCircumference", label: "Perímetro cefálico (cm)", type: "number" },
+          { name: "vitalSigns", label: "Sinais vitais", type: "textarea" }
+        ]
+      },
+      {
+        title: "15. Diagnóstico / Hipótese Diagnóstica",
+        fields: [
+          { name: "diagnosis", label: "Diagnóstico", type: "textarea" }
+        ]
+      },
+      {
+        title: "16. Plano de Tratamento",
+        fields: [
+          { name: "conduct", label: "Conduta", type: "textarea" },
+          { name: "prescriptions", label: "Prescrições", type: "textarea" },
+          { name: "requestedExams", label: "Exames solicitados", type: "textarea" }
+        ]
+      },
+      {
+        title: "17. Observações",
+        fields: [
+          { name: "observations", label: "Observações", type: "textarea" }
+        ]
+      }
+    ]
+  }
+};null,
   resetToken: null,
   verifyEmail: null,
 };
@@ -1356,12 +1622,23 @@ function filterAppointments() {
 // ══════════════════════════════════════════════
 async function loadRecords() {
   var patId = document.getElementById('rec-pat-sel').value;
-  if (!patId) return;
+  if (!patId) {
+    document.getElementById('rec-placeholder').classList.remove('hidden');
+    document.getElementById('rec-tabs').classList.add('hidden');
+    document.getElementById('rec-evolutions').classList.add('hidden');
+    document.getElementById('rec-anamnesis').classList.add('hidden');
+    document.getElementById('rec-attachments').classList.add('hidden');
+    return;
+  }
   document.getElementById('rec-placeholder').classList.add('hidden');
-  document.getElementById('rec-list').classList.remove('hidden');
+  document.getElementById('rec-tabs').classList.remove('hidden');
+  
+  // Default to evolutions tab
+  swRecTab('evolutions', document.querySelectorAll('#rec-tabs .tab')[0]);
+
   try {
     STATE.records = await api('GET', '/records?patientId=' + patId);
-    var el = document.getElementById('rec-list');
+    var el = document.getElementById('rec-evolutions');
     if (!STATE.records.length) {
       el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Nenhuma evolução registrada para este paciente</div>';
       return;
@@ -1442,6 +1719,159 @@ function useAI() {
   document.getElementById('rc').value = document.getElementById('ai-txt').textContent;
   document.getElementById('ai-res').classList.add('hidden');
   toast('✅ Prontuário aplicado! Revise e salve.');
+}
+
+// ══════════════════════════════════════════════
+// CLINICAL (ANAMNESIS & ATTACHMENTS)
+// ══════════════════════════════════════════════
+function swRecTab(tab, el) {
+  document.querySelectorAll('#rec-tabs .tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.rec-tab').forEach(p => p.classList.add('hidden'));
+  document.getElementById('rec-' + tab).classList.remove('hidden');
+  if (tab === 'anamnesis') loadAnamnesis();
+  if (tab === 'attachments') loadAttachments();
+}
+
+function swAnamType(type, el) {
+  document.querySelectorAll('#m-anam .tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('anam-type').value = type;
+  renderAnamnesisForm(type);
+}
+
+function renderAnamnesisForm(type, existingData = {}) {
+  const template = ANAMNESIS_FORMS[type];
+  const container = document.getElementById('anam-form-container');
+  let h = '';
+  template.sections.forEach(s => {
+    h += `<div class="sdv" style="margin-top:20px">${s.title}</div>`;
+    s.fields.forEach(f => {
+      const val = existingData[f.name] || '';
+      h += `<div class="fr"><label class="lbl">${f.label}${f.required ? ' *' : ''}</label>`;
+      if (f.type === 'textarea') {
+        h += `<textarea class="inp anam-field" id="af-${f.name}" style="height:80px;resize:none" data-name="${f.name}">${val}</textarea>`;
+      } else if (f.type === 'select') {
+        h += `<select class="sel anam-field" id="af-${f.name}" data-name="${f.name}"><option value="">Selecione...</option>`;
+        f.options.forEach(o => h += `<option ${val === o ? 'selected' : ''}>${o}</option>`);
+        h += `</select>`;
+      } else {
+        h += `<input type="${f.type}" class="inp anam-field" id="af-${f.name}" data-name="${f.name}" value="${val}" />`;
+      }
+      h += `</div>`;
+    });
+  });
+  container.innerHTML = h;
+}
+
+async function loadAnamnesis() {
+  const patId = document.getElementById('rec-pat-sel').value;
+  const container = document.getElementById('rec-anamnesis');
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm)">Carregando anamnese...</div>';
+  try {
+    const p = STATE.patients.find(x => x.id === patId);
+    const anam = await api('GET', '/clinical/anamnesis/' + patId).catch(() => null);
+    if (!anam) {
+      container.innerHTML = `<div class="al ali"><span style="font-size:20px">📋</span><div><div style="font-size:13px;font-weight:700;color:#1d4ed8">Nenhuma anamnese encontrada</div><div style="font-size:11px;color:#3b82f6;margin-top:2px">Clique abaixo para criar</div></div></div>
+      <button class="btn bp fw" style="margin-top:12px" onclick="openAnamModal('${p.type}')">+ Criar Anamnese</button>`;
+      return;
+    }
+    // Render anamnesis view
+    let h = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:14px;font-weight:700">Anamnese ${anam.type === 'ADULT' ? 'Adulto' : 'Infantil'}</div>
+      <button class="btn bs" style="font-size:11px;padding:6px 12px" onclick="openAnamModal('${anam.type}', true)">✎ Editar</button>
+    </div>`;
+    const template = ANAMNESIS_FORMS[anam.type];
+    template.sections.forEach(s => {
+      h += `<div class="sdv" style="margin-top:16px">${s.title}</div><div class="ibox">`;
+      s.fields.forEach(f => {
+        h += `<div class="ir"><div class="il">${f.label}</div><div class="iv">${anam.data[f.name] || '—'}</div></div>`;
+      });
+      h += `</div>`;
+    });
+    container.innerHTML = h;
+  } catch(e) { container.innerHTML = 'Erro ao carregar anamnese'; }
+}
+
+function openAnamModal(type, isEdit = false) {
+  const patId = document.getElementById('rec-pat-sel').value;
+  const p = STATE.patients.find(x => x.id === patId);
+  document.getElementById('anam-type-label').textContent = 'Anamnese de ' + p.name;
+  swAnamType(type, document.querySelectorAll('#m-anam .tab')[type === 'ADULT' ? 0 : 1]);
+  if (isEdit) {
+    api('GET', '/clinical/anamnesis/' + patId).then(anam => {
+      renderAnamnesisForm(type, anam.data);
+    });
+  } else {
+    renderAnamnesisForm(type);
+  }
+  openM('m-anam');
+}
+
+async function saveAnamnesis() {
+  const patId = document.getElementById('rec-pat-sel').value;
+  const type = document.getElementById('anam-type').value;
+  const btn = document.getElementById('anam-btn');
+  const errEl = document.getElementById('anam-err');
+  const data = {};
+  document.querySelectorAll('.anam-field').forEach(el => {
+    data[el.dataset.name] = el.value;
+  });
+  
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    await api('POST', '/clinical/anamnesis', { patientId: patId, type, data });
+    closeM('m-anam');
+    toast('✅ Anamnese salva!');
+    loadAnamnesis();
+  } catch(e) { errEl.textContent = e.message; errEl.classList.remove('hidden'); }
+  finally { btn.disabled = false; btn.textContent = 'Salvar Anamnese'; }
+}
+
+async function loadAttachments() {
+  const patId = document.getElementById('rec-pat-sel').value;
+  const container = document.getElementById('rec-attachments');
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm)">Carregando anexos...</div>';
+  try {
+    const atts = await api('GET', '/clinical/attachments/' + patId);
+    let h = `<div style="margin-bottom:16px">
+      <div class="fr"><label class="lbl">Novo Anexo (Link/Nome)</label>
+      <div style="display:flex;gap:8px"><input class="inp" id="new-att-name" placeholder="Nome do arquivo" style="flex:1"/><input class="inp" id="new-att-url" placeholder="Link do arquivo (S3, Drive, etc)" style="flex:2"/><button class="btn bp" onclick="saveAttachment()">+ Anexar</button></div>
+      </div>
+    </div>`;
+    if (!atts.length) {
+      h += '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Nenhum anexo encontrado</div>';
+    } else {
+      h += atts.map(a => `
+        <div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-weight:700;font-size:13px">${a.name}</div><div style="font-size:11px;color:var(--dm)">${new Date(a.createdAt).toLocaleDateString('pt-BR')}</div></div>
+          <div style="display:flex;gap:8px"><a href="${a.url}" target="_blank" class="btn bs" style="font-size:10px;padding:6px 10px">Abrir</a><button class="btn br" style="font-size:10px;padding:6px 10px" onclick="deleteAttachment('${a.id}')">Excluir</button></div>
+        </div>
+      `).join('');
+    }
+    container.innerHTML = h;
+  } catch(e) { container.innerHTML = 'Erro ao carregar anexos'; }
+}
+
+async function saveAttachment() {
+  const patId = document.getElementById('rec-pat-sel').value;
+  const name = document.getElementById('new-att-name').value.trim();
+  const url = document.getElementById('new-att-url').value.trim();
+  if (!name || !url) { toast('⚠️ Preencha nome e link'); return; }
+  try {
+    await api('POST', '/clinical/attachments', { patientId: patId, name, url, type: 'FILE' });
+    toast('✅ Anexo salvo!');
+    loadAttachments();
+  } catch(e) { toast('Erro ao salvar anexo'); }
+}
+
+async function deleteAttachment(id) {
+  if (!confirm('Deseja excluir este anexo?')) return;
+  try {
+    await api('DELETE', '/clinical/attachments/' + id);
+    toast('✅ Anexo excluído!');
+    loadAttachments();
+  } catch(e) { toast('Erro ao excluir anexo'); }
 }
 
 // ══════════════════════════════════════════════
