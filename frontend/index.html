@@ -466,7 +466,14 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
         <option value="">— Selecione um paciente —</option>
       </select>
       <div id="rec-placeholder" class="al ali"><span style="font-size:20px">📋</span><div><div style="font-size:13px;font-weight:700;color:#1d4ed8">Selecione um paciente acima</div><div style="font-size:11px;color:#3b82f6;margin-top:2px">O prontuário será exibido aqui</div></div></div>
-      <div id="rec-list" class="hidden"></div>
+      <div id="rec-tabs" class="tabs hidden" style="margin-bottom:12px">
+        <div class="tab on" onclick="swRecTab('evolutions',this)">Evoluções</div>
+        <div class="tab" onclick="swRecTab('anamnesis',this)">Anamnese</div>
+        <div class="tab" onclick="swRecTab('attachments',this)">Anexos</div>
+      </div>
+      <div id="rec-evolutions" class="rec-tab"></div>
+      <div id="rec-anamnesis" class="rec-tab hidden"></div>
+      <div id="rec-attachments" class="rec-tab hidden"></div>
     </div>
 
     <!-- FINANCIAL -->
@@ -627,8 +634,8 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
   </div>
 </div>
 
-<div id="m-rec" class="ov hidden" onclick="closeM('m-rec')">
-  <div class="modal" onclick="event.stopPropagation()">
+    <div id="m-rec" class="ov hidden" onclick="closeM('m-rec')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:93vh;overflow-y:auto">
     <div class="mbar"></div>
     <div style="font-size:17px;font-weight:800;margin-bottom:4px">Nova Evolução</div>
     <div style="font-size:12px;color:var(--mt);margin-bottom:14px">Registro da sessão clínica</div>
@@ -668,9 +675,71 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
   </div>
 </div>
 
+<div id="m-anam" class="ov hidden" onclick="closeM('m-anam')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:93vh;overflow-y:auto;max-width:700px">
+    <div class="mbar"></div>
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">Anamnese</div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:14px" id="anam-type-label">Anamnese do Paciente</div>
+    <div class="tabs" style="margin-bottom:14px">
+      <div class="tab on" onclick="swAnamType('ADULT',this)">👤 Adulto</div>
+      <div class="tab" onclick="swAnamType('CHILD',this)">👶 Infantil</div>
+    </div>
+    <input type="hidden" id="anam-type" value="ADULT"/>
+    <div id="anam-form-container"></div>
+    <div id="anam-err" class="auth-err hidden"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn bs" style="flex:1" onclick="closeM('m-anam')">Cancelar</button>
+      <button class="btn bp" style="flex:1" id="anam-btn" onclick="saveAnamnesis()">Salvar Anamnese</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="hidden"></div>
 
 <script>
+// ══════════════════════════════════════════════
+// ANAMNESIS FORMS TEMPLATES
+// ══════════════════════════════════════════════
+const ANAMNESIS_FORMS = {
+  ADULT: {
+    sections: [
+      { title: "1. Identificação", fields: [{name:"fullName",label:"Nome completo",type:"text",required:true},{name:"birthDate",label:"Data de nascimento",type:"date"},{name:"age",label:"Idade",type:"number"},{name:"gender",label:"Sexo",type:"select",options:["Masculino","Feminino","Outro"]},{name:"maritalStatus",label:"Estado civil",type:"select",options:["Solteiro","Casado","Divorciado","Viúvo","União estável"]},{name:"profession",label:"Profissão",type:"text"},{name:"phone",label:"Telefone",type:"text"},{name:"address",label:"Endereço",type:"text"},{name:"responsible",label:"Nome do responsável (se necessário)",type:"text"}] },
+      { title: "2. Queixa Principal (QP)", fields: [{name:"mainComplaint",label:"Motivo da consulta",type:"textarea",required:true},{name:"durationTime",label:"Tempo de duração",type:"text"}] },
+      { title: "3. História da Doença Atual (HDA)", fields: [{name:"symptomsStart",label:"Início dos sintomas",type:"text"},{name:"evolution",label:"Evolução",type:"textarea"},{name:"intensity",label:"Intensidade",type:"select",options:["Leve","Moderada","Grave"]},{name:"aggravatingFactors",label:"Fatores que pioram",type:"textarea"},{name:"improvingFactors",label:"Fatores que melhoram",type:"textarea"},{name:"associatedSymptoms",label:"Sintomas associados",type:"textarea"},{name:"previousTreatment",label:"Já realizou tratamento?",type:"textarea"}] },
+      { title: "4. Histórico Médico Pessoal", fields: [{name:"previousDiseases",label:"Doenças prévias",type:"textarea"},{name:"hospitalizations",label:"Internações",type:"textarea"},{name:"surgeries",label:"Cirurgias",type:"textarea"},{name:"allergies",label:"Alergias",type:"textarea"},{name:"continuousMedications",label:"Uso de medicamentos contínuos",type:"textarea"},{name:"chronicDiseases",label:"Doenças crônicas (hipertensão, diabetes, etc.)",type:"textarea"}] },
+      { title: "5. Histórico Familiar", fields: [{name:"familyDiseases",label:"Doenças na família",type:"textarea"},{name:"hereditaryDiseases",label:"Histórico de doenças hereditárias",type:"textarea"}] },
+      { title: "6. Hábitos de Vida", fields: [{name:"diet",label:"Alimentação",type:"textarea"},{name:"waterConsumption",label:"Consumo de água",type:"text"},{name:"physicalActivity",label:"Atividade física",type:"textarea"},{name:"sleep",label:"Sono",type:"textarea"},{name:"alcoholUse",label:"Uso de álcool",type:"select",options:["Não","Ocasional","Frequente","Diário"]},{name:"smoking",label:"Tabagismo",type:"select",options:["Não","Ex-fumante","Fumante ocasional","Fumante regular"]},{name:"drugUse",label:"Uso de drogas",type:"textarea"}] },
+      { title: "7. Aspectos Psicossociais", fields: [{name:"dailyRoutine",label:"Rotina diária",type:"textarea"},{name:"stressLevel",label:"Nível de estresse",type:"select",options:["Baixo","Moderado","Alto","Muito alto"]},{name:"emotionalHealth",label:"Saúde emocional",type:"textarea"},{name:"familySupport",label:"Apoio familiar",type:"textarea"}] },
+      { title: "8. Revisão de Sistemas", fields: [{name:"cardiovascular",label:"Sistema cardiovascular",type:"textarea"},{name:"respiratory",label:"Sistema respiratório",type:"textarea"},{name:"digestive",label:"Sistema digestivo",type:"textarea"},{name:"urinary",label:"Sistema urinário",type:"textarea"},{name:"neurological",label:"Sistema neurológico",type:"textarea"},{name:"musculoskeletal",label:"Sistema musculoesquelético",type:"textarea"}] },
+      { title: "9. Avaliação Física", fields: [{name:"bloodPressure",label:"Pressão arterial",type:"text"},{name:"heartRate",label:"Frequência cardíaca",type:"text"},{name:"weight",label:"Peso (kg)",type:"number"},{name:"height",label:"Altura (cm)",type:"number"},{name:"imc",label:"IMC",type:"number"}] },
+      { title: "10. Diagnóstico / Hipótese Diagnóstica", fields: [{name:"diagnosis",label:"Diagnóstico",type:"textarea"}] },
+      { title: "11. Plano de Tratamento", fields: [{name:"conduct",label:"Conduta",type:"textarea"},{name:"prescriptions",label:"Prescrições",type:"textarea"},{name:"requestedExams",label:"Exames solicitados",type:"textarea"}] },
+      { title: "12. Observações Gerais", fields: [{name:"generalObservations",label:"Observações",type:"textarea"}] }
+    ]
+  },
+  CHILD: {
+    sections: [
+      { title: "1. Identificação", fields: [{name:"childName",label:"Nome da criança",type:"text",required:true},{name:"birthDate",label:"Data de nascimento",type:"date"},{name:"age",label:"Idade",type:"number"},{name:"gender",label:"Sexo",type:"select",options:["Masculino","Feminino","Outro"]},{name:"responsibles",label:"Nome dos responsáveis",type:"textarea",required:true},{name:"phone",label:"Telefone",type:"text"},{name:"address",label:"Endereço",type:"text"}] },
+      { title: "2. Queixa Principal (QP)", fields: [{name:"mainComplaint",label:"Motivo da consulta",type:"textarea",required:true},{name:"durationTime",label:"Tempo de duração",type:"text"}] },
+      { title: "3. História da Doença Atual (HDA)", fields: [{name:"symptomsStart",label:"Início dos sintomas",type:"text"},{name:"evolution",label:"Evolução",type:"textarea"},{name:"associatedSymptoms",label:"Sintomas associados",type:"textarea"},{name:"previousTreatment",label:"Tratamentos já realizados",type:"textarea"}] },
+      { title: "4. Histórico Gestacional e Nascimento", fields: [{name:"laborType",label:"Tipo de parto",type:"select",options:["Normal","Cesárea","Fórceps","Outro"]},{name:"gestationalAge",label:"Idade gestacional",type:"text"},{name:"pregnancyComplications",label:"Complicações na gestação",type:"textarea"},{name:"birthWeight",label:"Peso ao nascer (kg)",type:"number"},{name:"apgar",label:"APGAR (se disponível)",type:"text"}] },
+      { title: "5. Desenvolvimento Neuropsicomotor", fields: [{name:"headControl",label:"Sustentou a cabeça",type:"text"},{name:"sitting",label:"Sentou",type:"text"},{name:"crawling",label:"Engatinhou",type:"text"},{name:"walking",label:"Andou",type:"text"},{name:"speaking",label:"Falou",type:"text"}] },
+      { title: "6. Histórico Médico", fields: [{name:"previousDiseases",label:"Doenças prévias",type:"textarea"},{name:"hospitalizations",label:"Internações",type:"textarea"},{name:"surgeries",label:"Cirurgias",type:"textarea"},{name:"allergies",label:"Alergias",type:"textarea"},{name:"medications",label:"Uso de medicamentos",type:"textarea"}] },
+      { title: "7. Vacinação", fields: [{name:"vaccinationUpdated",label:"Carteira de vacinação atualizada?",type:"select",options:["Sim","Não","Parcialmente"]},{name:"pendingVaccines",label:"Vacinas pendentes",type:"textarea"}] },
+      { title: "8. Alimentação", fields: [{name:"breastfeeding",label:"Aleitamento materno",type:"select",options:["Exclusivo","Misto","Não"]},{name:"foodIntroduction",label:"Introdução alimentar",type:"textarea"},{name:"currentDiet",label:"Alimentação atual",type:"textarea"}] },
+      { title: "9. Sono", fields: [{name:"sleepHours",label:"Horas de sono",type:"text"},{name:"sleepQuality",label:"Qualidade do sono",type:"textarea"}] },
+      { title: "10. Hábitos e Rotina", fields: [{name:"schoolAttendance",label:"Frequenta escola/creche?",type:"select",options:["Sim","Não"]},{name:"dailyActivities",label:"Atividades diárias",type:"textarea"},{name:"screenTime",label:"Uso de telas",type:"textarea"}] },
+      { title: "11. Histórico Familiar", fields: [{name:"familyDiseases",label:"Doenças familiares",type:"textarea"},{name:"geneticHistory",label:"Histórico genético",type:"textarea"}] },
+      { title: "12. Aspectos Comportamentais", fields: [{name:"socialInteraction",label:"Interação social",type:"textarea"},{name:"behavior",label:"Comportamento",type:"textarea"},{name:"emotionalDevelopment",label:"Desenvolvimento emocional",type:"textarea"}] },
+      { title: "13. Revisão de Sistemas", fields: [{name:"respiratory",label:"Sistema respiratório",type:"textarea"},{name:"digestive",label:"Sistema digestivo",type:"textarea"},{name:"urinary",label:"Sistema urinário",type:"textarea"},{name:"neurological",label:"Sistema neurológico",type:"textarea"}] },
+      { title: "14. Avaliação Física", fields: [{name:"weight",label:"Peso (kg)",type:"number"},{name:"height",label:"Altura (cm)",type:"number"},{name:"headCircumference",label:"Perímetro cefálico (cm)",type:"number"},{name:"vitalSigns",label:"Sinais vitais",type:"textarea"}] },
+      { title: "15. Diagnóstico / Hipótese Diagnóstica", fields: [{name:"diagnosis",label:"Diagnóstico",type:"textarea"}] },
+      { title: "16. Plano de Tratamento", fields: [{name:"conduct",label:"Conduta",type:"textarea"},{name:"prescriptions",label:"Prescrições",type:"textarea"},{name:"requestedExams",label:"Exames solicitados",type:"textarea"}] },
+      { title: "17. Observações", fields: [{name:"observations",label:"Observações",type:"textarea"}] }
+    ]
+  }
+};
+
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO — altere para a URL do seu backend
 // ══════════════════════════════════════════════
