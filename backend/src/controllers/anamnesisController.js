@@ -1,43 +1,38 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-exports.upsertAnamnesis = async (req, res) => {
-  const { patientId, type, data, complaint, observations } = req.body;
-  const userId = req.user.id;
-
+exports.saveAnamnesis = async (req, res) => {
   try {
-    // Check if patient belongs to user
-    const patient = await prisma.patient.findFirst({
-      where: { id: patientId, userId }
-    });
-
-    if (!patient) {
-      return res.status(404).json({ error: 'Paciente não encontrado' });
-    }
-
-    // Find existing anamnesis by patientId
+    const { patientId, type, data, complaint, observations } = req.body;
+    
+    // Find existing anamnesis
     const existing = await prisma.anamnesis.findFirst({
-      where: { patientId }
+      where: {
+        patientId,
+        userId: req.user.id
+      }
     });
 
     let anamnesis;
     if (existing) {
+      // Update existing
+      const updateData = {};
+      if (type) updateData.type = type;
+      if (data) updateData.data = data;
+      if (complaint !== undefined) updateData.complaint = complaint;
+      if (observations !== undefined) updateData.observations = observations;
+      
       anamnesis = await prisma.anamnesis.update({
         where: { id: existing.id },
-        data: { 
-          type: type || existing.type, 
-          data: data || existing.data,
-          complaint: complaint !== undefined ? complaint : existing.complaint,
-          observations: observations !== undefined ? observations : existing.observations,
-          updatedAt: new Date() 
-        }
+        data: updateData
       });
     } else {
+      // Create new
       anamnesis = await prisma.anamnesis.create({
-        data: { 
-          patientId, 
-          userId,
-          type: type || 'ADULT', 
+        data: {
+          userId: req.user.id,
+          patientId,
+          type: type || 'ADULT',
           data: data || {},
           complaint: complaint || '',
           observations: observations || ''
@@ -45,36 +40,31 @@ exports.upsertAnamnesis = async (req, res) => {
       });
     }
 
-    res.status(200).json(anamnesis);
+    res.json(anamnesis);
   } catch (error) {
-    console.error('❌ Upsert anamnesis error:', error);
-    res.status(500).json({ error: 'Erro ao salvar anamnese' });
+    console.error('Save Anamnesis Error:', error);
+    res.status(500).json({ error: 'Erro ao salvar informações clínicas' });
   }
 };
 
 exports.getAnamnesis = async (req, res) => {
-  const { patientId } = req.params;
-  const userId = req.user.id;
-
   try {
+    const { patientId } = req.params;
+    
     const anamnesis = await prisma.anamnesis.findFirst({
-      where: { patientId, userId }
+      where: {
+        patientId,
+        userId: req.user.id
+      }
     });
 
     if (!anamnesis) {
-      // Return an empty structure instead of 404 to make frontend life easier
-      return res.status(200).json({ 
-        patientId, 
-        type: 'ADULT', 
-        data: {}, 
-        complaint: '', 
-        observations: '' 
-      });
+      return res.status(404).json({ error: 'Anamnese não encontrada' });
     }
 
-    res.status(200).json(anamnesis);
+    res.json(anamnesis);
   } catch (error) {
-    console.error('❌ Get anamnesis error:', error);
-    res.status(500).json({ error: 'Erro ao carregar anamnese' });
+    console.error('Get Anamnesis Error:', error);
+    res.status(500).json({ error: 'Erro ao buscar anamnese' });
   }
 };

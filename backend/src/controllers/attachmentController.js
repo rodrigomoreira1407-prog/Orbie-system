@@ -2,13 +2,15 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 exports.createAttachment = async (req, res) => {
-  const { anamnesisId, fileName, fileUrl, fileType, fileSize } = req.body;
-  const userId = req.user.id;
-
   try {
-    // Check if anamnesis exists and belongs to user
+    const { anamnesisId, fileName, fileUrl, fileType, fileSize } = req.body;
+
+    // Verify anamnesis belongs to user
     const anamnesis = await prisma.anamnesis.findFirst({
-      where: { id: anamnesisId, userId }
+      where: {
+        id: anamnesisId,
+        userId: req.user.id
+      }
     });
 
     if (!anamnesis) {
@@ -27,19 +29,21 @@ exports.createAttachment = async (req, res) => {
 
     res.status(201).json(attachment);
   } catch (error) {
-    console.error('❌ Create attachment error:', error);
+    console.error('Create Attachment Error:', error);
     res.status(500).json({ error: 'Erro ao salvar anexo' });
   }
 };
 
 exports.getAttachments = async (req, res) => {
-  const { anamnesisId } = req.params;
-  const userId = req.user.id;
-
   try {
-    // Check if anamnesis belongs to user
+    const { anamnesisId } = req.params;
+
+    // Verify anamnesis belongs to user
     const anamnesis = await prisma.anamnesis.findFirst({
-      where: { id: anamnesisId, userId }
+      where: {
+        id: anamnesisId,
+        userId: req.user.id
+      }
     });
 
     if (!anamnesis) {
@@ -51,23 +55,24 @@ exports.getAttachments = async (req, res) => {
       orderBy: { uploadedAt: 'desc' }
     });
 
-    res.status(200).json(attachments);
+    res.json(attachments);
   } catch (error) {
-    console.error('❌ Get attachments error:', error);
-    res.status(500).json({ error: 'Erro ao carregar anexos' });
+    console.error('Get Attachments Error:', error);
+    res.status(500).json({ error: 'Erro ao buscar anexos' });
   }
 };
 
 exports.deleteAttachment = async (req, res) => {
-  const { id } = req.params;
-  const userId = req.user.id;
-
   try {
-    // Check if attachment exists and its anamnesis belongs to user
+    const { id } = req.params;
+
+    // Verify attachment and ownership
     const attachment = await prisma.attachment.findFirst({
-      where: { 
+      where: {
         id,
-        anamnesis: { userId }
+        anamnesis: {
+          userId: req.user.id
+        }
       }
     });
 
@@ -79,9 +84,9 @@ exports.deleteAttachment = async (req, res) => {
       where: { id }
     });
 
-    res.status(204).send();
+    res.json({ success: true });
   } catch (error) {
-    console.error('❌ Delete attachment error:', error);
+    console.error('Delete Attachment Error:', error);
     res.status(500).json({ error: 'Erro ao excluir anexo' });
   }
 };
