@@ -566,13 +566,15 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <div class="mbar"></div>
     <div style="font-size:17px;font-weight:800;margin-bottom:4px">Novo Paciente</div>
     <div style="font-size:12px;color:var(--mt);margin-bottom:14px">Preencha os dados do paciente</div>
-    <div class="tabs"><div class="tab on" onclick="swPT('ADULT',this)">🧑 Adulto</div><div class="tab" onclick="swPT('CHILD',this)">👶 Infantil</div></div>
+    <div class="tabs"><div class="tab on" onclick="swPT('ADULT',this)">🧑 Adulto<<div class="tab" onclick="loadPatients('CHILD',this)">👶 Infantil</div>iv>
     <input type="hidden" id="npat-type" value="ADULT"/>
     <div class="fr"><label class="lbl">Nome completo *</label><input class="inp" id="npat-name" placeholder="Nome do paciente"/></div>
     <div class="fg"><div><label class="lbl">CPF</label><input class="inp" id="npat-cpf" placeholder="000.000.000-00"/></div><div><label class="lbl">RG</label><input class="inp" id="npat-rg" placeholder="00.000.000-0"/></div></div>
     <div class="fg"><div><label class="lbl">Data de nascimento</label><input type="date" class="inp" id="npat-birth"/></div><div><label class="lbl">Gênero</label><select class="sel" id="npat-gender"><option value="">Selecione</option><option>Masculino</option><option>Feminino</option><option>Outro</option></select></div></div>
     <div class="fg"><div><label class="lbl">Telefone</label><input class="inp" id="npat-phone" placeholder="(11) 99999-9999"/></div><div><label class="lbl">E-mail</label><input class="inp" id="npat-email" placeholder="email@email.com"/></div></div>
-    <div class="fr"><label class="lbl">Endereço</label><input class="inp" id="npat-address" placeholder="Rua, número, bairro, cidade"/></div>
+    <div class="fr"><label class="lbl">CEP</label><input class="inp" id="npat-cep" placeholder="00000-000"/></div>
+    <div class="fr"><label class="lbl">Logradouro (Rua, Av...)</label><input class="inp" id="npat-address" placeholder="Ex: Rua São Manoel"/></div>
+    <div class="fg"><div><label class="lbl">Número</label><input class="inp" id="npat-number" placeholder="123"/></div><div><label class="lbl">Complemento</label><input class="inp" id="npat-complement" placeholder="Apto, Bloco..."/></div></div>
     <div id="npat-child-fields" class="hidden">
       <div class="sdv" style="color:#0891b2;border-color:rgba(8,145,178,.15)">👩 Responsável Principal</div>
       <div class="fg"><div><label class="lbl">Nome *</label><input class="inp" id="npat-r1n" placeholder="Nome do responsável"/></div><div><label class="lbl">Parentesco</label><input class="inp" id="npat-r1r" placeholder="Mãe, Pai..."/></div></div>
@@ -581,8 +583,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <div class="sdv" style="color:var(--rd);border-color:rgba(220,38,38,.15)">🚨 Contato de Emergência</div>
     <div class="fg"><div><label class="lbl">Nome</label><input class="inp" id="npat-en" placeholder="Nome do contato"/></div><div><label class="lbl">Telefone</label><input class="inp" id="npat-ep" placeholder="(11) 99999-9999"/></div></div>
     <div class="fg"><div><label class="lbl">Parentesco</label><input class="inp" id="npat-er" placeholder="Mãe, Pai..."/></div></div>
-    <div class="sdv">📋 Clínico</div>
-    <div class="fr"><label class="lbl">Queixa principal</label><textarea class="inp" id="npat-complaint" style="resize:none;height:60px" placeholder="Motivo da busca por atendimento..."></textarea></div>
+    <!-- Clínico movido para Prontuário -->
     <div id="npat-err" class="auth-err hidden"></div>
     <div style="display:flex;gap:8px;margin-top:16px">
       <button class="btn bs" style="flex:1" onclick="closeM('m-npat')">Cancelar</button>
@@ -1097,11 +1098,13 @@ async function createPatient() {
       gender: document.getElementById('npat-gender').value,
       phone: document.getElementById('npat-phone').value,
       email: document.getElementById('npat-email').value,
+      cep: document.getElementById('npat-cep').value,
       address: document.getElementById('npat-address').value,
+      number: document.getElementById('npat-number').value,
+      complement: document.getElementById('npat-complement').value,
       emergName: document.getElementById('npat-en').value,
       emergPhone: document.getElementById('npat-ep').value,
       emergRelation: document.getElementById('npat-er').value,
-      complaint: document.getElementById('npat-complaint').value,
       resp1Name: document.getElementById('npat-r1n') ? document.getElementById('npat-r1n').value : '',
       resp1Phone: document.getElementById('npat-r1p') ? document.getElementById('npat-r1p').value : '',
       resp1Relation: document.getElementById('npat-r1r') ? document.getElementById('npat-r1r').value : '',
@@ -1112,7 +1115,7 @@ async function createPatient() {
     closeM('m-npat');
     toast('✅ Paciente cadastrado!');
     // Clear fields
-    ['npat-name','npat-cpf','npat-rg','npat-phone','npat-email','npat-address','npat-en','npat-ep','npat-er','npat-complaint'].forEach(function(id){ document.getElementById(id).value=''; });
+    ['npat-name','npat-cpf','npat-rg','npat-phone','npat-email','npat-cep','npat-address','npat-number','npat-complement','npat-en','npat-ep','npat-er'].forEach(function(id){ var el = document.getElementById(id); if(el) el.value=''; });
   } catch(e) {
     errEl.textContent = e.message || 'Erro ao cadastrar';
     errEl.classList.remove('hidden');
@@ -1134,8 +1137,9 @@ async function viewPatient(id) {
     '<div class="ir"><div class="il">📞 Telefone</div><div class="iv">' + (p.phone || '—') + '</div></div>' +
     '<div class="ir"><div class="il">✉️ E-mail</div><div class="iv">' + (p.email || '—') + '</div></div>' +
     '<div class="ir"><div class="il">📄 CPF</div><div class="iv">' + (p.cpf || '—') + '</div></div>' +
-    '<div class="ir"><div class="il">📍 Endereço</div><div class="iv">' + (p.address || '—') + '</div></div>' +
-    '<div class="ir"><div class="il">💬 Queixa</div><div class="iv">' + (p.complaint || '—') + '</div></div>' +
+    '<div class="ir"><div class="il">📍 Endereço</div><div class="iv">' + 
+      (p.address ? (p.address + (p.number ? ', ' + p.number : '') + (p.complement ? ' (' + p.complement + ')' : '') + (p.cep ? ' - CEP: ' + p.cep : '')) : '—') + 
+    '</div></div>' +
     '</div>' +
     (p.emergName ? '<div class="ebox" style="margin-top:10px"><div class="etl">🚨 Emergência</div>' +
     '<div class="ir"><div class="il">Nome</div><div class="iv">' + p.emergName + '</div></div>' +
