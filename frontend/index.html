@@ -8,6 +8,8 @@
 <title>Orbie — Sistema de Gestão Clínica</title>
 <link rel="manifest" href="/manifest.json"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--bg:#f0f4f8;--w:#fff;--bd:#e2e8f0;--ac:#5b5ef4;--ac2:#7c3aed;--tx:#0f172a;--mt:#475569;--dm:#94a3b8;--gn:#059669;--rd:#dc2626;--am:#d97706}
@@ -483,10 +485,10 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
       <div class="ph"><div><div class="ptt">Relatórios</div><div class="pst2">Exporte os dados</div></div></div>
       <div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:10px">📅 Período</div><div class="fg"><div><label class="lbl">De</label><input type="date" class="inp" id="rep-from"/></div><div><label class="lbl">Até</label><input type="date" class="inp" id="rep-to"/></div></div></div>
       <div class="g2">
-        <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">👥</div><div style="font-size:13px;font-weight:700">Pacientes</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Lista completa</div><button class="btn bp fw" style="font-size:11px" onclick="toast('📄 Em breve: exportação em PDF')">Gerar PDF</button></div>
-        <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">📅</div><div style="font-size:13px;font-weight:700">Consultas</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Histórico</div><button class="btn bp fw" style="font-size:11px" onclick="toast('📄 Em breve: exportação em PDF')">Gerar PDF</button></div>
-        <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">💰</div><div style="font-size:13px;font-weight:700">Financeiro</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Receitas e despesas</div><button class="btn bp fw" style="font-size:11px" onclick="toast('📄 Em breve: exportação em PDF')">Gerar PDF</button></div>
-        <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">📋</div><div style="font-size:13px;font-weight:700">Prontuários</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Evolução clínica</div><button class="btn bp fw" style="font-size:11px" onclick="toast('📄 Em breve: exportação em PDF')">Gerar PDF</button></div>
+        <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">👥</div><div style="font-size:13px;font-weight:700">Pacientes</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Lista completa</div><button class="btn bp fw" style="font-size:11px" onclick="exportPDF('patients')">Gerar PDF</button></div>
+        <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">📅</div><div style="font-size:13px;font-weight:700">Consultas</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Histórico</div><button class="btn bp fw" style="font-size:11px" onclick="exportPDF('appointments')">Gerar PDF</button></div>
+        <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">💰</div><div style="font-size:13px;font-weight:700">Financeiro</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Receitas e despesas</div><button class="btn bp fw" style="font-size:11px" onclick="exportPDF('financial')">Gerar PDF</button></div>
+        <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">📋</div><div style="font-size:13px;font-weight:700">Prontuários</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Evolução clínica</div><button class="btn bp fw" style="font-size:11px" onclick="exportPDF('records')">Gerar PDF</button></div>
       </div>
     </div>
 
@@ -1193,7 +1195,7 @@ function renderAppointments(list) {
       '<div class="av avm" style="background:' + color + '">' + ini + '</div>' +
       '<div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700">' + patName + '</span>' + statusBadge + typeBadge + '</div>' +
       '<div class="rs" style="margin-top:3px">' + timeStr + ' · ' + a.duration + 'min · R$ ' + a.value.toFixed(2) + '</div></div>' +
-      (waLink ? '<a href="' + waLink + '" target="_blank" title="Enviar lembrete WhatsApp" style="color:#25D366;font-size:22px;display:flex;align-items:center;justify-content:center;padding:8px;border-radius:50%;background:#f0fdf4;margin-left:5px;transition:all 0.2s" onmouseover="this.style.background=\'#dcfce7\'" onmouseout="this.style.background=\'#f0fdf4\'"><i class="fab fa-whatsapp"></i></a>' : '') +
+      (waLink ? '<a href="' + waLink + '" target="_blank" title="Enviar lembrete WhatsApp" style="color:#25D366;font-size:22px;display:inline-flex;align-items:center;justify-content:center;padding:8px;border-radius:50%;background:#f0fdf4;margin-left:8px;text-decoration:none;transition:all 0.2s" onmouseover="this.style.background=\'#dcfce7\'" onmouseout="this.style.background=\'#f0fdf4\'"><i class="fa-brands fa-whatsapp"></i></a>' : '') +
       '</div>' +
       (a.meetLink ? '<div class="mbox"><span>🎥</span><span class="murl">' + a.meetLink + '</span><button class="btn bp" style="font-size:10px;padding:5px 10px;flex-shrink:0" onclick="openMeet(\'' + patName + '\',\'' + a.meetLink + '\',\'' + timeStr.split(' · ')[0] + '\')">Entrar</button></div>' : '') +
       '<div style="display:flex;gap:8px;margin-top:8px">' +
@@ -1396,6 +1398,68 @@ async function markPaid(id) {
     await loadFinancial();
     toast('✅ Marcado como pago!');
   } catch(e) { toast('Erro ao atualizar'); }
+}
+
+async function exportPDF(type) {
+  toast('⏳ Gerando PDF...');
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const from = document.getElementById('rep-from').value;
+    const to = document.getElementById('rep-to').value;
+    
+    let title = '';
+    let head = [];
+    let body = [];
+    
+    if (type === 'patients') {
+      title = 'Relatório de Pacientes';
+      head = [['Nome', 'Tipo', 'Telefone', 'E-mail', 'CPF']];
+      const data = await api('GET', '/patients');
+      body = data.map(p => [p.name, p.type === 'ADULT' ? 'Adulto' : 'Infantil', p.phone || '-', p.email || '-', p.cpf || '-']);
+    } else if (type === 'appointments') {
+      title = 'Relatório de Consultas';
+      head = [['Data', 'Paciente', 'Tipo', 'Valor', 'Status']];
+      let path = '/appointments';
+      if (from && to) path += '?from=' + from + '&to=' + to;
+      const data = await api('GET', path);
+      body = data.map(a => [new Date(a.date).toLocaleString('pt-BR'), a.patient ? a.patient.name : '-', a.type, 'R$ ' + a.value.toFixed(2), a.status]);
+    } else if (type === 'financial') {
+      title = 'Relatório Financeiro';
+      head = [['Data', 'Descrição', 'Tipo', 'Valor', 'Status']];
+      const now = new Date();
+      const data = await api('GET', '/financial?month=' + (now.getMonth()+1) + '&year=' + now.getFullYear());
+      body = data.items.map(f => [new Date(f.date).toLocaleDateString('pt-BR'), f.description, f.type === 'INCOME' ? 'Receita' : 'Despesa', 'R$ ' + f.value.toFixed(2), f.status === 'PAID' ? 'Pago' : 'Pendente']);
+    } else if (type === 'records') {
+      const patId = document.getElementById('rec-pat-sel').value;
+      if (!patId) { toast('⚠️ Selecione um paciente na tela de Prontuários primeiro'); return; }
+      const pat = STATE.patients.find(p => p.id === patId);
+      title = 'Prontuário Clínico: ' + (pat ? pat.name : '');
+      head = [['Data', 'Sessão', 'Humor', 'Evolução']];
+      const data = await api('GET', '/records?patientId=' + patId);
+      body = data.map(r => [new Date(r.sessionDate).toLocaleDateString('pt-BR'), 'Sessão ' + r.sessionNum, r.mood + '/10', r.content.substring(0, 100) + '...']);
+    }
+
+    doc.setFontSize(18);
+    doc.text(title, 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text('Gerado por Orbie System em ' + new Date().toLocaleDateString('pt-BR'), 14, 30);
+    
+    doc.autoTable({
+      head: head,
+      body: body,
+      startY: 35,
+      theme: 'striped',
+      headStyles: { fillColor: [91, 94, 244] }
+    });
+    
+    doc.save('Orbie_' + type + '_' + new Date().getTime() + '.pdf');
+    toast('✅ PDF gerado com sucesso!');
+  } catch (e) {
+    console.error(e);
+    toast('❌ Erro ao gerar PDF');
+  }
 }
 
 // ══════════════════════════════════════════════
