@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#5b5ef4"/>
 <title>Orbie — Sistema de Gestão Clínica</title>
 <link rel="manifest" href="/manifest.json"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--bg:#f0f4f8;--w:#fff;--bd:#e2e8f0;--ac:#5b5ef4;--ac2:#7c3aed;--tx:#0f172a;--mt:#475569;--dm:#94a3b8;--gn:#059669;--rd:#dc2626;--am:#d97706}
@@ -1177,11 +1178,23 @@ function renderAppointments(list) {
     var borderColor = color;
     var statusBadge = a.status === 'CONFIRMED' ? '<span class="bx bgn">Confirmada</span>' : a.status === 'COMPLETED' ? '<span class="bx bgr">Concluída</span>' : a.status === 'CANCELLED' ? '<span class="bx brd">Cancelada</span>' : '<span class="bx bbl">Agendada</span>';
     var typeBadge = a.type === 'ONLINE' ? '<span class="bx bbl">Online</span>' : '<span class="bx bpu">Presencial</span>';
+    
+    // Preparar link do WhatsApp
+    var waLink = '';
+    if (a.patient && a.patient.phone) {
+      var phone = a.patient.phone.replace(/\D/g, '');
+      if (phone.length === 11 && !phone.startsWith('55')) phone = '55' + phone;
+      var msg = encodeURIComponent('Olá, ' + patName + '! 👋 Confirmamos sua consulta no Orbie System para o dia ' + dt.toLocaleDateString('pt-BR') + ' às ' + dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + '. Podemos confirmar sua presença? ✨');
+      waLink = 'https://wa.me/' + phone + '?text=' + msg;
+    }
+
     return '<div class="acard" style="border-left:3px solid ' + borderColor + '">' +
       '<div style="display:flex;align-items:center;gap:10px">' +
       '<div class="av avm" style="background:' + color + '">' + ini + '</div>' +
       '<div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700">' + patName + '</span>' + statusBadge + typeBadge + '</div>' +
-      '<div class="rs" style="margin-top:3px">' + timeStr + ' · ' + a.duration + 'min · R$ ' + a.value.toFixed(2) + '</div></div></div>' +
+      '<div class="rs" style="margin-top:3px">' + timeStr + ' · ' + a.duration + 'min · R$ ' + a.value.toFixed(2) + '</div></div>' +
+      (waLink ? '<a href="' + waLink + '" target="_blank" title="Enviar lembrete WhatsApp" style="color:#25D366;font-size:22px;display:flex;align-items:center;justify-content:center;padding:8px;border-radius:50%;background:#f0fdf4;margin-left:5px;transition:all 0.2s" onmouseover="this.style.background=\'#dcfce7\'" onmouseout="this.style.background=\'#f0fdf4\'"><i class="fab fa-whatsapp"></i></a>' : '') +
+      '</div>' +
       (a.meetLink ? '<div class="mbox"><span>🎥</span><span class="murl">' + a.meetLink + '</span><button class="btn bp" style="font-size:10px;padding:5px 10px;flex-shrink:0" onclick="openMeet(\'' + patName + '\',\'' + a.meetLink + '\',\'' + timeStr.split(' · ')[0] + '\')">Entrar</button></div>' : '') +
       '<div style="display:flex;gap:8px;margin-top:8px">' +
       (a.status !== 'COMPLETED' && a.status !== 'CANCELLED' ? '<button class="btn bg2 fw" style="font-size:11px" onclick="updateApptStatus(\'' + a.id + '\',\'COMPLETED\')">✓ Concluir</button>' : '') +
