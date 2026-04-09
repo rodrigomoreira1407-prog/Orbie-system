@@ -465,7 +465,57 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
         <option value="">— Selecione um paciente —</option>
       </select>
       <div id="rec-placeholder" class="al ali"><span style="font-size:20px">📋</span><div><div style="font-size:13px;font-weight:700;color:#1d4ed8">Selecione um paciente acima</div><div style="font-size:11px;color:#3b82f6;margin-top:2px">O prontuário será exibido aqui</div></div></div>
-      <div id="rec-list" class="hidden"></div>
+      <div id="rec-content" class="hidden">
+        <div class="tabs" id="rec-tabs">
+          <div class="tab on" onclick="swRT('evolucoes',this)">📋 Evoluções</div>
+          <div class="tab" onclick="swRT('anamnese',this)">📝 Anamnese</div>
+          <div class="tab" onclick="swRT('queixa',this)">💬 Queixa/Obs</div>
+          <div class="tab" onclick="swRT('anexos',this)">📎 Anexos</div>
+        </div>
+
+        <!-- Evoluções -->
+        <div id="rt-evolucoes">
+          <div id="rec-list"></div>
+        </div>
+
+        <!-- Anamnese -->
+        <div id="rt-anamnese" class="hidden">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="font-size:14px;font-weight:700">Anamnese do Paciente</div>
+              <button class="btn bp" id="btn-anamnese-edit" onclick="openAnamnese()">+ Preencher/Editar</button>
+            </div>
+            <div id="anamnese-status" style="font-size:12px;color:var(--mt);text-align:center;padding:20px;background:#f8fafc;border-radius:10px;border:1px dashed var(--bd)">
+              Nenhuma anamnese preenchida para este paciente.
+            </div>
+          </div>
+        </div>
+
+        <!-- Queixa e Observações -->
+        <div id="rt-queixa" class="hidden">
+          <div class="card">
+            <div class="fr"><label class="lbl">Queixa Principal</label><textarea class="inp" id="clin-complaint" style="resize:none;height:100px" placeholder="Descreva a queixa principal..."></textarea></div>
+            <div class="fr"><label class="lbl">Observações Clínicas</label><textarea class="inp" id="clin-obs" style="resize:none;height:100px" placeholder="Observações gerais sobre o caso..."></textarea></div>
+            <button class="btn bp fw" onclick="saveClinicalInfo()">Salvar Informações</button>
+          </div>
+        </div>
+
+        <!-- Anexos -->
+        <div id="rt-anexos" class="hidden">
+          <div class="card">
+            <div style="font-size:14px;font-weight:700;margin-bottom:12px">Anexos e Documentos</div>
+            <div style="border:2px dashed var(--bd);border-radius:12px;padding:30px;text-align:center;margin-bottom:16px">
+              <div style="font-size:30px;margin-bottom:10px">📁</div>
+              <div style="font-size:13px;color:var(--mt)">Arraste arquivos ou clique para anexar</div>
+              <input type="file" id="file-upload" class="hidden" onchange="handleFileUpload(this)"/>
+              <button class="btn bs" style="margin-top:12px" onclick="document.getElementById('file-upload').click()">Selecionar Arquivo</button>
+            </div>
+            <div id="attachment-list">
+              <div style="font-size:12px;color:var(--dm);text-align:center">Nenhum anexo encontrado.</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- FINANCIAL -->
@@ -1248,30 +1298,73 @@ async function updateApptStatus(id, status) {
 // ══════════════════════════════════════════════
 // RECORDS
 // ══════════════════════════════════════════════
+function swRT(tab, el) {
+  ['evolucoes','anamnese','queixa','anexos'].forEach(function(t){
+    var e = document.getElementById('rt-'+t);
+    if(e) e.classList.toggle('hidden', t!==tab);
+  });
+  el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
+  el.classList.add('on');
+}
+
 async function loadRecords() {
   var patId = document.getElementById('rec-pat-sel').value;
   if (!patId) return;
   document.getElementById('rec-placeholder').classList.add('hidden');
-  document.getElementById('rec-list').classList.remove('hidden');
+  document.getElementById('rec-content').classList.remove('hidden');
+  
+  // Reset tabs
+  swRT('evolucoes', document.querySelector('#rec-tabs .tab:first-child'));
+
   try {
+    // Load Evolutions
     STATE.records = await api('GET', '/records?patientId=' + patId);
     var el = document.getElementById('rec-list');
     if (!STATE.records.length) {
       el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Nenhuma evolução registrada para este paciente</div>';
-      return;
+    } else {
+      el.innerHTML = STATE.records.map(function(r) {
+        var dt = new Date(r.sessionDate).toLocaleDateString('pt-BR');
+        return '<div class="ev" style="border-left-width:3px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<div class="evd">📅 ' + dt + ' · Sessão ' + r.sessionNum + (r.mood ? ' · ' + r.mood + '/10' : '') + '</div>' +
+          (r.aiGenerated ? '<span class="bx bai">🤖 IA</span>' : '') +
+          '</div>' +
+          '<div class="evt" style="margin-top:6px;white-space:pre-wrap">' + r.content + '</div>' +
+          (r.techniques ? '<div style="font-size:11px;color:var(--dm);margin-top:4px">🛠 ' + r.techniques + '</div>' : '') +
+          '</div>';
+      }).join('');
     }
-    el.innerHTML = STATE.records.map(function(r) {
-      var dt = new Date(r.sessionDate).toLocaleDateString('pt-BR');
-      return '<div class="ev" style="border-left-width:3px">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center">' +
-        '<div class="evd">📅 ' + dt + ' · Sessão ' + r.sessionNum + (r.mood ? ' · ' + r.mood + '/10' : '') + '</div>' +
-        (r.aiGenerated ? '<span class="bx bai">🤖 IA</span>' : '') +
-        '</div>' +
-        '<div class="evt" style="margin-top:6px;white-space:pre-wrap">' + r.content + '</div>' +
-        (r.techniques ? '<div style="font-size:11px;color:var(--dm);margin-top:4px">🛠 ' + r.techniques + '</div>' : '') +
-        '</div>';
-    }).join('');
+
+    // Load Clinical Info (Placeholder for now)
+    var p = STATE.patients.find(function(x){ return x.id === patId; });
+    if (p) {
+      document.getElementById('clin-complaint').value = p.complaint || '';
+      document.getElementById('clin-obs').value = p.obs || '';
+    }
   } catch(e) { toast('Erro ao carregar prontuários'); }
+}
+
+async function saveClinicalInfo() {
+  var patId = document.getElementById('rec-pat-sel').value;
+  if (!patId) return;
+  var complaint = document.getElementById('clin-complaint').value;
+  var obs = document.getElementById('clin-obs').value;
+  try {
+    await api('PUT', '/patients/' + patId, { complaint: complaint, obs: obs });
+    toast('✅ Informações salvas!');
+    await loadPatients(); // Refresh local state
+  } catch(e) { toast('Erro ao salvar informações'); }
+}
+
+function openAnamnese() {
+  toast('🛠️ Modelo de Anamnese sendo carregado...');
+  // Next phase will implement the full modal
+}
+
+function handleFileUpload(input) {
+  if (!input.files.length) return;
+  toast('📎 Upload de arquivos em desenvolvimento...');
 }
 
 async function createRecord() {
