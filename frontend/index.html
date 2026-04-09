@@ -140,34 +140,10 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
 .tbl{width:100%;border-collapse:collapse}
 .tbl th{text-align:left;padding:9px 10px;font-size:10px;font-weight:700;color:var(--dm);text-transform:uppercase;border-bottom:1px solid var(--bd);background:#f8fafc}
 .tbl td{padding:10px;font-size:12px;border-bottom:1px solid #f8fafc;color:var(--tx);vertical-align:middle}
-.pss{background:var(--w);border:1px solid var(--bd);border-radius:13px;margin-bottom:10px;overflow:hidden}
-.pssh{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#f8fafc;border-bottom:1px solid var(--bd)}
-.psst{font-size:13px;font-weight:700}
-.pssb{padding:14px}
-.pf{background:#f8fafc;border-radius:9px;padding:12px;font-size:13px;color:var(--mt);line-height:1.7;min-height:56px}
-.aibox{background:linear-gradient(135deg,rgba(91,94,244,.06),rgba(124,58,237,.06));border:1px solid rgba(91,94,244,.15);border-radius:14px;padding:16px;position:relative}
-.ailbl{font-size:10px;font-weight:800;color:var(--ac2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:flex;align-items:center;gap:5px}
-.spin{animation:rot 2s linear infinite;display:inline-block}@keyframes rot{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-.ph{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
-.ptt{font-size:22px;font-weight:800;letter-spacing:-.02em}
-.pst2{font-size:12px;color:var(--mt);margin-top:2px}
-.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;margin-bottom:4px;scrollbar-width:none}
-.chips::-webkit-scrollbar{display:none}
-.chip{background:var(--w);border:1px solid var(--bd);padding:7px 14px;border-radius:100px;font-size:12px;font-weight:600;color:var(--mt);cursor:pointer;white-space:nowrap;transition:all .2s}
-.chip.on{background:var(--ac);color:#fff;border-color:var(--ac);box-shadow:0 4px 10px rgba(91,94,244,.25)}
-.al{display:flex;gap:10px;padding:12px 14px;border-radius:12px;margin-bottom:14px;align-items:center}
-.ali{background:rgba(91,94,244,.07);border:1px solid rgba(91,94,244,.15);color:var(--ac)}
-.alai{background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.15);color:var(--ac2)}
-.mood{display:flex;justify-content:space-between;gap:4px;margin-top:6px}
-.md{font-size:20px;cursor:pointer;opacity:.3;transition:all .2s;filter:grayscale(1)}
-.md:hover{opacity:.7;transform:scale(1.15);filter:none}
-.md.on{opacity:1;transform:scale(1.2);filter:none}
-.ptbl{width:100%;border-collapse:collapse}
-.ptbl th{padding:12px;font-size:11px;font-weight:800;text-align:center;border-bottom:1px solid var(--bd);background:#f8fafc}
-.ptbl td{padding:12px;font-size:12px;text-align:center;border-bottom:1px solid var(--bd)}
-.ptbl tr:last-child td{border:none}
-.pcard{background:linear-gradient(135deg,var(--ac),var(--ac2));border-radius:16px;padding:20px;color:#fff;margin-bottom:16px;box-shadow:0 10px 25px rgba(91,94,244,.2)}
-@media(max-width:768px){.plans-grid{grid-template-columns:1fr}.sb{position:fixed;height:100%}.sb:not(.open){width:0;border:none}}
+.ev{border-left:3px solid var(--ac);background:var(--w);padding:12px;margin-bottom:10px;border-radius:0 10px 10px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.evd{font-size:11px;color:var(--mt);font-weight:600}
+.evt{margin-top:6px;white-space:pre-wrap;font-size:13px}
+@media(max-width:768px){.sb{position:fixed;height:100%}.sb:not(.open){width:0;border:none}}
 </style>
 </head>
 <body>
@@ -357,54 +333,36 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
         <option value="">— Selecione um paciente —</option>
       </select>
       <div id="rec-placeholder" class="al ali"><span style="font-size:20px">📋</span><div><div style="font-size:13px;font-weight:700;color:#1d4ed8">Selecione um paciente acima</div><div style="font-size:11px;color:#3b82f6;margin-top:2px">O prontuário será exibido aqui</div></div></div>
-      <div id="rec-content" class="hidden">
-        <div class="tabs" id="rec-tabs">
-          <div class="tab on" onclick="swRT('evolucoes',this)">📋 Evoluções</div>
-          <div class="tab" onclick="swRT('anamnese',this)">📝 Anamnese</div>
-          <div class="tab" onclick="swRT('queixa',this)">💬 Queixa/Obs</div>
-          <div class="tab" onclick="swRT('anexos',this)">📎 Anexos</div>
-        </div>
+      
+      <div id="rec-tabs" class="tabs hidden" style="margin-bottom:12px">
+        <div class="tab on" onclick="swRecTab('evolutions',this)">📋 Evoluções</div>
+        <div class="tab" onclick="swRecTab('anamnesis',this)">📝 Anamnese</div>
+        <div class="tab" onclick="swRecTab('complaint',this)">💬 Queixa/Obs</div>
+        <div class="tab" onclick="swRecTab('attachments',this)">📎 Anexos</div>
+      </div>
 
-        <!-- Evoluções -->
-        <div id="rt-evolucoes">
-          <div id="rec-list"></div>
+      <div id="rec-evolutions" class="rec-tab hidden"></div>
+      
+      <div id="rec-anamnesis" class="rec-tab hidden"></div>
+      
+      <div id="rec-complaint" class="rec-tab hidden">
+        <div class="card">
+          <div class="fr"><label class="lbl">Queixa Principal</label><textarea class="inp" id="clin-complaint" style="resize:none;height:100px" placeholder="Descreva a queixa principal..."></textarea></div>
+          <div class="fr"><label class="lbl">Observações Clínicas</label><textarea class="inp" id="clin-obs" style="resize:none;height:100px" placeholder="Observações gerais sobre o caso..."></textarea></div>
+          <button class="btn bp fw" onclick="saveClinicalInfo()">Salvar Informações</button>
         </div>
+      </div>
 
-        <!-- Anamnese -->
-        <div id="rt-anamnese" class="hidden">
-          <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-              <div style="font-size:14px;font-weight:700">Anamnese do Paciente</div>
-              <button class="btn bp" id="btn-anamnese-edit" onclick="openAnamnese()">+ Preencher/Editar</button>
-            </div>
-            <div id="anamnese-status" style="font-size:12px;color:var(--mt);text-align:center;padding:20px;background:#f8fafc;border-radius:10px;border:1px dashed var(--bd)">
-              Nenhuma anamnese preenchida para este paciente.
-            </div>
+      <div id="rec-attachments" class="rec-tab hidden">
+        <div class="card">
+          <div style="font-size:14px;font-weight:700;margin-bottom:12px">Anexos e Documentos</div>
+          <div class="fg">
+            <div><label class="lbl">Nome do Arquivo</label><input class="inp" id="new-att-name" placeholder="Ex: Exame de Sangue"/></div>
+            <div><label class="lbl">Link/URL do Arquivo</label><input class="inp" id="new-att-url" placeholder="https://..."/></div>
           </div>
-        </div>
-
-        <!-- Queixa e Observações -->
-        <div id="rt-queixa" class="hidden">
-          <div class="card">
-            <div class="fr"><label class="lbl">Queixa Principal</label><textarea class="inp" id="clin-complaint" style="resize:none;height:100px" placeholder="Descreva a queixa principal..."></textarea></div>
-            <div class="fr"><label class="lbl">Observações Clínicas</label><textarea class="inp" id="clin-obs" style="resize:none;height:100px" placeholder="Observações gerais sobre o caso..."></textarea></div>
-            <button class="btn bp fw" onclick="saveClinicalInfo()">Salvar Informações</button>
-          </div>
-        </div>
-
-        <!-- Anexos -->
-        <div id="rt-anexos" class="hidden">
-          <div class="card">
-            <div style="font-size:14px;font-weight:700;margin-bottom:12px">Anexos e Documentos</div>
-            <div style="border:2px dashed var(--bd);border-radius:12px;padding:30px;text-align:center;margin-bottom:16px">
-              <div style="font-size:30px;margin-bottom:10px">📁</div>
-              <div style="font-size:13px;color:var(--mt)">Arraste arquivos ou clique para anexar</div>
-              <input type="file" id="file-upload" class="hidden" onchange="handleFileUpload(this)"/>
-              <button class="btn bs" style="margin-top:12px" onclick="document.getElementById('file-upload').click()">Selecionar Arquivo</button>
-            </div>
-            <div id="attachment-list">
-              <div style="font-size:12px;color:var(--dm);text-align:center">Nenhum anexo encontrado.</div>
-            </div>
+          <button class="btn bp fw" style="margin-bottom:16px" onclick="saveAttachment()">Salvar Anexo</button>
+          <div id="attachment-list">
+            <div style="font-size:12px;color:var(--dm);text-align:center">Nenhum anexo encontrado.</div>
           </div>
         </div>
       </div>
@@ -552,7 +510,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
 </div>
 
 <div id="m-rec" class="ov hidden" onclick="closeM('m-rec')">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:93vh;overflow-y:auto">
     <div class="mbar"></div>
     <div style="font-size:17px;font-weight:800;margin-bottom:4px">Nova Evolução</div>
     <div style="font-size:12px;color:var(--mt);margin-bottom:14px">Registro da sessão clínica</div>
@@ -592,19 +550,51 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
   </div>
 </div>
 
+<div id="m-anam" class="ov hidden" onclick="closeM('m-anam')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:93vh;overflow-y:auto;max-width:700px">
+    <div class="mbar"></div>
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">Anamnese</div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:14px" id="anam-type-label">Anamnese do Paciente</div>
+    <div class="tabs" style="margin-bottom:14px">
+      <div class="tab on" onclick="swAnamType('ADULT',this)">👤 Adulto</div>
+      <div class="tab" onclick="swAnamType('CHILD',this)">👶 Infantil</div>
+    </div>
+    <input type="hidden" id="anam-type" value="ADULT"/>
+    <div id="anam-form-container"></div>
+    <div id="anam-err" class="auth-err hidden"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn bs" style="flex:1" onclick="closeM('m-anam')">Cancelar</button>
+      <button class="btn bp" style="flex:1" id="anam-btn" onclick="saveAnamnesis()">Salvar Anamnese</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="hidden"></div>
 
 <script>
-// ══════════════════════════════════════════════
-// CONFIGURAÇÃO — altere para a URL do seu backend
-// ══════════════════════════════════════════════
+const ANAMNESIS_FORMS = {
+  ADULT: {
+    sections: [
+      { title: "1. Identificação", fields: [{name:"fullName",label:"Nome completo",type:"text",required:true},{name:"birthDate",label:"Data de nascimento",type:"date"},{name:"age",label:"Idade",type:"number"},{name:"gender",label:"Sexo",type:"select",options:["Masculino","Feminino","Outro"]},{name:"maritalStatus",label:"Estado civil",type:"select",options:["Solteiro","Casado","Divorciado","Viúvo","União estável"]},{name:"profession",label:"Profissão",type:"text"},{name:"phone",label:"Telefone",type:"text"},{name:"address",label:"Endereço",type:"text"}] },
+      { title: "2. Queixa Principal (QP)", fields: [{name:"mainComplaint",label:"Motivo da consulta",type:"textarea",required:true},{name:"durationTime",label:"Tempo de duração",type:"text"}] },
+      { title: "3. História da Doença Atual (HDA)", fields: [{name:"symptomsStart",label:"Início dos sintomas",type:"text"},{name:"evolution",label:"Evolução",type:"textarea"}] },
+      { title: "4. Histórico Médico", fields: [{name:"previousDiseases",label:"Doenças prévias",type:"textarea"},{name:"medications",label:"Uso de medicamentos",type:"textarea"}] },
+      { title: "5. Hábitos de Vida", fields: [{name:"sleep",label:"Qualidade do sono",type:"textarea"},{name:"physicalActivity",label:"Atividade física",type:"textarea"}] }
+    ]
+  },
+  CHILD: {
+    sections: [
+      { title: "1. Identificação", fields: [{name:"childName",label:"Nome da criança",type:"text",required:true},{name:"birthDate",label:"Data de nascimento",type:"date"},{name:"responsibles",label:"Nome dos responsáveis",type:"textarea",required:true}] },
+      { title: "2. Queixa Principal (QP)", fields: [{name:"mainComplaint",label:"Motivo da consulta",type:"textarea",required:true}] },
+      { title: "3. Desenvolvimento", fields: [{name:"walking",label:"Andou com que idade?",type:"text"},{name:"speaking",label:"Falou com que idade?",type:"text"}] }
+    ]
+  }
+};
+
 const API = window.location.hostname === 'localhost'
   ? 'http://localhost:3001/api'
   : 'https://orbie-api.onrender.com/api';
 
-// ══════════════════════════════════════════════
-// ESTADO GLOBAL
-// ══════════════════════════════════════════════
 var STATE = {
   token: localStorage.getItem('orbie_token'),
   user: null,
@@ -612,15 +602,9 @@ var STATE = {
   appointments: [],
   records: [],
   financials: [],
-  currentPatient: null,
-  resetToken: null,
-  verifyEmail: null,
   currentAnamnesis: null
 };
 
-// ══════════════════════════════════════════════
-// API HELPER
-// ══════════════════════════════════════════════
 async function api(method, path, body) {
   var opts = {
     method: method,
@@ -634,9 +618,6 @@ async function api(method, path, body) {
   return data;
 }
 
-// ══════════════════════════════════════════════
-// SCREENS
-// ══════════════════════════════════════════════
 var SCREENS = ['loading-screen','login','register','verify','forgot','reset','plans','app'];
 function showScreen(name) {
   document.getElementById('loading-screen').classList.add('hidden');
@@ -648,51 +629,18 @@ function showScreen(name) {
   if (el) el.classList.remove('hidden');
 }
 
-// ══════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════
 async function init() {
   var params = new URLSearchParams(window.location.search);
-  var verifyToken = params.get('token') && window.location.pathname.includes('verify');
-  var resetToken = params.get('token') && window.location.pathname.includes('reset');
-
-  if (verifyToken || (params.get('token') && !resetToken)) {
-    try {
-      var data = await api('GET', '/auth/verify/' + params.get('token'));
-      STATE.token = data.token;
-      localStorage.setItem('orbie_token', data.token);
-      window.history.replaceState({}, '', '/');
-      await loadApp();
-      return;
-    } catch(e) {
-      showScreen('login');
-      return;
-    }
-  }
-  if (params.get('token') && params.get('reset')) {
-    STATE.resetToken = params.get('token');
-    showScreen('reset');
-    return;
-  }
-  if (params.get('session')) {
-    window.history.replaceState({}, '', '/');
-  }
-  if (STATE.token) {
-    await loadApp();
-  } else {
-    showScreen('login');
-  }
+  if (STATE.token) await loadApp();
+  else showScreen('login');
 }
 
 async function loadApp() {
   try {
-    var data = await api('GET', '/auth/me');
-    STATE.user = data.user;
+    STATE.user = await api('GET', '/auth/me');
     updateUserUI();
     showScreen('app');
-    await loadPatients();
-    await loadAppointments('today', null);
-    await loadFinancial();
+    await Promise.all([loadPatients(), loadAppointments('today', null), loadFinancial()]);
     renderDashboardGreeting();
     renderDashboardStats();
   } catch(e) {
@@ -707,652 +655,208 @@ function updateUserUI() {
   document.getElementById('u-name').textContent = STATE.user.name;
   document.getElementById('u-av').textContent = STATE.user.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
   document.getElementById('u-plan').textContent = 'Plano ' + (STATE.user.plan === 'NONE' ? 'Gratuito' : STATE.user.plan);
-  
-  if (document.getElementById('st-name')) {
-    document.getElementById('st-name').value = STATE.user.name || '';
-    document.getElementById('st-crp').value = STATE.user.crp || '';
-    document.getElementById('st-phone').value = STATE.user.phone || '';
-    document.getElementById('st-spec').value = STATE.user.specialty || '';
-    document.getElementById('st-bio').value = STATE.user.bio || '';
-  }
-  
-  var pci = document.getElementById('plan-card-info');
-  if (pci) {
-    var p = STATE.user.plan;
-    var exp = STATE.user.planExpiresAt ? new Date(STATE.user.planExpiresAt).toLocaleDateString('pt-BR') : '—';
-    pci.innerHTML = '<div style="font-size:12px;font-weight:600;opacity:.8">PLANO ATUAL</div>' +
-      '<div style="font-size:24px;font-weight:800;margin:4px 0">' + (p === 'NONE' ? 'Gratuito' : p) + '</div>' +
-      '<div style="font-size:11px;opacity:.9">Válido até: ' + exp + '</div>';
-  }
-  
   if (STATE.user.plan === 'PRO') {
     document.getElementById('ai-badge').classList.remove('hidden');
     document.getElementById('ai-gen-btn').classList.remove('hidden');
   }
 }
 
-// ══════════════════════════════════════════════
-// AUTH ACTIONS
-// ══════════════════════════════════════════════
 async function doLogin() {
-  var btn = document.getElementById('login-btn');
-  var err = document.getElementById('login-err');
-  err.classList.add('hidden');
   var email = document.getElementById('login-email').value;
   var pass = document.getElementById('login-pass').value;
-  if (!email || !pass) { err.textContent = 'Preencha todos os campos'; err.classList.remove('hidden'); return; }
-  btn.disabled = true; btn.textContent = 'Entrando...';
   try {
     var data = await api('POST', '/auth/login', { email, password: pass });
     STATE.token = data.token;
     localStorage.setItem('orbie_token', data.token);
     await loadApp();
-  } catch(e) {
-    err.textContent = e.message || 'Erro ao entrar';
-    err.classList.remove('hidden');
-  } finally { btn.disabled = false; btn.textContent = 'Entrar'; }
-}
-
-async function doRegister() {
-  var btn = document.getElementById('reg-btn');
-  var err = document.getElementById('reg-err');
-  err.classList.add('hidden');
-  var name = document.getElementById('reg-name').value;
-  var email = document.getElementById('reg-email').value;
-  var pass = document.getElementById('reg-pass').value;
-  if (!name || !email || !pass) { err.textContent = 'Preencha todos os campos'; err.classList.remove('hidden'); return; }
-  btn.disabled = true; btn.textContent = 'Criando conta...';
-  try {
-    await api('POST', '/auth/register', { name, email, password: pass });
-    toast('✅ Conta criada! Faça login para continuar.');
-    showScreen('login');
-  } catch(e) {
-    err.textContent = e.message || 'Erro ao criar conta';
-    err.classList.remove('hidden');
-  } finally { btn.disabled = false; btn.textContent = 'Criar minha conta'; }
+  } catch(e) { toast('❌ ' + e.message); }
 }
 
 function doLogout() {
   localStorage.removeItem('orbie_token');
-  STATE.token = null;
   location.reload();
 }
 
-// ══════════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════════
 var sbOpen = false;
-var TITLES = {dashboard:'Dashboard',patients:'Pacientes',appointments:'Agenda',records:'Prontuários',financial:'Financeiro',reports:'Relatórios',settings:'Configurações'};
 function toggleSB() { sbOpen = !sbOpen; document.getElementById('sb').classList.toggle('open', sbOpen); }
 function go(pg, el) {
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('on'); });
-  var t = document.getElementById('pg-' + pg);
-  if (t) t.classList.add('on');
+  document.getElementById('pg-' + pg).classList.add('on');
   document.querySelectorAll('.ni').forEach(function(n){ n.classList.remove('on'); });
-  if (el) { el.classList.add('on'); }
-  else { document.querySelectorAll('.ni').forEach(function(n){ var o = n.getAttribute('onclick')||''; if (o.indexOf("'"+pg+"'") > -1) n.classList.add('on'); }); }
-  document.getElementById('hdr-t').textContent = TITLES[pg] || pg;
-  if (sbOpen && window.innerWidth < 768) toggleSB();
-  document.getElementById('content').scrollTop = 0;
+  if (el) el.classList.add('on');
+  document.getElementById('hdr-t').textContent = pg.charAt(0).toUpperCase() + pg.slice(1);
   if (pg === 'records') populatePatientSelects();
-  if (pg === 'settings') updateUserUI();
 }
-function setTab(el) { el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); }); el.classList.add('on'); }
 
-// ══════════════════════════════════════════════
-// MODALS
-// ══════════════════════════════════════════════
 function openM(id) { document.getElementById(id).classList.remove('hidden'); }
 function closeM(id) { document.getElementById(id).classList.add('hidden'); }
-function showST(tab, el) {
-  ['perfil','senha','plano'].forEach(function(t){ var e = document.getElementById('st-'+t); if(e) e.classList.toggle('hidden', t!==tab); });
-  el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); }); el.classList.add('on');
-  if (tab === 'plano') updateUserUI();
-}
-function swPT(type, el) {
-  el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); }); el.classList.add('on');
-  document.getElementById('npat-type').value = type;
-  document.getElementById('npat-child-fields').classList.toggle('hidden', type !== 'CHILD');
-}
-function setFinType(type, el) {
-  el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); }); el.classList.add('on');
-  document.getElementById('fin-type').value = type;
-}
 
-function openMeet(name, url, time) {
-  document.getElementById('meet-n').textContent = 'Consulta com ' + name;
-  document.getElementById('meet-i').textContent = name + ' · ' + time + ' · 50 minutos';
-  document.getElementById('meet-u').textContent = url;
-  var fullUrl = url.startsWith('http') ? url : 'https://' + url;
-  document.getElementById('meet-link-btn').href = fullUrl;
-  openM('m-meet');
-}
-function copyMeetLink() {
-  var url = document.getElementById('meet-u').textContent;
-  navigator.clipboard && navigator.clipboard.writeText('https://' + url);
-  toast('✅ Link copiado!');
-}
-
-// ══════════════════════════════════════════════
-// PATIENTS
-// ══════════════════════════════════════════════
 async function loadPatients() {
   try {
     STATE.patients = await api('GET', '/patients');
     renderPatients(STATE.patients);
     populatePatientSelects();
-    renderDashboardPatients();
-  } catch(e) { console.error('Load patients:', e); }
+  } catch(e) {}
 }
 
 function renderPatients(list) {
   var el = document.getElementById('pat-list');
   document.getElementById('pat-count').textContent = list.length + ' pacientes';
-  if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Nenhum paciente cadastrado</div>'; return; }
-  el.innerHTML = list.map(function(p) {
-    var ini = p.name.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
-    var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6','#06b6d4'];
-    var color = colors[p.name.charCodeAt(0) % colors.length];
-    var lastDate = p.updatedAt ? new Date(p.updatedAt).toLocaleDateString('pt-BR') : '—';
-    return '<div class="card" style="cursor:pointer" onclick="viewPatient(\'' + p.id + '\')">' +
-      '<div style="display:flex;align-items:center;gap:12px">' +
-      '<div class="av avl" style="background:' + color + '">' + ini + '</div>' +
-      '<div style="flex:1;min-width:0">' +
-      '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700">' + p.name + '</span>' +
-      '<span class="bx ' + (p.status === 'ACTIVE' ? 'bgn' : 'bgr') + '">' + (p.status === 'ACTIVE' ? 'Ativo' : 'Inativo') + '</span>' +
-      (p.type === 'CHILD' ? '<span class="bx bcy">Infantil</span>' : '') + '</div>' +
-      '<div class="rs" style="margin-top:3px">' + (p.phone || p.email || '—') + '</div>' +
-      (p.cpf ? '<div class="rs">CPF: ' + p.cpf + '</div>' : '') +
-      '</div></div>' +
-      '<div style="display:flex;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--bd)">' +
-      '<span style="font-size:11px;color:var(--dm)">📅 ' + (p._count ? p._count.appointments : 0) + ' consultas</span>' +
-      '<span style="font-size:11px;color:var(--dm)">🕒 ' + lastDate + '</span>' +
-      (p.emergName ? '<span style="font-size:11px;color:var(--rd)">🚨 ' + p.emergName + '</span>' : '') +
-      '</div></div>';
-  }).join('');
-}
-
-function filterPatients() {
-  var q = document.getElementById('pat-search').value.toLowerCase();
-  var filtered = STATE.patients.filter(function(p) {
-    return p.name.toLowerCase().indexOf(q) > -1 ||
-      (p.cpf && p.cpf.indexOf(q) > -1) ||
-      (p.phone && p.phone.indexOf(q) > -1) ||
-      (p.email && p.email.toLowerCase().indexOf(q) > -1);
-  });
-  renderPatients(filtered);
-}
-
-var _typeFilter = '', _statusFilter = '';
-function filterByType(type, el) {
-  document.querySelectorAll('#pat-chips .chip').forEach(function(c){ c.classList.remove('on'); }); el.classList.add('on');
-  _typeFilter = type; applyFilters();
-}
-function filterByStatus(status, el) {
-  document.querySelectorAll('#pat-chips .chip').forEach(function(c){ c.classList.remove('on'); }); el.classList.add('on');
-  _statusFilter = status; applyFilters();
-}
-function applyFilters() {
-  var list = STATE.patients;
-  if (_typeFilter) list = list.filter(function(p){ return p.type === _typeFilter; });
-  if (_statusFilter) list = list.filter(function(p){ return p.status === _statusFilter; });
-  renderPatients(list);
+  el.innerHTML = list.map(p => `<div class="card" onclick="viewPatient('${p.id}')"><b>${p.name}</b><br/><small>${p.phone || ''}</small></div>`).join('');
 }
 
 function populatePatientSelects() {
   var selects = ['appt-pat', 'rec-pat-new', 'fin-pat', 'rec-pat-sel'];
-  selects.forEach(function(id) {
+  selects.forEach(id => {
     var el = document.getElementById(id);
     if (!el) return;
-    el.innerHTML = (id === 'fin-pat' ? '<option value="">Nenhum</option>' : '<option value="">Selecione...</option>');
-    STATE.patients.forEach(function(p) {
-      var opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = p.name + (p.type === 'CHILD' ? ' (Infantil)' : '');
-      el.appendChild(opt);
-    });
+    el.innerHTML = '<option value="">Selecione...</option>';
+    STATE.patients.forEach(p => el.innerHTML += `<option value="${p.id}">${p.name}</option>`);
   });
-}
-
-async function createPatient() {
-  var btn = document.getElementById('npat-btn');
-  var errEl = document.getElementById('npat-err');
-  errEl.classList.add('hidden');
-  var name = document.getElementById('npat-name').value.trim();
-  if (!name) { errEl.textContent = 'Nome é obrigatório'; errEl.classList.remove('hidden'); return; }
-  btn.disabled = true; btn.textContent = 'Cadastrando...';
-  try {
-    var rawDate = document.getElementById('npat-birth').value;
-    var formattedDate = null;
-    if (rawDate) {
-      formattedDate = rawDate.length === 10 ? rawDate + 'T12:00:00.000Z' : rawDate;
-    }
-    var body = {
-      type: document.getElementById('npat-type').value,
-      name: name,
-      cpf: document.getElementById('npat-cpf').value,
-      rg: document.getElementById('npat-rg').value,
-      birthDate: formattedDate,
-      gender: document.getElementById('npat-gender').value,
-      phone: document.getElementById('npat-phone').value,
-      email: document.getElementById('npat-email').value,
-      addressCep: document.getElementById('npat-cep').value,
-      address: document.getElementById('npat-address').value,
-      addressNum: document.getElementById('npat-number').value,
-      addressComp: document.getElementById('npat-complement').value,
-      emergName: document.getElementById('npat-en').value,
-      emergPhone: document.getElementById('npat-ep').value,
-      emergRelation: document.getElementById('npat-er').value,
-      resp1Name: document.getElementById('npat-r1n').value,
-      resp1Phone: document.getElementById('npat-r1p').value,
-      resp1Relation: document.getElementById('npat-r1r').value,
-      resp1Cpf: document.getElementById('npat-r1c').value,
-    };
-    await api('POST', '/patients', body);
-    await loadPatients();
-    closeM('m-npat');
-    toast('✅ Paciente cadastrado!');
-    // Clear fields
-    ['npat-name','npat-cpf','npat-rg','npat-phone','npat-email','npat-cep','npat-address','npat-number','npat-complement','npat-en','npat-ep','npat-er','npat-r1n','npat-r1p','npat-r1r','npat-r1c'].forEach(function(id){ var el = document.getElementById(id); if(el) el.value=''; });
-  } catch(e) {
-    errEl.textContent = e.message || 'Erro ao cadastrar';
-    errEl.classList.remove('hidden');
-  } finally { btn.disabled = false; btn.textContent = 'Cadastrar paciente'; }
-}
-
-async function viewPatient(id) {
-  var p = STATE.patients.find(function(x){ return x.id === id; });
-  if (!p) return;
-  var ini = p.name.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
-  var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6','#06b6d4'];
-  var color = colors[p.name.charCodeAt(0) % colors.length];
-  var h = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">' +
-    '<div class="av avl" style="background:' + color + '">' + ini + '</div>' +
-    '<div style="flex:1"><div style="font-size:17px;font-weight:800">' + p.name + '</div>' +
-    '<div style="font-size:12px;color:var(--mt);margin-top:2px">' + (p.birthDate ? new Date(p.birthDate).getFullYear() : '—') + ' · ' + (p.type === 'CHILD' ? 'Infantil' : 'Adulto') + '</div></div>' +
-    '<span class="bx ' + (p.status === 'ACTIVE' ? 'bgn' : 'bgr') + '">' + (p.status === 'ACTIVE' ? 'Ativo' : 'Inativo') + '</span></div>' +
-    '<div class="ibox">' +
-    '<div class="ir"><div class="il">📞 Telefone</div><div class="iv">' + (p.phone || '—') + '</div></div>' +
-    '<div class="ir"><div class="il">✉️ E-mail</div><div class="iv">' + (p.email || '—') + '</div></div>' +
-    '<div class="ir"><div class="il">📄 CPF</div><div class="iv">' + (p.cpf || '—') + '</div></div>' +
-    '<div class="ir"><div class="il">📍 Endereço</div><div class="iv">' + 
-      (p.address ? (p.address + (p.addressNum ? ', ' + p.addressNum : '') + (p.addressComp ? ' (' + p.addressComp + ')' : '') + (p.addressCep ? ' - CEP: ' + p.addressCep : '')) : '—') + 
-    '</div></div>' +
-    '</div>' +
-    (p.emergName ? '<div class="ebox" style="margin-top:10px"><div class="etl">🚨 Emergência</div>' +
-    '<div class="ir"><div class="il">Nome</div><div class="iv">' + p.emergName + '</div></div>' +
-    '<div class="ir"><div class="il">Telefone</div><div class="iv">' + (p.emergPhone || '—') + '</div></div>' +
-    '<div class="ir"><div class="il">Parentesco</div><div class="iv">' + (p.emergRelation || '—') + '</div></div></div>' : '') +
-    '<div style="display:flex;gap:8px;margin-top:14px">' +
-    '<button class="btn bp" style="flex:1;font-size:11px" onclick="closeM(\'m-pat\');openM(\'m-appt\');document.getElementById(\'appt-pat\').value=\''+p.id+'\'">+ Agendar</button>' +
-    '<button class="btn bs" style="flex:1;font-size:11px" onclick="closeM(\'m-pat\');go(\'records\',null);document.getElementById(\'rec-pat-sel\').value=\''+p.id+'\';loadRecords()">📋 Prontuário</button>' +
-    '</div>' +
-    '<button class="btn bs fw" style="margin-top:8px" onclick="closeM(\'m-pat\')">Fechar</button>';
-  document.getElementById('m-pat-ct').innerHTML = h;
-  openM('m-pat');
-}
-
-// ══════════════════════════════════════════════
-// APPOINTMENTS
-// ══════════════════════════════════════════════
-async function loadAppointments(filter, el) {
-  if (el) setTab(el);
-  try {
-    var path = '/appointments';
-    if (filter === 'today') {
-      var today = new Date().toISOString().split('T')[0];
-      path += '?date=' + today;
-    }
-    STATE.appointments = await api('GET', path);
-    renderAppointments(STATE.appointments);
-    renderDashboardToday();
-  } catch(e) { console.error('Load appointments:', e); }
-}
-
-function renderAppointments(list) {
-  var el = document.getElementById('appt-list');
-  if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Nenhuma consulta encontrada</div>'; return; }
-  var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6'];
-  el.innerHTML = list.map(function(a) {
-    var patName = a.patient ? a.patient.name : 'Paciente';
-    var ini = patName.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
-    var color = colors[patName.charCodeAt(0) % colors.length];
-    var dt = new Date(a.date);
-    var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + ' · ' + dt.toLocaleDateString('pt-BR');
-    var statusBadge = a.status === 'CONFIRMED' ? '<span class="bx bgn">Confirmada</span>' : a.status === 'COMPLETED' ? '<span class="bx bgr">Concluída</span>' : a.status === 'CANCELLED' ? '<span class="bx brd">Cancelada</span>' : '<span class="bx bbl">Agendada</span>';
-    var typeBadge = a.type === 'ONLINE' ? '<span class="bx bbl">Online</span>' : '<span class="bx bpu">Presencial</span>';
-    
-    return '<div class="acard" style="border-left:3px solid ' + color + '">' +
-      '<div style="display:flex;align-items:center;gap:10px">' +
-      '<div class="av avm" style="background:' + color + '">' + ini + '</div>' +
-      '<div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700">' + patName + '</span>' + statusBadge + typeBadge + '</div>' +
-      '<div class="rs" style="margin-top:3px">' + timeStr + ' · ' + a.duration + 'min · R$ ' + a.value.toFixed(2) + '</div></div>' +
-      '</div>' +
-      (a.meetLink ? '<div class="mbox"><span>🎥</span><span class="murl">' + a.meetLink + '</span><button class="btn bp" style="font-size:10px;padding:5px 10px;flex-shrink:0" onclick="openMeet(\'' + patName + '\',\'' + a.meetLink + '\',\'' + timeStr.split(' · ')[0] + '\')">Entrar</button></div>' : '') +
-      '<div style="display:flex;gap:8px;margin-top:8px">' +
-      (a.status !== 'COMPLETED' && a.status !== 'CANCELLED' ? '<button class="btn bg2 fw" style="font-size:11px" onclick="updateApptStatus(\'' + a.id + '\',\'COMPLETED\')">✓ Concluir</button>' : '') +
-      (a.status === 'SCHEDULED' ? '<button class="btn br" style="font-size:11px;padding:8px 10px" onclick="updateApptStatus(\'' + a.id + '\',\'CANCELLED\')">✕ Cancelar</button>' : '') +
-      '</div></div>';
-  }).join('');
-}
-
-async function createAppointment() {
-  var btn = document.getElementById('appt-btn');
-  var errEl = document.getElementById('appt-err');
-  errEl.classList.add('hidden');
-  var patId = document.getElementById('appt-pat').value;
-  var date = document.getElementById('appt-date').value;
-  var time = document.getElementById('appt-time').value;
-  if (!patId || !date || !time) { errEl.textContent = 'Preencha paciente, data e horário'; errEl.classList.remove('hidden'); return; }
-  btn.disabled = true; btn.textContent = 'Agendando...';
-  try {
-    var dt = new Date(date + 'T' + time + ':00');
-    await api('POST', '/appointments', {
-      patientId: patId,
-      date: dt.toISOString(),
-      duration: parseInt(document.getElementById('appt-dur').value) || 50,
-      value: parseFloat(document.getElementById('appt-val').value) || 0,
-      type: document.getElementById('appt-type').value,
-      title: document.getElementById('appt-title').value || 'Consulta',
-    });
-    await loadAppointments('today', null);
-    closeM('m-appt');
-    toast('✅ Consulta agendada!');
-  } catch(e) {
-    errEl.textContent = e.message || 'Erro ao agendar';
-    errEl.classList.remove('hidden');
-  } finally { btn.disabled = false; btn.textContent = 'Agendar'; }
-}
-
-async function updateApptStatus(id, status) {
-  try {
-    await api('PUT', '/appointments/' + id, { status: status });
-    await loadAppointments('today', null);
-    toast(status === 'COMPLETED' ? '✅ Consulta concluída!' : 'Consulta cancelada');
-  } catch(e) { toast('Erro ao atualizar consulta'); }
-}
-
-// ══════════════════════════════════════════════
-// RECORDS
-// ══════════════════════════════════════════════
-function swRT(tab, el) {
-  ['evolucoes','anamnese','queixa','anexos'].forEach(function(t){
-    var e = document.getElementById('rt-'+t);
-    if(e) e.classList.toggle('hidden', t!==tab);
-  });
-  el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
-  el.classList.add('on');
 }
 
 async function loadRecords() {
   var patId = document.getElementById('rec-pat-sel').value;
   if (!patId) return;
   document.getElementById('rec-placeholder').classList.add('hidden');
-  document.getElementById('rec-content').classList.remove('hidden');
-  swRT('evolucoes', document.querySelector('#rec-tabs .tab:first-child'));
+  document.getElementById('rec-tabs').classList.remove('hidden');
+  swRecTab('evolutions', document.querySelector('#rec-tabs .tab:first-child'));
+}
 
+function swRecTab(tab, el) {
+  document.querySelectorAll('#rec-tabs .tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.rec-tab').forEach(p => p.classList.add('hidden'));
+  document.getElementById('rec-' + tab).classList.remove('hidden');
+  if (tab === 'evolutions') renderEvolutions();
+  if (tab === 'anamnesis') loadAnamnesis();
+  if (tab === 'complaint') loadComplaint();
+  if (tab === 'attachments') loadAttachments();
+}
+
+async function renderEvolutions() {
+  var patId = document.getElementById('rec-pat-sel').value;
+  var el = document.getElementById('rec-evolutions');
   try {
-    STATE.records = await api('GET', '/records?patientId=' + patId);
-    var el = document.getElementById('rec-list');
-    if (!STATE.records.length) {
-      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Nenhuma evolução registrada para este paciente</div>';
-    } else {
-      el.innerHTML = STATE.records.map(function(r) {
-        var dt = new Date(r.sessionDate).toLocaleDateString('pt-BR');
-        return '<div class="ev" style="border-left-width:3px;padding:12px;border-left:3px solid var(--ac);background:var(--w);margin-bottom:10px;border-radius:0 10px 10px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05)">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center">' +
-          '<div class="evd" style="font-size:11px;color:var(--mt);font-weight:600">📅 ' + dt + ' · Sessão ' + r.sessionNum + (r.mood ? ' · ' + r.mood + '/10' : '') + '</div>' +
-          (r.aiGenerated ? '<span class="bx bai">🤖 IA</span>' : '') +
-          '</div>' +
-          '<div class="evt" style="margin-top:6px;white-space:pre-wrap;font-size:13px">' + r.content + '</div>' +
-          (r.techniques ? '<div style="font-size:11px;color:var(--dm);margin-top:4px">🛠 ' + r.techniques + '</div>' : '') +
-          '</div>';
-      }).join('');
-    }
+    var records = await api('GET', '/records?patientId=' + patId);
+    el.innerHTML = records.map(r => `<div class="ev"><div class="evd">📅 ${new Date(r.sessionDate).toLocaleDateString('pt-BR')}</div><div class="evt">${r.content}</div></div>`).join('');
+  } catch(e) {}
+}
 
-    try {
-      const anamnesis = await api('GET', '/clinical/anamnesis/' + patId);
-      STATE.currentAnamnesis = anamnesis;
-      document.getElementById('clin-complaint').value = anamnesis.complaint || '';
-      document.getElementById('clin-obs').value = anamnesis.observations || '';
-      
-      const statusEl = document.getElementById('anamnese-status');
-      if (anamnesis.id && anamnesis.updatedAt) {
-        statusEl.innerHTML = '✅ Anamnese preenchida em ' + new Date(anamnesis.updatedAt).toLocaleDateString('pt-BR');
-        statusEl.style.background = '#f0fdf4';
-        statusEl.style.borderColor = '#bbf7d0';
-        statusEl.style.color = '#16a34a';
-      } else {
-        statusEl.innerHTML = 'Nenhuma anamnese preenchida para este paciente.';
-        statusEl.style.background = '#f8fafc';
-        statusEl.style.borderColor = 'var(--bd)';
-        statusEl.style.color = 'var(--mt)';
-      }
-      if (anamnesis.id) loadAttachments(anamnesis.id);
-      else document.getElementById('attachment-list').innerHTML = '<div style="font-size:12px;color:var(--dm);text-align:center">Preencha a anamnese ou queixa para habilitar anexos.</div>';
-    } catch(e) { console.error('Anamnesis error:', e); }
-  } catch(e) { toast('Erro ao carregar prontuários'); }
+async function loadAnamnesis() {
+  var patId = document.getElementById('rec-pat-sel').value;
+  var container = document.getElementById('rec-anamnesis');
+  try {
+    var anam = await api('GET', '/clinical/anamnesis/' + patId);
+    STATE.currentAnamnesis = anam;
+    if (!anam || !anam.id) {
+      container.innerHTML = `<button class="btn bp fw" onclick="openAnamModal('ADULT')">+ Criar Anamnese</button>`;
+    } else {
+      container.innerHTML = `<div class="card"><b>Anamnese ${anam.type}</b><br/><small>Última atualização: ${new Date(anam.updatedAt).toLocaleDateString('pt-BR')}</small><br/><button class="btn bs fw" style="margin-top:10px" onclick="openAnamModal('${anam.type}', true)">Editar Anamnese</button></div>`;
+    }
+  } catch(e) { container.innerHTML = `<button class="btn bp fw" onclick="openAnamModal('ADULT')">+ Criar Anamnese</button>`; }
+}
+
+function openAnamModal(type, isEdit = false) {
+  swAnamType(type, document.querySelectorAll('#m-anam .tab')[type === 'ADULT' ? 0 : 1]);
+  if (isEdit && STATE.currentAnamnesis) renderAnamnesisForm(type, STATE.currentAnamnesis.data);
+  else renderAnamnesisForm(type);
+  openM('m-anam');
+}
+
+function swAnamType(type, el) {
+  document.querySelectorAll('#m-anam .tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('anam-type').value = type;
+  renderAnamnesisForm(type);
+}
+
+function renderAnamnesisForm(type, existingData = {}) {
+  const template = ANAMNESIS_FORMS[type];
+  const container = document.getElementById('anam-form-container');
+  let h = '';
+  template.sections.forEach(s => {
+    h += `<div class="sdv">${s.title}</div>`;
+    s.fields.forEach(f => {
+      const val = existingData[f.name] || '';
+      h += `<div class="fr"><label class="lbl">${f.label}</label>`;
+      if (f.type === 'textarea') h += `<textarea class="inp anam-field" data-name="${f.name}" style="height:60px">${val}</textarea>`;
+      else h += `<input type="${f.type}" class="inp anam-field" data-name="${f.name}" value="${val}"/>`;
+      h += `</div>`;
+    });
+  });
+  container.innerHTML = h;
+}
+
+async function saveAnamnesis() {
+  var patId = document.getElementById('rec-pat-sel').value;
+  var data = {};
+  document.querySelectorAll('.anam-field').forEach(el => data[el.dataset.name] = el.value);
+  try {
+    await api('POST', '/clinical/anamnesis', { patientId: patId, type: document.getElementById('anam-type').value, data: data });
+    toast('✅ Anamnese salva!');
+    closeM('m-anam');
+    loadAnamnesis();
+  } catch(e) { toast('Erro ao salvar'); }
+}
+
+async function loadComplaint() {
+  var patId = document.getElementById('rec-pat-sel').value;
+  try {
+    var anam = await api('GET', '/clinical/anamnesis/' + patId);
+    document.getElementById('clin-complaint').value = anam.complaint || '';
+    document.getElementById('clin-obs').value = anam.observations || '';
+  } catch(e) {}
 }
 
 async function saveClinicalInfo() {
   var patId = document.getElementById('rec-pat-sel').value;
-  if (!patId) return;
-  var complaint = document.getElementById('clin-complaint').value;
-  var obs = document.getElementById('clin-obs').value;
   try {
-    await api('POST', '/clinical/anamnesis', { patientId: patId, complaint: complaint, observations: obs });
+    await api('POST', '/clinical/anamnesis', { 
+      patientId: patId, 
+      complaint: document.getElementById('clin-complaint').value, 
+      observations: document.getElementById('clin-obs').value 
+    });
     toast('✅ Informações salvas!');
-    loadRecords();
-  } catch(e) { toast('Erro ao salvar informações'); }
+  } catch(e) { toast('Erro ao salvar'); }
 }
 
-async function loadAttachments(anamnesisId) {
+async function loadAttachments() {
+  var patId = document.getElementById('rec-pat-sel').value;
+  var el = document.getElementById('attachment-list');
   try {
-    const list = await api('GET', '/clinical/attachments/' + anamnesisId);
-    const el = document.getElementById('attachment-list');
-    if (!list.length) {
-      el.innerHTML = '<div style="font-size:12px;color:var(--dm);text-align:center">Nenhum anexo encontrado.</div>';
-      return;
-    }
-    el.innerHTML = list.map(a => `
-      <div class="row" style="padding:8px 0">
-        <div class="ri"><div class="rn" style="font-size:12px">${a.fileName}</div><div class="rs">${new Date(a.uploadedAt).toLocaleDateString('pt-BR')}</div></div>
-        <div style="display:flex;gap:6px"><a href="${a.fileUrl}" target="_blank" class="btn bs" style="padding:4px 8px;font-size:10px">Ver</a><button class="btn br" style="padding:4px 8px;font-size:10px" onclick="deleteAttachment('${a.id}')">✕</button></div>
-      </div>
-    `).join('');
-  } catch(e) { console.error('Load attachments error:', e); }
+    var anam = await api('GET', '/clinical/anamnesis/' + patId);
+    if (!anam || !anam.id) { el.innerHTML = 'Crie uma anamnese ou queixa primeiro.'; return; }
+    var list = await api('GET', '/clinical/attachments/' + anam.id);
+    el.innerHTML = list.map(a => `<div class="row"><div>${a.fileName}</div><a href="${a.fileUrl}" target="_blank">Ver</a></div>`).join('');
+  } catch(e) {}
 }
 
-async function deleteAttachment(id) {
-  if (!confirm('Excluir este anexo?')) return;
+async function saveAttachment() {
+  var patId = document.getElementById('rec-pat-sel').value;
+  var name = document.getElementById('new-att-name').value;
+  var url = document.getElementById('new-att-url').value;
   try {
-    await api('DELETE', '/clinical/attachments/' + id);
-    toast('✅ Anexo excluído');
-    if (STATE.currentAnamnesis) loadAttachments(STATE.currentAnamnesis.id);
-  } catch(e) { toast('Erro ao excluir'); }
-}
-
-async function handleFileUpload(input) {
-  if (!input.files.length) return;
-  if (!STATE.currentAnamnesis || !STATE.currentAnamnesis.id) {
-    toast('⚠️ Salve a Queixa Principal primeiro');
-    return;
-  }
-  toast('📎 Upload em desenvolvimento...');
-}
-
-async function createRecord() {
-  var btn = document.getElementById('rec-btn');
-  var errEl = document.getElementById('rec-err');
-  errEl.classList.add('hidden');
-  var patId = document.getElementById('rec-pat-new').value;
-  var content = document.getElementById('rc').value.trim();
-  if (!patId || !content) { errEl.textContent = 'Preencha paciente e conteúdo'; errEl.classList.remove('hidden'); return; }
-  btn.disabled = true; btn.textContent = 'Salvando...';
-  try {
-    await api('POST', '/records', {
-      patientId: patId,
-      content: content,
-      sessionDate: document.getElementById('rec-date').value || new Date().toISOString(),
-      mood: parseInt(document.getElementById('mv').textContent) || null,
-      techniques: document.getElementById('rec-tech').value,
-      evolution: document.getElementById('rec-evol').value,
-      goals: document.getElementById('rec-goals').value,
-      risks: document.getElementById('rec-risks').value,
-      aiGenerated: !document.getElementById('ai-res').classList.contains('hidden'),
-    });
-    closeM('m-rec');
-    toast('✅ Evolução salva!');
-    document.getElementById('rc').value = '';
-    document.getElementById('ai-res').classList.add('hidden');
-    if (document.getElementById('rec-pat-sel').value === patId) await loadRecords();
-  } catch(e) {
-    errEl.textContent = e.message || 'Erro ao salvar';
-    errEl.classList.remove('hidden');
-  } finally { btn.disabled = false; btn.textContent = 'Salvar evolução'; }
-}
-
-async function callAI() {
-  var content = document.getElementById('rc').value.trim();
-  if (content.length < 15) { toast('⚠️ Descreva o conteúdo da sessão'); return; }
-  document.getElementById('ai-load').classList.remove('hidden');
-  document.getElementById('ai-res').classList.add('hidden');
-  try {
-    var data = await api('POST', '/ai/generate-record', { content: content });
-    document.getElementById('ai-load').classList.add('hidden');
-    document.getElementById('ai-txt').textContent = data.text;
-    document.getElementById('ai-res').classList.remove('hidden');
-    toast('🤖 Prontuário gerado!');
-  } catch(e) {
-    document.getElementById('ai-load').classList.add('hidden');
-    toast('❌ ' + (e.message || 'Erro ao gerar prontuário'));
-  }
-}
-function useAI() {
-  document.getElementById('rc').value = document.getElementById('ai-txt').textContent;
-  document.getElementById('ai-res').classList.add('hidden');
-  toast('✅ Prontuário aplicado!');
-}
-
-// ══════════════════════════════════════════════
-// FINANCIAL
-// ══════════════════════════════════════════════
-async function loadFinancial() {
-  var now = new Date();
-  try {
-    var data = await api('GET', '/financial?month=' + (now.getMonth()+1) + '&year=' + now.getFullYear());
-    STATE.financials = data.items;
-    var s = data.summary;
-    document.getElementById('fin-period').textContent = now.toLocaleDateString('pt-BR', {month:'long',year:'numeric'});
-    document.getElementById('fin-summary').innerHTML =
-      '<div class="sc"><div style="font-size:20px;margin-bottom:6px">📈</div><div style="font-size:16px;font-weight:800;color:var(--gn)">R$' + s.income.toFixed(2) + '</div><div style="font-size:10px;color:var(--mt)">Recebido</div></div>' +
-      '<div class="sc"><div style="font-size:20px;margin-bottom:6px">📉</div><div style="font-size:16px;font-weight:800;color:var(--rd)">R$' + s.expense.toFixed(2) + '</div><div style="font-size:10px;color:var(--mt)">Despesas</div></div>' +
-      '<div class="sc"><div style="font-size:20px;margin-bottom:6px">💎</div><div style="font-size:16px;font-weight:800;color:var(--ac)">R$' + s.balance.toFixed(2) + '</div><div style="font-size:10px;color:var(--mt)">Saldo</div></div>';
-    var el = document.getElementById('fin-list');
-    if (!STATE.financials.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Nenhum lançamento este mês</div>'; return; }
-    el.innerHTML = '<div class="card" style="padding:0;overflow:hidden"><table class="tbl"><thead><tr><th>Descrição</th><th>Valor</th><th>Status</th></tr></thead><tbody>' +
-      STATE.financials.map(function(f) {
-        return '<tr><td><div style="font-weight:600;font-size:12px">' + f.description + '</div>' +
-          '<div style="font-size:10px;color:var(--dm)">' + new Date(f.date).toLocaleDateString('pt-BR') + (f.method ? ' · ' + f.method : '') + '</div></td>' +
-          '<td style="color:' + (f.type === 'INCOME' ? 'var(--gn)' : 'var(--rd)') + ';font-weight:700">' + (f.type === 'INCOME' ? '+' : '-') + 'R$' + f.value.toFixed(2) + '</td>' +
-          '<td><span class="bx ' + (f.status === 'PAID' ? 'bgn' : 'byw') + '" ' + (f.status === 'PENDING' ? 'style="cursor:pointer" onclick="markPaid(\'' + f.id + '\')"' : '') + '>' + (f.status === 'PAID' ? 'Pago' : 'Pagar') + '</span></td></tr>';
-      }).join('') + '</tbody></table></div>';
-  } catch(e) { console.error('Load financial:', e); }
-}
-
-async function createFinancial() {
-  var btn = document.getElementById('fin-btn');
-  var errEl = document.getElementById('fin-err');
-  errEl.classList.add('hidden');
-  var desc = document.getElementById('fin-desc').value.trim();
-  var val = parseFloat(document.getElementById('fin-val').value);
-  if (!desc || !val) { errEl.textContent = 'Preencha descrição e valor'; errEl.classList.remove('hidden'); return; }
-  btn.disabled = true; btn.textContent = 'Salvando...';
-  try {
-    var rawDate = document.getElementById('fin-date').value;
-    var formattedDate = rawDate ? (rawDate.length === 10 ? rawDate + 'T12:00:00.000Z' : rawDate) : new Date().toISOString();
-    await api('POST', '/financial', {
-      type: document.getElementById('fin-type').value,
-      description: desc,
-      value: val,
-      date: formattedDate,
-      status: document.getElementById('fin-status').value,
-      method: document.getElementById('fin-method').value,
-      patientId: document.getElementById('fin-pat').value || null,
-    });
-    await loadFinancial();
-    closeM('m-fin');
-    toast('✅ Lançamento salvo!');
-  } catch(e) {
-    errEl.textContent = e.message || 'Erro ao salvar';
-    errEl.classList.remove('hidden');
-  } finally { btn.disabled = false; btn.textContent = 'Salvar lançamento'; }
-}
-
-async function markPaid(id) {
-  try {
-    await api('PUT', '/financial/' + id, { status: 'PAID' });
-    await loadFinancial();
-    toast('✅ Marcado como pago!');
-  } catch(e) { toast('Erro ao atualizar'); }
-}
-
-// ══════════════════════════════════════════════
-// HELPERS & DASHBOARD
-// ══════════════════════════════════════════════
-function setMood(v) {
-  document.getElementById('mv').textContent = v;
-  document.querySelectorAll('.md').forEach(function(d,i){ d.classList.toggle('on', i+1===v); });
+    var anam = await api('GET', '/clinical/anamnesis/' + patId);
+    await api('POST', '/clinical/attachments', { anamnesisId: anam.id, fileName: name, fileUrl: url });
+    toast('✅ Anexo salvo!');
+    loadAttachments();
+  } catch(e) { toast('Erro ao salvar anexo'); }
 }
 
 function toast(msg) {
   var el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.remove('hidden');
-  setTimeout(function(){ el.classList.add('hidden'); }, 2800);
+  setTimeout(() => el.classList.add('hidden'), 3000);
 }
 
 function renderDashboardGreeting() {
-  if (!STATE.user) return;
-  var hr = new Date().getHours();
-  var g = hr < 12 ? 'Bom dia' : hr < 18 ? 'Boa tarde' : 'Boa noite';
-  document.getElementById('dash-greeting').innerHTML = '<span>👋</span><div><div style="font-size:14px;font-weight:700">' + g + ', ' + STATE.user.name.split(' ')[0] + '!</div><div style="font-size:11px;opacity:.8">Como está sua agenda para hoje?</div></div>';
+  document.getElementById('dash-greeting').innerHTML = `<b>Olá, ${STATE.user.name.split(' ')[0]}!</b><br/><small>Bem-vindo ao seu painel.</small>`;
 }
-
 function renderDashboardStats() {
-  var active = STATE.patients.filter(p => p.status === 'ACTIVE').length;
-  var today = STATE.appointments.filter(a => new Date(a.date).toDateString() === new Date().toDateString()).length;
-  document.getElementById('dash-stats').innerHTML = 
-    '<div class="sc"><div style="font-size:18px;margin-bottom:4px">👥</div><div style="font-size:15px;font-weight:800">' + active + '</div><div style="font-size:9px;color:var(--mt)">Pacientes Ativos</div></div>' +
-    '<div class="sc"><div style="font-size:18px;margin-bottom:4px">📅</div><div style="font-size:15px;font-weight:800">' + today + '</div><div style="font-size:9px;color:var(--mt)">Consultas Hoje</div></div>';
+  document.getElementById('dash-stats').innerHTML = `<div class="sc"><b>${STATE.patients.length}</b><br/>Pacientes</div><div class="sc"><b>${STATE.appointments.length}</b><br/>Consultas</div>`;
 }
-
-function renderDashboardToday() {
-  var el = document.getElementById('dash-today');
-  var today = STATE.appointments.filter(a => new Date(a.date).toDateString() === new Date().toDateString());
-  var h = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;font-weight:700">📅 Consultas Hoje</div><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go(\'appointments\',null)">Ver agenda →</button></div>';
-  if (!today.length) h += '<div style="text-align:center;padding:20px;color:var(--dm);font-size:12px">Nenhuma consulta para hoje</div>';
-  else h += today.slice(0, 3).map(a => '<div class="row"><div class="ri"><div class="rn">' + (a.patient?a.patient.name:'Paciente') + '</div><div class="rs">' + new Date(a.date).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + '</div></div><span class="bx bbl">' + (a.type==='ONLINE'?'Online':'Presencial') + '</span></div>').join('');
-  el.innerHTML = h;
-}
-
-function renderDashboardPatients() {
-  var el = document.getElementById('dash-patients');
-  var h = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;font-weight:700">👥 Pacientes Recentes</div><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go(\'patients\',null)">Ver todos →</button></div>';
-  if (!STATE.patients.length) h += '<div style="text-align:center;padding:20px;color:var(--dm);font-size:12px">Nenhum paciente cadastrado</div>';
-  else h += STATE.patients.slice(0, 3).map(p => '<div class="row" onclick="viewPatient(\''+p.id+'\')" style="cursor:pointer"><div class="ri"><div class="rn">'+p.name+'</div><div class="rs">'+(p.type==='CHILD'?'Infantil':'Adulto')+'</div></div><span class="bx '+(p.status==='ACTIVE'?'bgn':'bgr')+'">'+(p.status==='ACTIVE'?'Ativo':'Inativo')+'</span></div>').join('');
-  el.innerHTML = h;
-}
-
-(function() {
-  var now = new Date();
-  var dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  document.getElementById('hdr-d').textContent = dias[now.getDay()] + ', ' + now.getDate() + ' ' + meses[now.getMonth()];
-  document.getElementById('appt-date').value = now.toISOString().split('T')[0];
-  document.getElementById('fin-date').value = now.toISOString().split('T')[0];
-  document.getElementById('rep-from').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-  document.getElementById('rep-to').value = now.toISOString().split('T')[0];
-})();
 
 init();
 </script>
