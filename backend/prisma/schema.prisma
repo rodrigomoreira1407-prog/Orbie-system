@@ -30,6 +30,7 @@ model User {
   appointments         Appointment[]
   records              Record[]
   financials           Financial[]
+  anamneses            Anamnesis[]
 }
 
 model Patient {
@@ -50,10 +51,6 @@ model Patient {
   addressCep    String?
   city          String?
   state         String?
-  complaint     String?
-  anamnesis     String?
-  observations  String?
-  attachments   String?
   notes         String?
   status        String        @default("ACTIVE")
   emergName     String?
@@ -72,6 +69,7 @@ model Patient {
   appointments  Appointment[]
   records       Record[]
   financials    Financial[]
+  anamneses     Anamnesis[]
 }
 
 model Appointment {
@@ -90,6 +88,32 @@ model Appointment {
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Anamnesis {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patientId    String
+  patient      Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  type         String   @default("ADULT") // ADULT ou CHILD
+  data         Json     // Armazena todos os campos do formulário em JSON
+  complaint    String?  // Queixa Principal
+  observations String?  // Observações gerais
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  attachments  Attachment[]
+}
+
+model Attachment {
+  id         String   @id @default(cuid())
+  anamnesisId String
+  anamnesis  Anamnesis @relation(fields: [anamnesisId], references: [id], onDelete: Cascade)
+  fileName   String
+  fileUrl    String
+  fileType   String?  // pdf, jpg, etc
+  fileSize   Int?
+  uploadedAt DateTime @default(now())
 }
 
 model Record {

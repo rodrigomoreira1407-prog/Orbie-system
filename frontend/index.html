@@ -599,8 +599,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <div class="sdv" style="color:var(--rd);border-color:rgba(220,38,38,.15)">🚨 Contato de Emergência</div>
     <div class="fg"><div><label class="lbl">Nome</label><input class="inp" id="npat-en" placeholder="Nome do contato"/></div><div><label class="lbl">Telefone</label><input class="inp" id="npat-ep" placeholder="(11) 99999-9999"/></div></div>
     <div class="fg"><div><label class="lbl">Parentesco</label><input class="inp" id="npat-er" placeholder="Mãe, Pai..."/></div></div>
-    <div class="sdv">📋 Clínico</div>
-    <div class="fr"><label class="lbl">Queixa principal</label><textarea class="inp" id="npat-complaint" style="resize:none;height:60px" placeholder="Motivo da busca por atendimento..."></textarea></div>
+
     <div id="npat-err" class="auth-err hidden"></div>
     <div style="display:flex;gap:8px;margin-top:16px">
       <button class="btn bs" style="flex:1" onclick="closeM('m-npat')">Cancelar</button>
@@ -1128,7 +1127,7 @@ async function createPatient() {
       emergName: document.getElementById('npat-en').value,
       emergPhone: document.getElementById('npat-ep').value,
       emergRelation: document.getElementById('npat-er').value,
-      complaint: document.getElementById('npat-complaint').value,
+
       resp1Name: document.getElementById('npat-r1n') ? document.getElementById('npat-r1n').value : '',
       resp1Phone: document.getElementById('npat-r1p') ? document.getElementById('npat-r1p').value : '',
       resp1Relation: document.getElementById('npat-r1r') ? document.getElementById('npat-r1r').value : '',
@@ -1139,7 +1138,7 @@ async function createPatient() {
     closeM('m-npat');
     toast('✅ Paciente cadastrado!');
     // Clear fields
-    ['npat-name','npat-cpf','npat-rg','npat-phone','npat-email','npat-address','npat-address-num','npat-address-comp','npat-address-cep','npat-en','npat-ep','npat-er','npat-complaint'].forEach(function(id){ var el = document.getElementById(id); if(el) el.value=''; });
+    ['npat-name','npat-cpf','npat-rg','npat-phone','npat-email','npat-address','npat-address-num','npat-address-comp','npat-address-cep','npat-en','npat-ep','npat-er'].forEach(function(id){ var el = document.getElementById(id); if(el) el.value=''; });
   } catch(e) {
     errEl.textContent = e.message || 'Erro ao cadastrar';
     errEl.classList.remove('hidden');
@@ -1162,23 +1161,13 @@ async function viewPatient(id) {
     '<div style="flex:1"><div style="font-size:17px;font-weight:800">' + p.name + '</div>' +
     '<div style="font-size:12px;color:var(--mt);margin-top:2px">' + (p.birthDate ? new Date(p.birthDate).getFullYear() : '—') + ' · ' + (p.type === 'CHILD' ? 'Infantil' : 'Adulto') + '</div></div>' +
     '<span class="bx ' + (p.status === 'ACTIVE' ? 'bgn' : 'bgr') + '">' + (p.status === 'ACTIVE' ? 'Ativo' : 'Inativo') + '</span></div>' +
-    '<div class="tabs"><div class="tab on" onclick="swPTab(\'info\',this)">Info</div><div class="tab" onclick="swPTab(\'clinico\',this)">Clínico</div><div class="tab" onclick="swPTab(\'obs\',this)">Observações</div></div>' +
+    '<div class="tabs"><div class="tab on" onclick="swPTab(\'info\',this)">Info</div></div>' +
     '<div id="ptab-info" class="ptab">' +
     '<div class="ibox">' +
     '<div class="ir"><div class="il">📞 Telefone</div><div class="iv">' + (p.phone || '—') + '</div></div>' +
     '<div class="ir"><div class="il">✉️ E-mail</div><div class="iv">' + (p.email || '—') + '</div></div>' +
     '<div class="ir"><div class="il">📄 CPF</div><div class="iv">' + (p.cpf || '—') + '</div></div>' +
     '<div class="ir"><div class="il">📍 Endereço</div><div class="iv">' + fullAddr + '</div></div>' +
-    '</div></div>' +
-    '<div id="ptab-clinico" class="ptab hidden">' +
-    '<div class="ibox">' +
-    '<div class="ir"><div class="il">💬 Queixa</div><div class="iv">' + (p.complaint || '—') + '</div></div>' +
-    '<div class="ir"><div class="il">📋 Anamnese</div><div class="iv">' + (p.anamnesis || '—') + '</div></div>' +
-    '</div></div>' +
-    '<div id="ptab-obs" class="ptab hidden">' +
-    '<div class="ibox">' +
-    '<div class="ir"><div class="il">📝 Obs</div><div class="iv">' + (p.observations || '—') + '</div></div>' +
-    '<div class="ir"><div class="il">📎 Anexos</div><div class="iv">' + (p.attachments || 'Nenhum anexo') + '</div></div>' +
     '</div></div>' +
     (p.emergName ? '<div class="ebox" style="margin-top:10px"><div class="etl">🚨 Emergência</div>' +
     '<div class="ir"><div class="il">Nome</div><div class="iv">' + p.emergName + '</div></div>' +
