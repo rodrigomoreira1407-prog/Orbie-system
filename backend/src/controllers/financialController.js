@@ -27,10 +27,17 @@ async function list(req, res) {
 
 async function create(req, res) {
   try {
-    const item = await prisma.financial.create({ data: { ...req.body, userId: req.user.id } });
+    const data = { ...req.body, userId: req.user.id };
+    if (data.date && typeof data.date === 'string') {
+      const d = new Date(data.date);
+      if (!isNaN(d.getTime())) data.date = d.toISOString();
+      else data.date = new Date().toISOString();
+    }
+    const item = await prisma.financial.create({ data });
     res.status(201).json(item);
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao criar lancamento' });
+    console.error('❌ Erro ao criar lancamento:', err);
+    res.status(500).json({ error: 'Erro ao criar lancamento: ' + err.message });
   }
 }
 

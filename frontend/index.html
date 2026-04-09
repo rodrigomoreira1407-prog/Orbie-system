@@ -1361,11 +1361,22 @@ async function createFinancial() {
   if (!desc || !val) { errEl.textContent = 'Preencha descrição e valor'; errEl.classList.remove('hidden'); return; }
   btn.disabled = true; btn.textContent = 'Salvando...';
   try {
+    var rawDate = document.getElementById('fin-date').value;
+    var formattedDate = null;
+    if (rawDate) {
+      if (rawDate.includes('/')) {
+        var parts = rawDate.split('/');
+        if (parts.length === 3) formattedDate = parts[2] + '-' + parts[1] + '-' + parts[0];
+      } else {
+        formattedDate = rawDate;
+      }
+      if (formattedDate && formattedDate.length === 10) formattedDate += 'T12:00:00.000Z';
+    }
     await api('POST', '/financial', {
       type: document.getElementById('fin-type').value,
       description: desc,
       value: val,
-      date: document.getElementById('fin-date').value || new Date().toISOString(),
+      date: formattedDate || new Date().toISOString(),
       status: document.getElementById('fin-status').value,
       method: document.getElementById('fin-method').value,
       patientId: document.getElementById('fin-pat').value || null,
