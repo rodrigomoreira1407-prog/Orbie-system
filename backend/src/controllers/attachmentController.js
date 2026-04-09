@@ -2,25 +2,26 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 exports.createAttachment = async (req, res) => {
-  const { patientId, name, url, type } = req.body;
-  const userId = req.userId;
+  const { anamnesisId, fileName, fileUrl, fileType, fileSize } = req.body;
+  const userId = req.user.id;
 
   try {
-    const patient = await prisma.patient.findFirst({
-      where: { id: patientId, userId }
+    // Check if anamnesis exists and belongs to user
+    const anamnesis = await prisma.anamnesis.findFirst({
+      where: { id: anamnesisId, userId }
     });
 
-    if (!patient) {
-      return res.status(404).json({ error: 'Paciente não encontrado' });
+    if (!anamnesis) {
+      return res.status(404).json({ error: 'Anamnese não encontrada' });
     }
 
     const attachment = await prisma.attachment.create({
       data: {
-        patientId,
-        userId,
-        name,
-        url,
-        type
+        anamnesisId,
+        fileName,
+        fileUrl,
+        fileType,
+        fileSize
       }
     });
 
@@ -32,13 +33,22 @@ exports.createAttachment = async (req, res) => {
 };
 
 exports.getAttachments = async (req, res) => {
-  const { patientId } = req.params;
-  const userId = req.userId;
+  const { anamnesisId } = req.params;
+  const userId = req.user.id;
 
   try {
+    // Check if anamnesis belongs to user
+    const anamnesis = await prisma.anamnesis.findFirst({
+      where: { id: anamnesisId, userId }
+    });
+
+    if (!anamnesis) {
+      return res.status(404).json({ error: 'Anamnese não encontrada' });
+    }
+
     const attachments = await prisma.attachment.findMany({
-      where: { patientId, userId },
-      orderBy: { createdAt: 'desc' }
+      where: { anamnesisId },
+      orderBy: { uploadedAt: 'desc' }
     });
 
     res.status(200).json(attachments);
@@ -50,11 +60,15 @@ exports.getAttachments = async (req, res) => {
 
 exports.deleteAttachment = async (req, res) => {
   const { id } = req.params;
-  const userId = req.userId;
+  const userId = req.user.id;
 
   try {
+    // Check if attachment exists and its anamnesis belongs to user
     const attachment = await prisma.attachment.findFirst({
-      where: { id, userId }
+      where: { 
+        id,
+        anamnesis: { userId }
+      }
     });
 
     if (!attachment) {

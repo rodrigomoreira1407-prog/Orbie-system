@@ -2,8 +2,8 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 exports.upsertAnamnesis = async (req, res) => {
-  const { patientId, type, data } = req.body;
-  const userId = req.userId;
+  const { patientId, type, data, complaint, observations } = req.body;
+  const userId = req.user.id;
 
   try {
     // Check if patient belongs to user
@@ -15,12 +15,35 @@ exports.upsertAnamnesis = async (req, res) => {
       return res.status(404).json({ error: 'Paciente não encontrado' });
     }
 
-    // Upsert anamnesis (update if exists, create if not)
-    const anamnesis = await prisma.anamnesis.upsert({
-      where: { patientId },
-      update: { type, data, updatedAt: new Date() },
-      create: { patientId, type, data, userId }
+    // Find existing anamnesis by patientId
+    const existing = await prisma.anamnesis.findFirst({
+      where: { patientId }
     });
+
+    let anamnesis;
+    if (existing) {
+      anamnesis = await prisma.anamnesis.update({
+        where: { id: existing.id },
+        data: { 
+          type: type || existing.type, 
+          data: data || existing.data,
+          complaint: complaint !== undefined ? complaint : existing.complaint,
+          observations: observations !== undefined ? observations : existing.observations,
+          updatedAt: new Date() 
+        }
+      });
+    } else {
+      anamnesis = await prisma.anamnesis.create({
+        data: { 
+          patientId, 
+          userId,
+          type: type || 'ADULT', 
+          data: data || {},
+          complaint: complaint || '',
+          observations: observations || ''
+        }
+      });
+    }
 
     res.status(200).json(anamnesis);
   } catch (error) {
@@ -31,7 +54,7 @@ exports.upsertAnamnesis = async (req, res) => {
 
 exports.getAnamnesis = async (req, res) => {
   const { patientId } = req.params;
-  const userId = req.userId;
+  const userId = req.user.id;
 
   try {
     const anamnesis = await prisma.anamnesis.findFirst({
@@ -39,7 +62,14 @@ exports.getAnamnesis = async (req, res) => {
     });
 
     if (!anamnesis) {
-      return res.status(404).json({ error: 'Anamnese não encontrada' });
+      // Return an empty structure instead of 404 to make frontend life easier
+      return res.status(200).json({ 
+        patientId, 
+        type: 'ADULT', 
+        data: {}, 
+        complaint: '', 
+        observations: '' 
+      });
     }
 
     res.status(200).json(anamnesis);

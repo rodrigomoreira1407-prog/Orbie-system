@@ -13,7 +13,7 @@ router.get('/anamnesis/:patientId', anamnesisController.getAnamnesis);
 
 // Attachment Routes
 router.post('/attachments', attachmentController.createAttachment);
-router.get('/attachments/:patientId', attachmentController.getAttachments);
+router.get('/attachments/:anamnesisId', attachmentController.getAttachments);
 router.delete('/attachments/:id', attachmentController.deleteAttachment);
 
 module.exports = router;
