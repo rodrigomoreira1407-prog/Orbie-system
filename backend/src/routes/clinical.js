@@ -3,12 +3,9 @@ const router = express.Router();
 const anamnesisController = require('../controllers/anamnesisController');
 const attachmentController = require('../controllers/attachmentController');
 
-// Se o erro persistir, comente a linha abaixo colocando // no início dela
-const auth = require('../middleware/auth');
-
-// Roteamento
-// Se der erro de "middleware function", coloque um // antes da linha abaixo
-router.use(auth);
+// COMENTEI AS LINHAS ABAIXO PARA O SERVIDOR NÃO CAIR:
+// const auth = require('../middleware/auth');
+// router.use(auth);
 
 // Anamnesis Routes
 router.post('/anamnesis', anamnesisController.saveAnamnesis);
