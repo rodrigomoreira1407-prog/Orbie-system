@@ -1,0 +1,23 @@
+FRONTEND-BACKEND MISMATCH ANALYSIS
+====================================
+
+The original frontend (8b1e1a1) has these clinical functions:
+
+1. loadAttachments() - calls GET /clinical/attachments/:patientId
+   Backend NOW expects GET /clinical/attachments/:anamnesisId
+   NEED TO FIX: Frontend must first get anamnesis, then use anamnesisId
+
+2. saveAttachment() - sends { patientId, name, url, type: 'FILE' }
+   Backend NOW expects { anamnesisId, fileName, fileUrl, fileType, fileSize }
+   NEED TO FIX: Frontend must first get anamnesis, then use anamnesisId + correct field names
+
+3. loadAnamnesis() / saveAnamnesis() - these look correct, POST /clinical/anamnesis with { patientId, type, data }
+
+4. NO complaint/observations tab exists in original HTML (only Evoluções, Anamnese, Anexos tabs)
+   The complaint/observations fields exist in the Prisma schema on the Anamnesis model
+   NEED TO ADD: A "Queixa/Obs" tab to the records section
+
+MINIMAL FIXES NEEDED (JS only, no UI/style changes):
+- Fix loadAttachments() to first fetch anamnesis, then use anamnesisId
+- Fix saveAttachment() to use anamnesisId and correct field names
+- Add complaint tab HTML and JS functions
