@@ -1723,6 +1723,42 @@ function renderCalendar(year, month) {
   cal.innerHTML = html;
 }
 
+function renderCalendarWithFilter(filteredAppointments) {
+  var cal = document.getElementById('appt-calendar');
+  var today = new Date();
+  var year = today.getFullYear();
+  var month = today.getMonth();
+  
+  var firstDay = new Date(year, month, 1);
+  var lastDay = new Date(year, month + 1, 0);
+  var daysInMonth = lastDay.getDate();
+  var startingDayOfWeek = firstDay.getDay();
+  
+  var monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  var dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  html += '<button class="btn bs" style="padding:6px 10px;font-size:11px" onclick="renderCalendar(' + (month === 0 ? year - 1 : year) + ', ' + (month === 0 ? 11 : month - 1) + ')">← Anterior</button>';
+  html += '<div style="font-weight:700;font-size:14px">' + monthNames[month] + ' ' + year + '</div>';
+  html += '<button class="btn bs" style="padding:6px 10px;font-size:11px" onclick="renderCalendar(' + (month === 11 ? year + 1 : year) + ', ' + (month === 11 ? 0 : month + 1) + ')">Próximo →</button>';
+  html += '</div>';
+  
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px">';
+  dayNames.forEach(function(d) { html += '<div style="text-align:center;font-weight:700;font-size:11px;padding:6px;color:var(--mt)">' + d + '</div>'; });
+  
+  for (var i = 0; i < startingDayOfWeek; i++) { html += '<div></div>'; }
+  
+  for (var day = 1; day <= daysInMonth; day++) {
+    var d = new Date(year, month, day);
+    var isToday = d.toDateString() === today.toDateString();
+    var hasFilteredAppointments = filteredAppointments && filteredAppointments.some(function(a) { return new Date(a.date).toDateString() === d.toDateString(); });
+    var bg = isToday ? 'background:#3b82f6;color:white' : (hasFilteredAppointments ? 'background:#fef08a;border:2px solid #facc15' : '');
+    html += '<div style="' + bg + ';text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" onclick="selectCalendarDate(' + year + ',' + month + ',' + day + ')">' + day + '</div>';
+  }
+  html += '</div>';
+  cal.innerHTML = html;
+}
+
 function selectCalendarDate(year, month, day) {
   var date = new Date(year, month, day);
   var dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
@@ -1785,6 +1821,7 @@ function filterAppointments() {
     return name.indexOf(q) > -1 || cpf.indexOf(q) > -1;
   });
   renderAppointments(filtered);
+  renderCalendarWithFilter(filtered);
 }
 
 // ══════════════════════════════════════════════
