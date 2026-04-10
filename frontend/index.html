@@ -760,16 +760,19 @@ const API = window.location.hostname === 'localhost'
 // ESTADO GLOBAL
 // ══════════════════════════════════════════════
 var STATE = {
-  token: localStorage.getItem('orbie-token'),
+  token: localStorage.getItem('orbie_token'),
   user: null,
   patients: [],
   appointments: [],
   records: [],
   financial: [],
-  plans: []
+  plans: [],
+  resetToken: null,
+  verifyEmail: null
 };
 
-const ANAMNESIS_FORMS = {
+// ANAMNESIS_FORMS já declarado acima
+var _ANAMNESIS_FORMS_DUPLICATE_REMOVED = {
   ADULT: {
     sections: [
       {
@@ -1032,9 +1035,6 @@ const ANAMNESIS_FORMS = {
       }
     ]
   }
-};null,
-  resetToken: null,
-  verifyEmail: null,
 };
 
 // ══════════════════════════════════════════════
