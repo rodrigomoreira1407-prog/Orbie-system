@@ -462,9 +462,19 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
         <div style="background:#e2e8f0;border-radius:6px;height:6px;overflow:hidden">
           <div id="appt-progress-bar" style="background:linear-gradient(90deg, #3b82f6, #1e40af);height:100%;width:0%;transition:width 0.3s ease"></div>
         </div>
+        <div style="display:flex;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:12px">
+          <div style="flex:1">
+            <div style="color:#64748b;margin-bottom:2px">Faturado Hoje</div>
+            <div style="font-size:16px;font-weight:700;color:#10b981" id="appt-revenue-today">R$ 0,00</div>
+          </div>
+          <div style="flex:1">
+            <div style="color:#64748b;margin-bottom:2px">Atendimentos</div>
+            <div style="font-size:16px;font-weight:700;color:#3b82f6" id="appt-count-today">0</div>
+          </div>
+        </div>
       </div>
-      <div id="appt-next-card" style="background:linear-gradient(135deg, #10b981, #059669);border-radius:11px;padding:14px;margin-bottom:12px;color:white;display:none;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px);this.style.boxShadow='0 8px 16px rgba(16,185,129,0.3)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
-        <div style="font-size:11px;opacity:0.9;margin-bottom:6px">⏰ Próximo Paciente</div>
+      <div id="appt-next-card" style="background:linear-gradient(135deg, #10b981, #059669);border-radius:11px;padding:14px;margin-bottom:12px;color:white;display:none;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 16px rgba(16,185,129,0.3)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <div style="font-size:11px;opacity:0.9;margin-bottom:6px">Próximo Paciente</div>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
           <div style="flex:1;min-width:0">
             <div style="font-size:14px;font-weight:700;margin-bottom:4px" id="appt-next-name">-</div>
@@ -475,6 +485,11 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
         </div>
       </div>
       <div id="appt-calendar" style="background:white;border-radius:11px;padding:14px;margin-bottom:12px;border:1px solid var(--bd)"></div>
+      <div style="background:white;border-radius:11px;padding:12px;margin-bottom:12px;border:1px solid var(--bd);display:flex;gap:16px;flex-wrap:wrap;font-size:12px">
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;background:#3b82f6;border-radius:3px"></div><span>Online</span></div>
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;background:#10b981;border-radius:3px"></div><span>Presencial</span></div>
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;background:#8b5cf6;border-radius:3px"></div><span>Avaliação</span></div>
+      </div>
       <input class="inp" id="appt-search" placeholder="🔍  Buscar por nome ou CPF do paciente..." style="margin-bottom:12px" oninput="filterAppointments()"/>
       <div class="tabs"><div class="tab on" onclick="loadAppointments('today',this)">Hoje</div><div class="tab" onclick="loadAppointments('week',this)">Semana</div><div class="tab" onclick="loadAppointments('month',this)">Mês</div></div>
       <div id="appt-list"><div style="text-align:center;padding:40px;color:var(--dm)">Carregando consultas...</div></div>
@@ -1705,6 +1720,7 @@ function updateProgressAndNext() {
   
   var completed = todayAppointments.filter(function(a) { return a.status === 'COMPLETED'; }).length;
   var total = todayAppointments.length;
+  var revenue = todayAppointments.filter(function(a) { return a.status === 'COMPLETED'; }).reduce(function(sum, a) { return sum + (a.value || 0); }, 0);
   
   var progressEl = document.getElementById('appt-progress');
   var nextCardEl = document.getElementById('appt-next-card');
@@ -1713,6 +1729,8 @@ function updateProgressAndNext() {
     progressEl.style.display = 'block';
     document.getElementById('appt-progress-text').textContent = completed + ' de ' + total;
     document.getElementById('appt-progress-bar').style.width = (completed / total * 100) + '%';
+    document.getElementById('appt-revenue-today').textContent = 'R$ ' + revenue.toFixed(2).replace('.', ',');
+    document.getElementById('appt-count-today').textContent = completed;
   } else {
     progressEl.style.display = 'none';
   }
@@ -1727,7 +1745,7 @@ function updateProgressAndNext() {
     var patName = nextAppt.patient ? nextAppt.patient.name : 'Paciente';
     var dt = new Date(nextAppt.date);
     var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
-    var typeStr = nextAppt.type === 'ONLINE' ? '🌐 Online' : '🏢 Presencial';
+    var typeStr = nextAppt.type === 'ONLINE' ? 'Online' : 'Presencial';
     
     document.getElementById('appt-next-name').textContent = patName;
     document.getElementById('appt-next-time').textContent = timeStr + ' (' + nextAppt.duration + 'min)';
@@ -1771,7 +1789,7 @@ function renderAppointments(list) {
     var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + ' · ' + dt.toLocaleDateString('pt-BR');
     var borderColor = typeColor;
     var statusBadge = a.status === 'CONFIRMED' ? '<span class="bx bgn">Confirmada</span>' : a.status === 'COMPLETED' ? '<span class="bx bgr">Concluída</span>' : a.status === 'CANCELLED' ? '<span class="bx brd">Cancelada</span>' : '<span class="bx bbl">Agendada</span>';
-    var typeBadge = a.type === 'ONLINE' ? '<span class="bx" style="background:' + typeBg + ';color:' + typeColor + ';border:1px solid ' + typeColor + ';border-radius:4px;padding:4px 8px;font-size:10px;font-weight:600">🌐 Online</span>' : '<span class="bx" style="background:' + typeBg + ';color:' + typeColor + ';border:1px solid ' + typeColor + ';border-radius:4px;padding:4px 8px;font-size:10px;font-weight:600">🏢 Presencial</span>';
+    var typeBadge = a.type === 'ONLINE' ? '<span class="bx" style="background:' + typeBg + ';color:' + typeColor + ';border:1px solid ' + typeColor + ';border-radius:4px;padding:4px 8px;font-size:10px;font-weight:600">Online</span>' : '<span class="bx" style="background:' + typeBg + ';color:' + typeColor + ';border:1px solid ' + typeColor + ';border-radius:4px;padding:4px 8px;font-size:10px;font-weight:600">Presencial</span>';
     var sessNum = a.patient && a.patient._count ? a.patient._count.records : 0;
     var sessBadge = '<span class="bx bbl" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0">Sessão ' + (sessNum + 1) + '</span>';
 
