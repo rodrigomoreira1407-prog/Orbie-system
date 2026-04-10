@@ -3,17 +3,16 @@ const router = express.Router();
 const anamnesisController = require('../controllers/anamnesisController');
 const attachmentController = require('../controllers/attachmentController');
 
-// COMENTEI AS LINHAS ABAIXO PARA O SERVIDOR NÃO CAIR:
-// const auth = require('../middleware/auth');
-// router.use(auth);
+const { auth, requirePlan } = require('../middleware/auth');
+const needPlan = requirePlan(['BASIC', 'PRO']);
 
 // Anamnesis Routes
-router.post('/anamnesis', anamnesisController.saveAnamnesis);
-router.get('/anamnesis/:patientId', anamnesisController.getAnamnesis);
+router.post('/anamnesis', auth, needPlan, anamnesisController.saveAnamnesis);
+router.get('/anamnesis/:patientId', auth, needPlan, anamnesisController.getAnamnesis);
 
 // Attachment Routes
-router.post('/attachments', attachmentController.createAttachment);
-router.get('/attachments/:anamnesisId', attachmentController.getAttachments);
-router.delete('/attachments/:id', attachmentController.deleteAttachment);
+router.post('/attachments', auth, needPlan, attachmentController.createAttachment);
+router.get('/attachments/:anamnesisId', auth, needPlan, attachmentController.getAttachments);
+router.delete('/attachments/:id', auth, needPlan, attachmentController.deleteAttachment);
 
 module.exports = router;

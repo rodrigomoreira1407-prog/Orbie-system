@@ -42,8 +42,8 @@ exports.saveAnamnesis = async (req, res) => {
 
     res.json(anamnesis);
   } catch (error) {
-    console.error('Save Anamnesis Error:', error);
-    res.status(500).json({ error: 'Erro ao salvar informações clínicas' });
+    console.error('Save Anamnesis Error:', error.message || error);
+    res.status(500).json({ error: 'Erro ao salvar informações clínicas: ' + (error.message || 'Erro desconhecido') });
   }
 };
 
