@@ -56,7 +56,28 @@ async function update(req, res) {
   try {
     const exists = await prisma.appointment.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!exists) return res.status(404).json({ error: 'Consulta nao encontrada' });
+    
     const appt = await prisma.appointment.update({ where: { id: req.params.id }, data: req.body });
+    
+    if (req.body.status === 'COMPLETED' && exists.status !== 'COMPLETED' && appt.value > 0) {
+      try {
+        await prisma.financial.create({
+          data: {
+            userId: req.user.id,
+            patientId: appt.patientId,
+            type: 'INCOME',
+            description: `Consulta - ${appt.title || 'Sessao'}`,
+            value: appt.value,
+            date: new Date(),
+            status: 'PAID',
+            method: 'Consulta'
+          }
+        });
+      } catch (finErr) {
+        console.error('Erro ao criar lancamento financeiro:', finErr);
+      }
+    }
+    
     res.json(appt);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao atualizar consulta' });
