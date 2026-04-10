@@ -9,16 +9,24 @@ function generateMeetLink() {
 
 async function list(req, res) {
   try {
-    const { date, patientId, status } = req.query;
+    const { date, startDate, endDate, patientId, status } = req.query;
     const where = { userId: req.user.id };
     if (patientId) where.patientId = patientId;
     if (status) where.status = status;
+    
     if (date) {
       const d = new Date(date);
       const start = new Date(d.setHours(0,0,0,0));
       const end = new Date(d.setHours(23,59,59,999));
       where.date = { gte: start, lte: end };
+    } else if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0,0,0,0);
+      const end = new Date(endDate);
+      end.setHours(23,59,59,999);
+      where.date = { gte: start, lte: end };
     }
+    
     const appointments = await prisma.appointment.findMany({
       where, orderBy: { date: 'asc' },
       include: { 
