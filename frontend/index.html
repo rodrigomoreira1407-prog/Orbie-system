@@ -454,6 +454,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <!-- APPOINTMENTS -->
     <div id="pg-appointments" class="page">
       <div class="ph"><div><div class="ptt">Agenda</div><div class="pst2" id="appt-date-title">Hoje</div></div><button class="abtn" onclick="openM('m-appt')">+ Nova</button></div>
+      <div id="appt-calendar" style="background:white;border-radius:11px;padding:14px;margin-bottom:12px;border:1px solid var(--bd)"></div>
       <input class="inp" id="appt-search" placeholder="🔍  Buscar por nome ou CPF do paciente..." style="margin-bottom:12px" oninput="filterAppointments()"/>
       <div class="tabs"><div class="tab on" onclick="loadAppointments('today',this)">Hoje</div><div class="tab" onclick="loadAppointments('week',this)">Semana</div><div class="tab" onclick="loadAppointments('all',this)">Todas</div></div>
       <div id="appt-list"><div style="text-align:center;padding:40px;color:var(--dm)">Carregando consultas...</div></div>
@@ -638,7 +639,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <div style="font-size:17px;font-weight:800;margin-bottom:4px">Nova Consulta</div>
     <div style="font-size:12px;color:var(--mt);margin-bottom:14px">Preencha os dados abaixo</div>
     <div class="fr"><label class="lbl">Paciente *</label><select class="sel" id="appt-pat"><option value="">Selecione o paciente...</option></select></div>
-    <div class="fg"><div><label class="lbl">Data *</label><input type="date" class="inp" id="appt-date"/></div><div><label class="lbl">Horário *</label><input type="time" class="inp" id="appt-time" value="09:00"/></div></div>
+    <div class="fg"><div><label class="lbl">Data *</label><input type="date" class="inp" id="appt-date" onchange="updateDayOfWeek()"/><div style="font-size:11px;color:var(--mt);margin-top:4px" id="appt-dow"></div></div><div><label class="lbl">Horário *</label><input type="time" class="inp" id="appt-time" value="09:00"/></div></div>
     <div class="fg"><div><label class="lbl">Duração (min)</label><input type="number" class="inp" id="appt-dur" value="50" min="15" step="5"/></div><div><label class="lbl">Valor (R$)</label><input type="number" class="inp" id="appt-val" value="150" min="0" step="10"/></div></div>
     <div class="fr"><label class="lbl">Tipo</label><select class="sel" id="appt-type"><option value="ONLINE">🎥 Online — Meet automático</option><option value="PRESENTIAL">🏢 Presencial</option></select></div>
     <div class="fr"><label class="lbl">Tipo de sessão</label><input class="inp" id="appt-title" value="Consulta" placeholder="TCC, Avaliação..."/></div>
@@ -1631,17 +1632,21 @@ async function viewPatient(id) {
 // ══════════════════════════════════════════════
 // APPOINTMENTS
 // ══════════════════════════════════════════════
-async function loadAppointments(filter, el) {
+async function loadAppointments(filter, el, specificDate) {
   if (el) setTab(el);
   try {
     var path = '/appointments';
     if (filter === 'today') {
       var today = new Date().toISOString().split('T')[0];
       path += '?date=' + today;
+    } else if (filter === 'day' && specificDate) {
+      path += '?date=' + specificDate;
     }
     STATE.appointments = await api('GET', path);
     renderAppointments(STATE.appointments);
     renderDashboardToday();
+    var today = new Date();
+    renderCalendar(today.getFullYear(), today.getMonth());
   } catch(e) { console.error('Load appointments:', e); }
 }
 
@@ -1683,6 +1688,57 @@ function renderAppointments(list) {
       (a.status === 'SCHEDULED' ? '<button class="btn br" style="font-size:11px;padding:8px 10px" onclick="updateApptStatus(\'' + a.id + '\',\'CANCELLED\')">✕ Cancelar</button>' : '') +
       '</div></div>';
   }).join('');
+}
+
+function renderCalendar(year, month) {
+  var cal = document.getElementById('appt-calendar');
+  var firstDay = new Date(year, month, 1);
+  var lastDay = new Date(year, month + 1, 0);
+  var daysInMonth = lastDay.getDate();
+  var startingDayOfWeek = firstDay.getDay();
+  
+  var monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  var dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  html += '<button class="btn bs" style="padding:6px 10px;font-size:11px" onclick="renderCalendar(' + (month === 0 ? year - 1 : year) + ', ' + (month === 0 ? 11 : month - 1) + ')">← Anterior</button>';
+  html += '<div style="font-weight:700;font-size:14px">' + monthNames[month] + ' ' + year + '</div>';
+  html += '<button class="btn bs" style="padding:6px 10px;font-size:11px" onclick="renderCalendar(' + (month === 11 ? year + 1 : year) + ', ' + (month === 11 ? 0 : month + 1) + ')">Próximo →</button>';
+  html += '</div>';
+  
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px">';
+  dayNames.forEach(function(d) { html += '<div style="text-align:center;font-weight:700;font-size:11px;padding:6px;color:var(--mt)">' + d + '</div>'; });
+  
+  for (var i = 0; i < startingDayOfWeek; i++) { html += '<div></div>'; }
+  
+  var today = new Date();
+  for (var day = 1; day <= daysInMonth; day++) {
+    var d = new Date(year, month, day);
+    var isToday = d.toDateString() === today.toDateString();
+    var hasAppointments = STATE.appointments && STATE.appointments.some(function(a) { return new Date(a.date).toDateString() === d.toDateString(); });
+    var bg = isToday ? 'background:#3b82f6;color:white' : (hasAppointments ? 'background:#f0fdf4;border:1px solid #86efac' : '');
+    html += '<div style="' + bg + ';text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" onclick="selectCalendarDate(' + year + ',' + month + ',' + day + ')">' + day + '</div>';
+  }
+  html += '</div>';
+  cal.innerHTML = html;
+}
+
+function selectCalendarDate(year, month, day) {
+  var date = new Date(year, month, day);
+  var dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+  loadAppointments('day', null, dateStr);
+}
+
+function updateDayOfWeek() {
+  var dateInput = document.getElementById('appt-date').value;
+  if (!dateInput) {
+    document.getElementById('appt-dow').textContent = '';
+    return;
+  }
+  var date = new Date(dateInput + 'T00:00:00');
+  var days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+  var dayName = days[date.getDay()];
+  document.getElementById('appt-dow').textContent = dayName;
 }
 
 async function createAppointment() {
