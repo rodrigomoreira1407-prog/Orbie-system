@@ -1902,8 +1902,17 @@ function renderCalendar(year, month) {
   for (var day = 1; day <= daysInMonth; day++) {
     var d = new Date(year, month, day);
     var isToday = d.toDateString() === today.toDateString();
-    var hasAppointments = STATE.appointments && STATE.appointments.some(function(a) { return new Date(a.date).toDateString() === d.toDateString(); });
-    var bg = isToday ? 'background:#3b82f6;color:white' : (hasAppointments ? 'background:#f0fdf4;border:1px solid #86efac' : '');
+    var dayAppointments = STATE.appointments && STATE.appointments.filter(function(a) { return new Date(a.date).toDateString() === d.toDateString() && a.status !== 'CANCELLED'; }) || [];
+    var hasAppointments = dayAppointments.length > 0;
+    var bg = '';
+    if (isToday) {
+      bg = 'background:#3b82f6;color:white';
+    } else if (hasAppointments) {
+      var firstAppointmentType = dayAppointments[0].type;
+      var typeColor = firstAppointmentType === 'ONLINE' ? '#3b82f6' : (firstAppointmentType === 'PRESENTIAL' ? '#10b981' : '#8b5cf6');
+      var typeBg = firstAppointmentType === 'ONLINE' ? '#eff6ff' : (firstAppointmentType === 'PRESENTIAL' ? '#f0fdf4' : '#f3e8ff');
+      bg = 'background:' + typeBg + ';border:2px solid ' + typeColor + ';color:' + typeColor + ';font-weight:700';
+    }
     html += '<div style="' + bg + ';text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" onclick="selectCalendarDate(' + year + ',' + month + ',' + day + ')">' + day + '</div>';
   }
   html += '</div>';
@@ -1938,8 +1947,17 @@ function renderCalendarWithFilter(filteredAppointments) {
   for (var day = 1; day <= daysInMonth; day++) {
     var d = new Date(year, month, day);
     var isToday = d.toDateString() === today.toDateString();
-    var hasFilteredAppointments = filteredAppointments && filteredAppointments.some(function(a) { return new Date(a.date).toDateString() === d.toDateString(); });
-    var bg = isToday ? 'background:#3b82f6;color:white' : (hasFilteredAppointments ? 'background:#fef08a;border:2px solid #facc15' : '');
+    var dayAppointments = filteredAppointments && filteredAppointments.filter(function(a) { return new Date(a.date).toDateString() === d.toDateString() && a.status !== 'CANCELLED'; }) || [];
+    var hasFilteredAppointments = dayAppointments.length > 0;
+    var bg = '';
+    if (isToday) {
+      bg = 'background:#3b82f6;color:white';
+    } else if (hasFilteredAppointments) {
+      var firstAppointmentType = dayAppointments[0].type;
+      var typeColor = firstAppointmentType === 'ONLINE' ? '#3b82f6' : (firstAppointmentType === 'PRESENTIAL' ? '#10b981' : '#8b5cf6');
+      var typeBg = firstAppointmentType === 'ONLINE' ? '#eff6ff' : (firstAppointmentType === 'PRESENTIAL' ? '#f0fdf4' : '#f3e8ff');
+      bg = 'background:' + typeBg + ';border:2px solid ' + typeColor + ';color:' + typeColor + ';font-weight:700';
+    }
     html += '<div style="' + bg + ';text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" onclick="selectCalendarDate(' + year + ',' + month + ',' + day + ')">' + day + '</div>';
   }
   html += '</div>';
