@@ -1653,6 +1653,12 @@ async function loadAppointments(filter, el, specificDate) {
 function renderAppointments(list) {
   var el = document.getElementById('appt-list');
   if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Nenhuma consulta encontrada</div>'; return; }
+  
+  var activeTab = document.querySelector('.tab.on');
+  if (activeTab && activeTab.textContent.trim() === 'Semana') {
+    renderAppointmentsAsColumns(list);
+    return;
+  }
   var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6'];
   el.innerHTML = list.map(function(a) {
     var patName = a.patient ? a.patient.name : 'Paciente';
@@ -1688,6 +1694,66 @@ function renderAppointments(list) {
       (a.status === 'SCHEDULED' ? '<button class="btn br" style="font-size:11px;padding:8px 10px" onclick="updateApptStatus(\'' + a.id + '\',\'CANCELLED\')">✕ Cancelar</button>' : '') +
       '</div></div>';
   }).join('');
+}
+
+function renderAppointmentsAsColumns(list) {
+  var el = document.getElementById('appt-list');
+  var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6'];
+  
+  // Agrupar consultas por data
+  var byDate = {};
+  list.forEach(function(a) {
+    var dateKey = new Date(a.date).toISOString().split('T')[0];
+    if (!byDate[dateKey]) byDate[dateKey] = [];
+    byDate[dateKey].push(a);
+  });
+  
+  // Ordenar datas
+  var dates = Object.keys(byDate).sort();
+  
+  // Renderizar colunas
+  var dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  var html = '<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:12px">';
+  
+  dates.forEach(function(dateKey) {
+    var date = new Date(dateKey + 'T00:00:00');
+    var dayName = dayNames[date.getDay()];
+    var dateStr = date.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+    var appointments = byDate[dateKey].sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+    
+    html += '<div style="flex-shrink:0;width:280px;background:white;border-radius:11px;border:1px solid var(--bd);overflow:hidden;display:flex;flex-direction:column">';
+    html += '<div style="background:linear-gradient(135deg, #3b82f6, #1e40af);color:white;padding:14px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1)">';
+    html += '<div style="font-weight:700;font-size:16px">' + dayName + '</div>';
+    html += '<div style="font-size:13px;opacity:0.9;margin-top:4px">' + dateStr + '</div>';
+    html += '</div>';
+    
+    html += '<div style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px">';
+    appointments.forEach(function(a) {
+      var patName = a.patient ? a.patient.name : 'Paciente';
+      var ini = patName.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+      var color = colors[patName.charCodeAt(0) % colors.length];
+      var dt = new Date(a.date);
+      var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+      var statusBadge = a.status === 'CONFIRMED' ? '<span class="bx bgn" style="font-size:10px">✓</span>' : a.status === 'COMPLETED' ? '<span class="bx bgr" style="font-size:10px">✓</span>' : a.status === 'CANCELLED' ? '<span class="bx brd" style="font-size:10px">✕</span>' : '<span class="bx bbl" style="font-size:10px">◯</span>';
+      
+      html += '<div style="background:#f8fafc;border-left:3px solid ' + color + ';border-radius:6px;padding:10px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background=\"#f1f5f9\"" onmouseout="this.style.background=\"#f8fafc\"">';
+      html += '<div style="font-weight:700;font-size:13px;color:' + color + ';margin-bottom:4px">' + timeStr + '</div>';
+      html += '<div style="display:flex;align-items:center;gap:6px">';
+      html += '<div class="av" style="background:' + color + ';width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:white;font-size:11px;font-weight:700">' + ini + '</div>';
+      html += '<div style="flex:1;min-width:0">';
+      html += '<div style="font-weight:600;font-size:12px;color:#1e293b;word-break:break-word">' + patName + '</div>';
+      html += '<div style="font-size:11px;color:var(--mt);margin-top:2px">' + a.duration + 'min · R$ ' + a.value.toFixed(2) + '</div>';
+      html += '</div>';
+      html += statusBadge;
+      html += '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '</div>';
+  });
+  
+  html += '</div>';
+  el.innerHTML = html;
 }
 
 function renderCalendar(year, month) {
