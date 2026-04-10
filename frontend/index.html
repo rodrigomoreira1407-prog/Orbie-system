@@ -512,7 +512,11 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
         </div>
         <div class="fr" style="margin-top:10px">
           <label class="lbl">Paciente (Opcional para Prontuários)</label>
-          <select class="sel" id="rep-pat-sel"><option value="">Todos os pacientes</option></select>
+          <div style="position:relative">
+            <input type="text" class="inp" id="rep-pat-search" placeholder="Buscar paciente por nome ou CPF..." style="width:100%;padding:10px" oninput="filterReportsPatients(this.value)" />
+            <div id="rep-pat-dropdown" class="rep-pat-dropdown hidden" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:6px;max-height:300px;overflow-y:auto;z-index:1000;box-shadow:0 4px 6px rgba(0,0,0,0.1)"></div>
+          </div>
+          <select class="sel" id="rep-pat-sel" style="display:none"><option value="">Todos os pacientes</option></select>
         </div>
       </div>
       <div class="g2">
@@ -1114,10 +1118,16 @@ async function init() {
 async function loadApp() {
   try {
     document.addEventListener('click', function(e) {
-      var dropdown = document.getElementById('rec-pat-dropdown');
-      var search = document.getElementById('rec-pat-search');
-      if (dropdown && search && !dropdown.contains(e.target) && !search.contains(e.target)) {
-        dropdown.classList.add('hidden');
+      var recDropdown = document.getElementById('rec-pat-dropdown');
+      var recSearch = document.getElementById('rec-pat-search');
+      if (recDropdown && recSearch && !recDropdown.contains(e.target) && !recSearch.contains(e.target)) {
+        recDropdown.classList.add('hidden');
+      }
+      
+      var repDropdown = document.getElementById('rep-pat-dropdown');
+      var repSearch = document.getElementById('rep-pat-search');
+      if (repDropdown && repSearch && !repDropdown.contains(e.target) && !repSearch.contains(e.target)) {
+        repDropdown.classList.add('hidden');
       }
     });
     
@@ -1484,6 +1494,45 @@ function selectRecordsPatient(patId, patName) {
   document.getElementById('rec-pat-sel').value = patId;
   document.getElementById('rec-pat-dropdown').classList.add('hidden');
   loadRecords();
+}
+
+function filterReportsPatients(query) {
+  var dropdown = document.getElementById('rep-pat-dropdown');
+  var search = document.getElementById('rep-pat-search');
+  var select = document.getElementById('rep-pat-sel');
+  
+  query = query.toLowerCase().trim();
+  
+  if (!query) {
+    dropdown.classList.add('hidden');
+    select.value = '';
+    return;
+  }
+  
+  var filtered = STATE.patients.filter(function(p) {
+    var name = (p.name || '').toLowerCase();
+    var cpf = (p.cpf || '').toLowerCase();
+    return name.indexOf(query) > -1 || cpf.indexOf(query) > -1;
+  });
+  
+  if (filtered.length === 0) {
+    dropdown.innerHTML = '<div style="padding:12px;text-align:center;color:#999;font-size:12px">Nenhum paciente encontrado</div>';
+    dropdown.classList.remove('hidden');
+    return;
+  }
+  
+  dropdown.innerHTML = filtered.map(function(p) {
+    var label = p.name + (p.cpf ? ' • ' + p.cpf : '') + (p.type === 'CHILD' ? ' (Infantil)' : '');
+    return '<div style="padding:10px;cursor:pointer;border-bottom:1px solid #eee;hover:background:#f5f5f5" onclick="selectReportsPatient(\''+p.id+'\', \''+p.name.replace(/'/g, "\\'")+'\')">' + label + '</div>';
+  }).join('');
+  
+  dropdown.classList.remove('hidden');
+}
+
+function selectReportsPatient(patId, patName) {
+  document.getElementById('rep-pat-search').value = patName;
+  document.getElementById('rep-pat-sel').value = patId;
+  document.getElementById('rep-pat-dropdown').classList.add('hidden');
 }
 
 async function createPatient() {
