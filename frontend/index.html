@@ -561,6 +561,22 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
         <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">💰</div><div style="font-size:13px;font-weight:700">Financeiro</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Receitas e despesas</div><button class="btn bp fw" style="font-size:11px" onclick="exportPDF('financial')">Gerar PDF</button></div>
         <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">📋</div><div style="font-size:13px;font-weight:700">Prontuários</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Evolução clínica</div><button class="btn bp fw" style="font-size:11px" onclick="exportPDF('records')">Gerar PDF</button></div>
       </div>
+      <div class="card" style="margin-top:12px;border:2px solid #8b5cf6;background:#f3e8ff">
+        <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#7c3aed">Meu Contador</div>
+        <div style="font-size:12px;color:#6b21a8;margin-bottom:12px">Configure os dados do seu contador para facilitar a emissão de notas fiscais</div>
+        <div class="fg">
+          <div><label class="lbl">Nome do Contador</label><input type="text" class="inp" id="acc-name" placeholder="Nome completo"/></div>
+          <div><label class="lbl">E-mail do Contador</label><input type="email" class="inp" id="acc-email" placeholder="contador@email.com"/></div>
+        </div>
+        <div class="fg" style="margin-top:10px">
+          <div><label class="lbl">De</label><input type="date" class="inp" id="acc-from"/></div>
+          <div><label class="lbl">Até</label><input type="date" class="inp" id="acc-to"/></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn bp fw" style="font-size:11px" onclick="saveAccountantData()">Salvar Dados</button>
+          <button class="btn bg2 fw" style="font-size:11px" onclick="exportAccountantReport()">Exportar para Contador</button>
+        </div>
+      </div>
     </div>
 
     <!-- SETTINGS -->
@@ -2603,6 +2619,73 @@ function toast(msg) {
   if (repFrom) { repFrom.value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]; }
   var repTo = document.getElementById('rep-to');
   if (repTo) repTo.value = now.toISOString().split('T')[0];
+})();
+
+// ══════════════════════════════════════════════
+// CONTADOR FUNCTIONS
+// ══════════════════════════════════════════════
+
+function saveAccountantData() {
+  var name = document.getElementById('acc-name').value.trim();
+  var email = document.getElementById('acc-email').value.trim();
+  if (!name || !email) { toast('Preencha nome e e-mail do contador'); return; }
+  STATE.accountant = { name: name, email: email };
+  localStorage.setItem('orbie_accountant', JSON.stringify(STATE.accountant));
+  toast('✅ Dados do contador salvos!');
+}
+
+function exportAccountantReport() {
+  var from = document.getElementById('acc-from').value;
+  var to = document.getElementById('acc-to').value;
+  if (!from || !to) { toast('Selecione o período'); return; }
+  
+  var startDate = new Date(from);
+  var endDate = new Date(to);
+  endDate.setHours(23, 59, 59, 999);
+  
+  var appointments = STATE.appointments.filter(function(a) {
+    var d = new Date(a.date);
+    return d >= startDate && d <= endDate && a.status === 'COMPLETED';
+  });
+  
+  var totalRevenue = appointments.reduce(function(sum, a) { return sum + (a.value || 0); }, 0);
+  var csv = 'RELATÓRIO DE FATURAMENTO PARA CONTADOR\n';
+  csv += 'Período: ' + from + ' a ' + to + '\n';
+  csv += 'Data de Geração: ' + new Date().toLocaleDateString('pt-BR') + '\n';
+  if (STATE.accountant) csv += 'Contador: ' + STATE.accountant.name + ' (' + STATE.accountant.email + ')\n';
+  csv += '\n';
+  csv += 'RESUMO\n';
+  csv += 'Total de Consultas Realizadas,' + appointments.length + '\n';
+  csv += 'Faturamento Total,R$ ' + totalRevenue.toFixed(2) + '\n';
+  csv += '\n';
+  csv += 'DETALHAMENTO\n';
+  csv += 'Data,Paciente,Tipo,Duração (min),Valor\n';
+  
+  appointments.forEach(function(a) {
+    var dt = new Date(a.date).toLocaleDateString('pt-BR');
+    var pat = a.patient ? a.patient.name : 'Paciente';
+    var type = a.type === 'ONLINE' ? 'Online' : 'Presencial';
+    csv += dt + ',' + pat + ',' + type + ',' + a.duration + ',R$ ' + a.value.toFixed(2) + '\n';
+  });
+  
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'relatorio_contador_' + from + '_' + to + '.csv';
+  link.click();
+  toast('✅ Relatório exportado para ' + (STATE.accountant ? STATE.accountant.email : 'download'));
+}
+
+// Load accountant data on init
+(function() {
+  var saved = localStorage.getItem('orbie_accountant');
+  if (saved) {
+    STATE.accountant = JSON.parse(saved);
+    if (document.getElementById('acc-name')) {
+      document.getElementById('acc-name').value = STATE.accountant.name || '';
+      document.getElementById('acc-email').value = STATE.accountant.email || '';
+    }
+  }
 })();
 
 // Enter key support
