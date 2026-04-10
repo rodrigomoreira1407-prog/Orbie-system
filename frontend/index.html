@@ -444,7 +444,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
       <div class="chips" id="pat-chips">
         <div class="chip on" onclick="filterByType('',this)">Todos</div>
         <div class="chip" onclick="filterByType('ADULT',this)">🧑 Adultos</div>
-        <div class="chip" onclick="filterByType('CHILD',this)">👶 Infantil</div>
+        <div class="chip" onclick="filterByType('CHILD',this)">Infantojuvenil</div>
         <div class="chip" onclick="filterByStatus('ACTIVE',this)">Ativos</div>
         <div class="chip" onclick="filterByStatus('INACTIVE',this)">Inativos</div>
       </div>
@@ -601,7 +601,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <div class="mbar"></div>
     <div style="font-size:17px;font-weight:800;margin-bottom:4px">Novo Paciente</div>
     <div style="font-size:12px;color:var(--mt);margin-bottom:14px">Preencha os dados do paciente</div>
-    <div class="tabs"><div class="tab on" onclick="swPT('ADULT',this)">🧑 Adulto</div><div class="tab" onclick="swPT('CHILD',this)">👶 Infantil</div></div>
+    <div class="tabs"><div class="tab on" onclick="swPT('ADULT',this)">Adulto</div><div class="tab" onclick="swPT('CHILD',this)">Infantojuvenil</div></div>
     <input type="hidden" id="npat-type" value="ADULT"/>
     <div class="fr"><label class="lbl">Nome completo *</label><input class="inp" id="npat-name" placeholder="Nome do paciente"/></div>
     <div class="fg"><div><label class="lbl">CPF</label><input class="inp" id="npat-cpf" placeholder="000.000.000-00"/></div><div><label class="lbl">RG</label><input class="inp" id="npat-rg" placeholder="00.000.000-0"/></div></div>
@@ -616,7 +616,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
       <div style="flex:1"><label class="lbl">CEP</label><input class="inp" id="npat-address-cep" placeholder="00000-000"/></div>
     </div>
     <div id="npat-child-fields" class="hidden">
-      <div class="sdv" style="color:#0891b2;border-color:rgba(8,145,178,.15)">👩 Responsável Principal</div>
+      <div class="sdv" style="color:#0891b2;border-color:rgba(8,145,178,.15)">Responsável Principal</div>
       <div class="fg"><div><label class="lbl">Nome *</label><input class="inp" id="npat-r1n" placeholder="Nome do responsável"/></div><div><label class="lbl">Parentesco</label><input class="inp" id="npat-r1r" placeholder="Mãe, Pai..."/></div></div>
       <div class="fg"><div><label class="lbl">Telefone *</label><input class="inp" id="npat-r1p" placeholder="(11) 99999-9999"/></div><div><label class="lbl">CPF</label><input class="inp" id="npat-r1c" placeholder="000.000.000-00"/></div></div>
     </div>
@@ -665,7 +665,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     </div>
     <div id="ai-load" class="hidden"><div style="background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.2);border-radius:11px;padding:14px;text-align:center;margin-bottom:12px"><div class="spin" style="font-size:22px;margin-bottom:6px;display:block">⚙️</div><div style="font-size:13px;font-weight:600;color:#7c3aed">IA processando...</div></div></div>
     <div id="ai-res" class="hidden"><div class="aibox" style="margin-bottom:12px"><div class="ailbl">🤖 Prontuário gerado — revise e aplique</div><div id="ai-txt" style="font-size:12px;color:#3b0764;line-height:1.7;white-space:pre-wrap;max-height:180px;overflow-y:auto"></div><div style="display:flex;gap:8px;margin-top:10px"><button class="btn bai2" style="flex:1;font-size:11px" onclick="useAI()">✓ Usar</button><button class="btn bs" style="font-size:11px" onclick="callAI()">↺ Regenerar</button></div></div></div>
-    <div class="fr"><label class="lbl">Humor: <span id="mv">7</span>/10</label><div class="mood"><div class="md" onclick="setMood(1)">😞</div><div class="md" onclick="setMood(2)">😟</div><div class="md" onclick="setMood(3)">😐</div><div class="md" onclick="setMood(4)">🙂</div><div class="md" onclick="setMood(5)">😊</div><div class="md" onclick="setMood(6)">😄</div><div class="md on" onclick="setMood(7)">😁</div><div class="md" onclick="setMood(8)">🤩</div><div class="md" onclick="setMood(9)">🥳</div><div class="md" onclick="setMood(10)">🌟</div></div></div>
+
     <div class="fg"><div><label class="lbl">Técnicas</label><input class="inp" id="rec-tech" placeholder="TCC, Mindfulness..."/></div><div><label class="lbl">Evolução</label><input class="inp" id="rec-evol" placeholder="Positiva, estável..."/></div></div>
     <div class="fg"><div><label class="lbl">Próx. sessão</label><input class="inp" id="rec-goals" placeholder="Objetivos..."/></div><div><label class="lbl">Riscos</label><input class="inp" id="rec-risks" placeholder="Nenhum..."/></div></div>
     <div id="rec-err" class="auth-err hidden"></div>
@@ -698,8 +698,8 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <div style="font-size:17px;font-weight:800;margin-bottom:4px">Anamnese</div>
     <div style="font-size:12px;color:var(--mt);margin-bottom:14px" id="anam-type-label">Anamnese do Paciente</div>
     <div class="tabs" style="margin-bottom:14px">
-      <div class="tab on" onclick="swAnamType('ADULT',this)">👤 Adulto</div>
-      <div class="tab" onclick="swAnamType('CHILD',this)">👶 Infantil</div>
+      <div class="tab on" onclick="swAnamType('ADULT',this)">Adulto</div>
+      <div class="tab" onclick="swAnamType('CHILD',this)">Infantojuvenil</div>
     </div>
     <input type="hidden" id="anam-type" value="ADULT"/>
     <div id="anam-form-container"></div>
@@ -1396,7 +1396,7 @@ function renderPatients(list) {
       '<div style="flex:1;min-width:0">' +
       '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700">' + p.name + '</span>' +
       '<span class="bx ' + (p.status === 'ACTIVE' ? 'bgn' : 'bgr') + '">' + (p.status === 'ACTIVE' ? 'Ativo' : 'Inativo') + '</span>' +
-      (p.type === 'CHILD' ? '<span class="bx bcy">Infantil</span>' : '') + '</div>' +
+      (p.type === 'CHILD' ? '<span class="bx bcy">Infantojuvenil</span>' : '') + '</div>' +
       '<div class="rs" style="margin-top:3px">' + (p.phone || p.email || '—') + '</div>' +
       (p.cpf ? '<div class="rs">CPF: ' + p.cpf + '</div>' : '') +
       '</div></div>' +
@@ -1445,7 +1445,7 @@ function populatePatientSelects() {
     STATE.patients.forEach(function(p) {
       var opt = document.createElement('option');
       opt.value = p.id;
-      opt.textContent = p.name + (p.type === 'CHILD' ? ' (Infantil)' : '');
+      opt.textContent = p.name + (p.type === 'CHILD' ? ' (Infantojuvenil)' : '');
       el.appendChild(opt);
     });
   });
@@ -1482,7 +1482,7 @@ function filterRecordsPatients(query) {
   }
   
   dropdown.innerHTML = filtered.map(function(p) {
-    var label = p.name + (p.cpf ? ' • ' + p.cpf : '') + (p.type === 'CHILD' ? ' (Infantil)' : '');
+    var label = p.name + (p.cpf ? ' • ' + p.cpf : '') + (p.type === 'CHILD' ? ' (Infantojuvenil)' : '');
     return '<div style="padding:10px;cursor:pointer;border-bottom:1px solid #eee;hover:background:#f5f5f5" onclick="selectRecordsPatient(\''+p.id+'\', \''+p.name.replace(/'/g, "\\'")+'\')">' + label + '</div>';
   }).join('');
   
@@ -1522,7 +1522,7 @@ function filterReportsPatients(query) {
   }
   
   dropdown.innerHTML = filtered.map(function(p) {
-    var label = p.name + (p.cpf ? ' • ' + p.cpf : '') + (p.type === 'CHILD' ? ' (Infantil)' : '');
+    var label = p.name + (p.cpf ? ' • ' + p.cpf : '') + (p.type === 'CHILD' ? ' (Infantojuvenil)' : '');
     return '<div style="padding:10px;cursor:pointer;border-bottom:1px solid #eee;hover:background:#f5f5f5" onclick="selectReportsPatient(\''+p.id+'\', \''+p.name.replace(/'/g, "\\'")+'\')">' + label + '</div>';
   }).join('');
   
@@ -1605,7 +1605,7 @@ async function viewPatient(id) {
   var h = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">' +
     '<div class="av avl" style="background:' + color + '">' + ini + '</div>' +
     '<div style="flex:1"><div style="font-size:17px;font-weight:800">' + p.name + '</div>' +
-    '<div style="font-size:12px;color:var(--mt);margin-top:2px">' + (p.birthDate ? new Date(p.birthDate).getFullYear() : '—') + ' · ' + (p.type === 'CHILD' ? 'Infantil' : 'Adulto') + '</div></div>' +
+      '<div style="font-size:12px;color:var(--mt);margin-top:2px">' + (p.birthDate ? new Date(p.birthDate).getFullYear() : '—') + ' · ' + (p.type === 'CHILD' ? 'Infantojuvenil' : 'Adulto') + '</div></div>' +
     '<span class="bx ' + (p.status === 'ACTIVE' ? 'bgn' : 'bgr') + '">' + (p.status === 'ACTIVE' ? 'Ativo' : 'Inativo') + '</span></div>' +
     '<div class="tabs"><div class="tab on" onclick="swPTab(\'info\',this)">Info</div></div>' +
     '<div id="ptab-info" class="ptab">' +
@@ -1893,7 +1893,7 @@ async function loadAnamnesis() {
     }
     // Render anamnesis view
     let h = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div style="font-size:14px;font-weight:700">Anamnese ${anam.type === 'ADULT' ? 'Adulto' : 'Infantil'}</div>
+      <div style="font-size:14px;font-weight:700">Anamnese ${anam.type === 'ADULT' ? 'Adulto' : 'Infantojuvenil'}</div>
       <button class="btn bs" style="font-size:11px;padding:6px 12px" onclick="openAnamModal('${anam.type}', true)">✎ Editar</button>
     </div>`;
     const template = ANAMNESIS_FORMS[anam.type];
@@ -2120,7 +2120,7 @@ async function exportPDF(type) {
       title = 'Relatório de Pacientes';
       head = [['Nome', 'Tipo', 'Telefone', 'E-mail', 'CPF']];
       const data = await api('GET', '/patients');
-      body = data.map(p => [p.name, p.type === 'ADULT' ? 'Adulto' : 'Infantil', p.phone || '-', p.email || '-', p.cpf || '-']);
+      body = data.map(p => [p.name, p.type === 'ADULT' ? 'Adulto' : 'Infantojuvenil', p.phone || '-', p.email || '-', p.cpf || '-']);
     } else if (type === 'appointments') {
       title = 'Relatório de Consultas';
       head = [['Data', 'Paciente', 'Tipo', 'Valor', 'Status']];
@@ -2216,7 +2216,7 @@ function renderDashboardPatients() {
     var color = colors[p.name.charCodeAt(0) % colors.length];
     return '<div class="row" onclick="viewPatient(\'' + p.id + '\')" style="cursor:pointer">' +
       '<div class="av avs" style="background:' + color + '">' + ini + '</div>' +
-      '<div class="ri"><div class="rn">' + p.name + '</div><div class="rs">' + (p.type === 'CHILD' ? 'Infantil' : 'Adulto') + (p._count ? ' · ' + p._count.appointments + ' sessões' : '') + '</div></div>' +
+      '<div class="ri"><div class="rn">' + p.name + '</div><div class="rs">' + (p.type === 'CHILD' ? 'Infantojuvenil' : 'Adulto') + (p._count ? ' · ' + p._count.appointments + ' sessões' : '') + '</div></div>' +
       '<span class="bx ' + (p.status === 'ACTIVE' ? 'bgn' : 'bgr') + '">' + (p.status === 'ACTIVE' ? 'Ativo' : 'Inativo') + '</span></div>';
   }).join('');
   el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;font-weight:700">👥 Pacientes Recentes</div><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go(\'patients\',null)">Ver todos →</button></div>' + (rows || '<div style="text-align:center;padding:20px;color:var(--dm);font-size:13px">Nenhum paciente cadastrado</div>');
@@ -2258,11 +2258,6 @@ async function savePassword() {
 // ══════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════
-function setMood(v) {
-  document.getElementById('mv').textContent = v;
-  document.querySelectorAll('.md').forEach(function(d,i){ d.classList.toggle('on', i+1===v); });
-}
-
 var _tt = null;
 function toast(msg) {
   var el = document.getElementById('toast');
