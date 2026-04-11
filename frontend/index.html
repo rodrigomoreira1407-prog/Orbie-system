@@ -566,11 +566,30 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
         <div style="font-size:12px;color:#6b21a8;margin-bottom:12px">Configure os dados do seu contador para facilitar a emissão de notas fiscais</div>
         <div class="fg">
           <div><label class="lbl">Nome do Contador</label><input type="text" class="inp" id="acc-name" placeholder="Nome completo"/></div>
-          <div><label class="lbl">E-mail do Contador</label><input type="email" class="inp" id="acc-email" placeholder="contador@email.com"/></div>
+          <div><label class="lbl">WhatsApp do Contador</label><input type="tel" class="inp" id="acc-whatsapp" placeholder="(11) 99999-9999"/></div>
         </div>
         <div class="fg" style="margin-top:10px">
           <div><label class="lbl">De</label><input type="date" class="inp" id="acc-from"/></div>
           <div><label class="lbl">Até</label><input type="date" class="inp" id="acc-to"/></div>
+        </div>
+        <div style="margin-top:10px">
+          <label class="lbl">Paciente</label>
+          <div style="position:relative">
+            <input type="text" class="inp" id="inv-pat-search" placeholder="Buscar paciente por nome ou CPF..." style="width:100%;padding:10px" oninput="filterInvoicePatients(this.value)" />
+            <div id="inv-pat-dropdown" class="inv-pat-dropdown hidden" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:6px;max-height:300px;overflow-y:auto;z-index:1000;box-shadow:0 4px 6px rgba(0,0,0,0.1)"></div>
+          </div>
+        </div>
+        <div id="invoice-form" class="hidden" style="margin-top:12px;padding:12px;background:white;border-radius:6px;border:1px solid #ddd">
+          <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#333">Formulário para Nota Fiscal</div>
+          <div class="fr"><label class="lbl">Data da prestação do serviço</label><input type="text" class="inp" id="inv-dates" readonly/></div>
+          <div class="fr"><label class="lbl">Valor total dos serviços</label><input type="text" class="inp" id="inv-total" readonly/></div>
+          <div class="fr"><label class="lbl">Nome</label><input type="text" class="inp" id="inv-name" readonly/></div>
+          <div class="fr"><label class="lbl">CPF do cliente</label><input type="text" class="inp" id="inv-cpf" readonly/></div>
+          <div class="fr"><label class="lbl">Descrição do serviço</label><textarea class="inp" id="inv-desc" readonly style="resize:none;height:80px"></textarea></div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn bp fw" style="font-size:11px" onclick="sendInvoiceWhatsApp()">Enviar via WhatsApp</button>
+            <button class="btn bg2 fw" style="font-size:11px" onclick="copyInvoiceText()">Copiar Texto</button>
+          </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:12px">
           <button class="btn bp fw" style="font-size:11px" onclick="saveAccountantData()">Salvar Dados</button>
@@ -2676,6 +2695,82 @@ function exportAccountantReport() {
   toast('✅ Relatório exportado para ' + (STATE.accountant ? STATE.accountant.email : 'download'));
 }
 
+function filterInvoicePatients(query) {
+  var dropdown = document.getElementById('inv-pat-dropdown');
+  if (!query.trim()) { dropdown.classList.add('hidden'); return; }
+  var filtered = STATE.patients.filter(function(p) {
+    return p.name.toLowerCase().includes(query.toLowerCase()) || (p.cpf && p.cpf.includes(query));
+  });
+  dropdown.innerHTML = filtered.map(function(p) {
+    return '<div style="padding:8px;border-bottom:1px solid #eee;cursor:pointer" onclick="selectInvoicePatient(\'' + p.id + '\')"><div style="font-weight:600">' + p.name + '</div><div style="font-size:11px;color:#666">' + (p.cpf || 'Sem CPF') + '</div></div>';
+  }).join('');
+  dropdown.classList.toggle('hidden', filtered.length === 0);
+}
+
+function selectInvoicePatient(patientId) {
+  var patient = STATE.patients.find(function(p) { return p.id === patientId; });
+  if (!patient) return;
+  document.getElementById('inv-pat-search').value = patient.name;
+  document.getElementById('inv-pat-dropdown').classList.add('hidden');
+  
+  var from = document.getElementById('acc-from').value;
+  var to = document.getElementById('acc-to').value;
+  if (!from || !to) { toast('Selecione o periodo primeiro'); return; }
+  
+  var startDate = new Date(from);
+  var endDate = new Date(to);
+  endDate.setHours(23, 59, 59, 999);
+  
+  var appointments = STATE.appointments.filter(function(a) {
+    var d = new Date(a.date);
+    return a.patientId === patientId && d >= startDate && d <= endDate && a.status === 'COMPLETED';
+  });
+  
+  if (appointments.length === 0) { toast('Nenhuma consulta encontrada para este paciente no periodo'); return; }
+  
+  var dates = appointments.map(function(a) { return new Date(a.date).toLocaleDateString('pt-BR'); }).join(' e ');
+  var total = appointments.reduce(function(sum, a) { return sum + (a.value || 0); }, 0);
+  var desc = 'Datas das sessoes:\n';
+  appointments.forEach(function(a) {
+    desc += '- ' + new Date(a.date).toLocaleDateString('pt-BR') + ' - R$ ' + a.value.toFixed(2) + '\n';
+  });
+  
+  document.getElementById('inv-dates').value = dates;
+  document.getElementById('inv-total').value = 'R$ ' + total.toFixed(2);
+  document.getElementById('inv-name').value = patient.name;
+  document.getElementById('inv-cpf').value = patient.cpf || 'Nao informado';
+  document.getElementById('inv-desc').value = desc;
+  document.getElementById('invoice-form').classList.remove('hidden');
+}
+
+function sendInvoiceWhatsApp() {
+  var whatsapp = document.getElementById('acc-whatsapp').value.trim();
+  if (!whatsapp) { toast('Preencha o WhatsApp do contador'); return; }
+  var text = buildInvoiceText();
+  var encoded = encodeURIComponent(text);
+  var url = 'https://wa.me/' + whatsapp.replace(/\D/g, '') + '?text=' + encoded;
+  window.open(url, '_blank');
+}
+
+function copyInvoiceText() {
+  var text = buildInvoiceText();
+  navigator.clipboard.writeText(text).then(function() { toast('Texto copiado!'); });
+}
+
+function buildInvoiceText() {
+  var dates = document.getElementById('inv-dates').value;
+  var total = document.getElementById('inv-total').value;
+  var name = document.getElementById('inv-name').value;
+  var cpf = document.getElementById('inv-cpf').value;
+  var desc = document.getElementById('inv-desc').value;
+  return '*NOTA FISCAL - SERVICOS PSICOLOGICOS*\n\n' +
+    'Data da prestacao do servico: ' + dates + '\n' +
+    'Valor total dos servicos: ' + total + '\n' +
+    'Nome: ' + name + '\n' +
+    'CPF do cliente: ' + cpf + '\n' +
+    'Descricao do servico:\n' + desc;
+}
+
 // Load accountant data on init
 (function() {
   var saved = localStorage.getItem('orbie_accountant');
@@ -2683,7 +2778,7 @@ function exportAccountantReport() {
     STATE.accountant = JSON.parse(saved);
     if (document.getElementById('acc-name')) {
       document.getElementById('acc-name').value = STATE.accountant.name || '';
-      document.getElementById('acc-email').value = STATE.accountant.email || '';
+      document.getElementById('acc-whatsapp').value = STATE.accountant.whatsapp || '';
     }
   }
 })();
