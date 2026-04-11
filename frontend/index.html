@@ -585,6 +585,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
           <div class="fr"><label class="lbl">CPF</label><input type="text" class="inp" id="inv-cpf" readonly/></div>
           <div class="fr"><label class="lbl">Data das sessões realizadas e pagas</label><input type="text" class="inp" id="inv-dates" readonly/></div>
           <div class="fr"><label class="lbl">Valor total</label><input type="text" class="inp" id="inv-total" readonly/></div>
+          <div class="fr"><label class="lbl">Descrição do serviço</label><textarea class="inp" id="inv-desc" style="resize:none;height:60px" readonly placeholder="Datas das sessões e valores"></textarea></div>
           <div class="fr"><label class="lbl">Obs da NF</label><textarea class="inp" id="inv-obs" style="resize:none;height:60px" placeholder="Observações para a nota fiscal"></textarea></div>
           <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
             <button class="btn bp fw" style="font-size:11px;background:#25D366;border:none;display:flex;align-items:center;gap:6px" onclick="sendInvoiceWhatsApp()">📱 WhatsApp</button>
@@ -2544,6 +2545,7 @@ function renderDashboard() {
 }
 
 function renderDashboardToday() {
+  updateProgressAndNext();
   var el = document.getElementById('dash-today');
   if (!STATE.appointments.length) {
     el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;font-weight:700">📅 Consultas Hoje</div><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go(\'appointments\',null)">Ver agenda →</button></div>' +
@@ -2716,7 +2718,7 @@ function filterInvoicePatients(query) {
   dropdown.classList.toggle('hidden', filtered.length === 0);
 }
 
-function selectInvoicePatient(patientId) {
+async function selectInvoicePatient(patientId) {
   var patient = STATE.patients.find(function(p) { return p.id === patientId; });
   if (!patient) return;
   document.getElementById('inv-pat-search').value = patient.name;
@@ -2730,24 +2732,40 @@ function selectInvoicePatient(patientId) {
   var endDate = new Date(to);
   endDate.setHours(23, 59, 59, 999);
   
+  // Tenta buscar do STATE primeiro, mas se não encontrar, busca da API para o período
   var appointments = STATE.appointments.filter(function(a) {
     var d = new Date(a.date);
     return a.patientId === patientId && d >= startDate && d <= endDate && a.status === 'COMPLETED';
   });
   
-  if (appointments.length === 0) { toast('Nenhuma consulta encontrada para este paciente no periodo'); return; }
+  if (appointments.length === 0) {
+    try {
+      var path = '/appointments?patientId=' + patientId + '&startDate=' + from + '&endDate=' + to;
+      var fetched = await api('GET', path);
+      appointments = fetched.filter(function(a) { return a.status === 'COMPLETED'; });
+    } catch(e) { console.error('Fetch appointments for invoice:', e); }
+  }
   
-  var dates = appointments.map(function(a) { return new Date(a.date).toLocaleDateString('pt-BR'); }).join(' e ');
+  if (appointments.length === 0) { 
+    toast('Nenhuma consulta concluída encontrada para este paciente no período'); 
+    document.getElementById('invoice-form').classList.add('hidden');
+    return; 
+  }
+  
+  // Ordenar por data
+  appointments.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+  
+  var dates = appointments.map(function(a) { return new Date(a.date).toLocaleDateString('pt-BR'); }).join(', ');
   var total = appointments.reduce(function(sum, a) { return sum + (a.value || 0); }, 0);
-  var desc = 'Datas das sessoes:\n';
+  var desc = 'Datas das sessões:\n';
   appointments.forEach(function(a) {
-    desc += '- ' + new Date(a.date).toLocaleDateString('pt-BR') + ' - R$ ' + a.value.toFixed(2) + '\n';
+    desc += '- ' + new Date(a.date).toLocaleDateString('pt-BR') + ' - R$ ' + (a.value || 0).toFixed(2) + '\n';
   });
   
   document.getElementById('inv-dates').value = dates;
   document.getElementById('inv-total').value = 'R$ ' + total.toFixed(2);
   document.getElementById('inv-name').value = patient.name;
-  document.getElementById('inv-cpf').value = patient.cpf || 'Nao informado';
+  document.getElementById('inv-cpf').value = patient.cpf || 'Não informado';
   document.getElementById('inv-desc').value = desc;
   document.getElementById('invoice-form').classList.remove('hidden');
 }
@@ -2776,11 +2794,13 @@ function generateInvoicePDF() {
   var html = '<html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;margin:20px;color:#333}h1{text-align:center;color:#7c3aed}table{width:100%;border-collapse:collapse;margin:20px 0}td{padding:8px;border-bottom:1px solid #ddd}label{font-weight:bold;color:#555}.label{width:30%}.value{width:70%}.total{font-weight:bold;font-size:16px;color:#7c3aed}</style></head><body>';
   html += '<h1>NOTA FISCAL - SERVICOS PSICOLOGICOS</h1>';
   html += '<table>';
+  var desc = document.getElementById('inv-desc').value;
   html += '<tr><td class="label">Nome completo:</td><td class="value">' + name + '</td></tr>';
   html += '<tr><td class="label">CPF:</td><td class="value">' + cpf + '</td></tr>';
-  html += '<tr><td class="label">Data das sessoes realizadas e pagas:</td><td class="value">' + dates + '</td></tr>';
+  html += '<tr><td class="label">Data das sessões realizadas e pagas:</td><td class="value">' + dates + '</td></tr>';
   html += '<tr><td class="label">Valor total:</td><td class="value total">' + total + '</td></tr>';
-  if (obs.trim()) html += '<tr><td class="label">Observacoes:</td><td class="value">' + obs.replace(/\n/g, '<br/>') + '</td></tr>';
+  html += '<tr><td class="label">Descrição do serviço:</td><td class="value">' + desc.replace(/\n/g, '<br/>') + '</td></tr>';
+  if (obs.trim()) html += '<tr><td class="label">Observações:</td><td class="value">' + obs.replace(/\n/g, '<br/>') + '</td></tr>';
   html += '</table>';
   html += '<p style="font-size:11px;color:#999;text-align:center;margin-top:40px">Documento gerado automaticamente pelo Orbie System</p>';
   html += '</body></html>';
@@ -2798,13 +2818,15 @@ function buildInvoiceText() {
   var total = document.getElementById('inv-total').value;
   var name = document.getElementById('inv-name').value;
   var cpf = document.getElementById('inv-cpf').value;
+  var desc = document.getElementById('inv-desc').value;
   var obs = document.getElementById('inv-obs').value;
-  return '*NOTA FISCAL - SERVICOS PSICOLOGICOS*\n\n' +
+  return '*NOTA FISCAL - SERVIÇOS PSICOLÓGICOS*\n\n' +
     'Nome completo: ' + name + '\n' +
     'CPF: ' + cpf + '\n' +
-    'Data das sessoes realizadas e pagas: ' + dates + '\n' +
-    'Valor total: ' + total + '\n' +
-    (obs.trim() ? 'Observacoes: ' + obs + '\n' : '');
+    'Data das sessões realizadas e pagas: ' + dates + '\n' +
+    'Valor total: ' + total + '\n\n' +
+    'Descrição do serviço:\n' + desc + '\n' +
+    (obs.trim() ? 'Observações: ' + obs + '\n' : '');
 }
 
 // Load accountant data on init
