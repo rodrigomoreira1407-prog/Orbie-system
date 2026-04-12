@@ -517,8 +517,8 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
       <div id="rec-complaint" class="rec-tab hidden">
         <div class="card">
           <div style="font-size:14px;font-weight:700;margin-bottom:12px">💬 Queixa Principal e Observações</div>
-          <div class="fr"><label class="lbl">Queixa Principal</label><textarea class="inp" id="clin-complaint" style="resize:none;height:100px" placeholder="Descreva a queixa principal do paciente..."></textarea></div>
-          <div class="fr"><label class="lbl">Observações Clínicas</label><textarea class="inp" id="clin-obs" style="resize:none;height:100px" placeholder="Observações gerais sobre o caso..."></textarea></div>
+          <div class="fr"><label class="lbl" style="display:flex;justify-content:space-between;align-items:center">Queixa Principal <button type="button" class="btn" style="font-size:12px;padding:4px 10px;background:#f0f4f8;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:6px" onclick="toggleVoiceInput('clin-complaint')"><span id="clin-complaint-voice-icon">🎙️</span> <span id="clin-complaint-voice-text">Ditar</span></button></label><textarea class="inp" id="clin-complaint" style="resize:none;height:100px" placeholder="Descreva a queixa principal do paciente..."></textarea></div>
+          <div class="fr"><label class="lbl" style="display:flex;justify-content:space-between;align-items:center">Observações Clínicas <button type="button" class="btn" style="font-size:12px;padding:4px 10px;background:#f0f4f8;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:6px" onclick="toggleVoiceInput('clin-obs')"><span id="clin-obs-voice-icon">🎙️</span> <span id="clin-obs-voice-text">Ditar</span></button></label><textarea class="inp" id="clin-obs" style="resize:none;height:100px" placeholder="Observações gerais sobre o caso..."></textarea></div>
           <button class="btn bp fw" onclick="saveClinicalInfo()">Salvar Informações</button>
         </div>
       </div>
@@ -732,7 +732,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <div id="ai-badge" class="al alai hidden" style="margin-bottom:14px"><span style="font-size:20px">🤖</span><div><div style="font-size:12px;font-weight:700;color:#5b21b6">IA disponível — Plano PRO</div><div style="font-size:11px;color:#7c3aed;margin-top:2px">Descreva a sessão e a IA estrutura o prontuário</div></div></div>
     <div class="fg"><div><label class="lbl">Paciente *</label><select class="sel" id="rec-pat-new"><option value="">Selecione...</option></select></div><div><label class="lbl">Data</label><input type="datetime-local" class="inp" id="rec-date"/></div></div>
     <div class="fr">
-      <label class="lbl">Conteúdo da sessão *</label>
+      <label class="lbl" style="display:flex;justify-content:space-between;align-items:center">Conteúdo da sessão * <button type="button" class="btn" style="font-size:12px;padding:4px 10px;background:#f0f4f8;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:6px" onclick="toggleVoiceInput('rc')"><span id="rc-voice-icon">🎙️</span> <span id="rc-voice-text">Ditar</span></button></label>
       <textarea id="rc" class="inp" style="resize:none;height:90px" placeholder="Descreva o que foi trabalhado na sessão..."></textarea>
       <button id="ai-gen-btn" class="btn bai2 fw hidden" style="margin-top:6px;font-size:12px" onclick="callAI()">🤖 Gerar prontuário com IA</button>
     </div>
@@ -2855,3 +2855,95 @@ init();
 </script>
 </body>
 </html>
+
+// ══════════════════════════════════════════════
+// VOICE INPUT (SPEECH-TO-TEXT)
+// ══════════════════════════════════════════════
+var voiceState = {};
+
+function toggleVoiceInput(fieldId) {
+  if (voiceState[fieldId] && voiceState[fieldId].isListening) {
+    stopVoiceInput(fieldId);
+  } else {
+    startVoiceInput(fieldId);
+  }
+}
+
+function startVoiceInput(fieldId) {
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    toast('❌ Seu navegador não suporta reconhecimento de voz. Use Chrome, Edge ou Safari.');
+    return;
+  }
+  
+  var recognition = new SpeechRecognition();
+  recognition.lang = 'pt-BR';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  
+  var iconEl = document.getElementById(fieldId + '-voice-icon');
+  var textEl = document.getElementById(fieldId + '-voice-text');
+  var textarea = document.getElementById(fieldId);
+  
+  if (!voiceState[fieldId]) voiceState[fieldId] = {};
+  voiceState[fieldId].isListening = true;
+  voiceState[fieldId].recognition = recognition;
+  
+  if (iconEl) iconEl.textContent = '🔴';
+  if (textEl) textEl.textContent = 'Ouvindo...';
+  if (textarea) textarea.style.borderColor = '#dc2626';
+  
+  var finalTranscript = '';
+  
+  recognition.onstart = function() {
+    toast('🎤 Microfone ativado - comece a falar');
+  };
+  
+  recognition.onresult = function(event) {
+    var interimTranscript = '';
+    for (var i = event.resultIndex; i < event.results.length; i++) {
+      var transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript + ' ';
+      } else {
+        interimTranscript += transcript;
+      }
+    }
+    
+    if (textarea) {
+      textarea.value = (textarea.value + ' ' + finalTranscript + interimTranscript).trim();
+    }
+  };
+  
+  recognition.onerror = function(event) {
+    toast('❌ Erro no reconhecimento: ' + event.error);
+    stopVoiceInput(fieldId);
+  };
+  
+  recognition.onend = function() {
+    if (voiceState[fieldId] && voiceState[fieldId].isListening) {
+      stopVoiceInput(fieldId);
+    }
+  };
+  
+  recognition.start();
+}
+
+function stopVoiceInput(fieldId) {
+  if (voiceState[fieldId] && voiceState[fieldId].recognition) {
+    voiceState[fieldId].recognition.stop();
+  }
+  
+  voiceState[fieldId] = voiceState[fieldId] || {};
+  voiceState[fieldId].isListening = false;
+  
+  var iconEl = document.getElementById(fieldId + '-voice-icon');
+  var textEl = document.getElementById(fieldId + '-voice-text');
+  var textarea = document.getElementById(fieldId);
+  
+  if (iconEl) iconEl.textContent = '🎙️';
+  if (textEl) textEl.textContent = 'Ditar';
+  if (textarea) textarea.style.borderColor = 'var(--bd)';
+  
+  toast('✅ Ditado finalizado');
+}
