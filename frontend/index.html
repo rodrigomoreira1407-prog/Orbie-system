@@ -1152,7 +1152,205 @@ function showScreen(name) {
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
-async function init() {
+async 
+// ===== WEEKLY TIME GRID VIEW =====
+function renderWeeklyGrid(startDate) {
+  var cal = document.getElementById('appt-calendar');
+  if (!cal) return;
+  
+  var sunday = new Date(startDate);
+  sunday.setDate(sunday.getDate() - sunday.getDay());
+  
+  var dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  var hours = [];
+  for (var h = 0; h < 24; h++) {
+    hours.push(h.toString().padStart(2, '0') + ':00');
+  }
+  
+  var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+  html += '<thead><tr><th style="width:60px;padding:8px;border:1px solid #ddd">Hora</th>';
+  
+  for (var d = 0; d < 7; d++) {
+    var date = new Date(sunday);
+    date.setDate(date.getDate() + d);
+    var dateStr = date.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+    var isToday = date.toDateString() === new Date().toDateString();
+    html += '<th style="padding:8px;border:1px solid #ddd;background:' + (isToday ? '#3b82f6' : '#f8fafc') + ';color:' + (isToday ? 'white' : 'black') + '">' + dayNames[d] + '<br>' + dateStr + '</th>';
+  }
+  html += '</tr></thead><tbody>';
+  
+  hours.forEach(function(hour) {
+    html += '<tr><td style="padding:8px;border:1px solid #ddd;font-weight:700;background:#f8fafc">' + hour + '</td>';
+    for (var d = 0; d < 7; d++) {
+      var date = new Date(sunday);
+      date.setDate(date.getDate() + d);
+      var dateKey = date.toISOString().split('T')[0];
+      var cellAppts = STATE.appointments.filter(function(a) {
+        var aDate = new Date(a.date).toISOString().split('T')[0];
+        var aHour = new Date(a.date).getHours().toString().padStart(2, '0') + ':00';
+        return aDate === dateKey && aHour === hour && a.status === 'PENDING';
+      });
+      html += '<td style="padding:4px;border:1px solid #ddd;height:60px;vertical-align:top;background:#fafafa">';
+      cellAppts.forEach(function(a) {
+        var patName = a.patient ? a.patient.name.split(' ')[0] : 'Paciente';
+        html += '<div style="background:#5b5ef4;color:white;padding:4px;border-radius:4px;font-size:10px;margin-bottom:2px;cursor:pointer" onclick="openAppointmentConfirmation(' + a.id + ')">' + patName + '</div>';
+      });
+      html += '</td>';
+    }
+    html += '</tr>';
+  });
+  
+  html += '</tbody></table></div>';
+  cal.innerHTML = html;
+}
+
+// ===== SESSIONS MANAGEMENT =====
+var currentSessionFilter = 'completed';
+
+function switchSessionTab(tab) {
+  currentSessionFilter = tab;
+  document.getElementById('sessions-tab-completed').style.background = tab === 'completed' ? '#10b981' : '#d1d5db';
+  document.getElementById('sessions-tab-cancelled').style.background = tab === 'cancelled' ? '#ef4444' : '#d1d5db';
+  document.getElementById('sessions-tab-missed').style.background = tab === 'missed' ? '#f59e0b' : '#d1d5db';
+  renderSessions();
+}
+
+function filterSessions() {
+  renderSessions();
+}
+
+function renderSessions() {
+  var el = document.getElementById('sessions-list');
+  var search = document.getElementById('sessions-search').value.toLowerCase();
+  
+  var statusMap = {
+    'completed': 'COMPLETED',
+    'cancelled': 'CANCELLED',
+    'missed': 'MISSED'
+  };
+  
+  var sessions = STATE.appointments.filter(function(a) {
+    var status = a.status === 'COMPLETED' ? 'COMPLETED' : a.status === 'CANCELLED' ? 'CANCELLED' : 'MISSED';
+    var matchStatus = status === statusMap[currentSessionFilter];
+    var matchSearch = !search || (a.patient && (a.patient.name.toLowerCase().includes(search) || (a.patient.cpf && a.patient.cpf.includes(search))));
+    return matchStatus && matchSearch;
+  });
+  
+  var html = '';
+  sessions.forEach(function(a) {
+    var patName = a.patient ? a.patient.name : 'Paciente';
+    var dt = new Date(a.date);
+    var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + ' · ' + dt.toLocaleDateString('pt-BR');
+    var statusColor = a.status === 'COMPLETED' ? '#10b981' : a.status === 'CANCELLED' ? '#ef4444' : '#f59e0b';
+    var statusText = a.status === 'COMPLETED' ? 'Concluída' : a.status === 'CANCELLED' ? 'Cancelada' : 'Falta';
+    
+    html += '<div style="background:white;border-left:3px solid ' + statusColor + ';border-radius:6px;padding:12px;display:flex;justify-content:space-between;align-items:center">';
+    html += '<div><div style="font-weight:700;font-size:14px">' + patName + '</div>';
+    html += '<div style="font-size:12px;color:#666;margin-top:4px">' + timeStr + ' · R$ ' + a.value.toFixed(2) + '</div>';
+    html += '<div style="font-size:11px;color:' + statusColor + ';margin-top:4px;font-weight:700">' + statusText + '</div></div>';
+    html += '</div>';
+  });
+  
+  if (html === '') html = '<div style="text-align:center;color:#999;padding:20px">Nenhuma sessão encontrada</div>';
+  el.innerHTML = html;
+}
+
+// ===== APPOINTMENT CONFIRMATION FLOW =====
+var currentEditingAppointment = null;
+
+function openAppointmentConfirmation(appointmentId) {
+  var appt = STATE.appointments.find(function(a) { return a.id === appointmentId; });
+  if (!appt) return;
+  
+  currentEditingAppointment = appt;
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+  
+  var patName = appt.patient ? appt.patient.name : 'Paciente';
+  var dt = new Date(appt.date);
+  var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + ' · ' + dt.toLocaleDateString('pt-BR');
+  
+  modal.innerHTML = '<div style="background:white;border-radius:8px;padding:24px;max-width:400px;width:90%">';
+  modal.innerHTML += '<h2 style="margin:0 0 12px 0;font-size:18px">' + patName + '</h2>';
+  modal.innerHTML += '<p style="margin:0 0 16px 0;color:#666;font-size:14px">' + timeStr + ' · R$ ' + appt.value.toFixed(2) + '</p>';
+  modal.innerHTML += '<div style="display:flex;gap:8px;flex-direction:column">';
+  modal.innerHTML += '<button class="btn bg2" style="width:100%" onclick="confirmAppointment(' + appointmentId + ');this.parentElement.parentElement.parentElement.remove()">✓ Confirmar</button>';
+  modal.innerHTML += '<button class="btn br" style="width:100%" onclick="cancelAppointment(' + appointmentId + ');this.parentElement.parentElement.parentElement.remove()">✕ Cancelar</button>';
+  modal.innerHTML += '<button class="btn" style="width:100%;background:#f59e0b;color:white;border:none" onclick="openMissedDialog(' + appointmentId + ');this.parentElement.parentElement.parentElement.remove()">⚠ Falta</button>';
+  modal.innerHTML += '</div>';
+  modal.innerHTML += '</div>';
+  
+  document.body.appendChild(modal);
+  modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+}
+
+function confirmAppointment(appointmentId) {
+  updateAppointmentStatus(appointmentId, 'COMPLETED', 0);
+  toast('✓ Sessão confirmada!');
+}
+
+function cancelAppointment(appointmentId) {
+  updateAppointmentStatus(appointmentId, 'CANCELLED', 0);
+  toast('✕ Sessão cancelada!');
+}
+
+function openMissedDialog(appointmentId) {
+  var appt = STATE.appointments.find(function(a) { return a.id === appointmentId; });
+  if (!appt) return;
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+  
+  modal.innerHTML = '<div style="background:white;border-radius:8px;padding:24px;max-width:400px;width:90%">';
+  modal.innerHTML += '<h2 style="margin:0 0 12px 0;font-size:18px">Marcar como Falta</h2>';
+  modal.innerHTML += '<p style="margin:0 0 16px 0;color:#666;font-size:14px">Valor da sessão: R$ ' + appt.value.toFixed(2) + '</p>';
+  modal.innerHTML += '<div style="display:flex;gap:8px;flex-direction:column">';
+  modal.innerHTML += '<button class="btn bg2" style="width:100%" onclick="updateAppointmentStatus(' + appointmentId + ', 'MISSED', ' + appt.value + ');this.parentElement.parentElement.parentElement.remove();toast('⚠ Marcado como falta com valor integral')">Manter Valor Integral</button>';
+  modal.innerHTML += '<button class="btn" style="width:100%;background:#f59e0b;color:white;border:none" onclick="openAdjustValueDialog(' + appointmentId + ');this.parentElement.parentElement.parentElement.remove()">Ajustar Valor</button>';
+  modal.innerHTML += '</div>';
+  modal.innerHTML += '</div>';
+  
+  document.body.appendChild(modal);
+  modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+}
+
+function openAdjustValueDialog(appointmentId) {
+  var appt = STATE.appointments.find(function(a) { return a.id === appointmentId; });
+  if (!appt) return;
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+  
+  modal.innerHTML = '<div style="background:white;border-radius:8px;padding:24px;max-width:400px;width:90%">';
+  modal.innerHTML += '<h2 style="margin:0 0 12px 0;font-size:18px">Ajustar Valor da Falta</h2>';
+  modal.innerHTML += '<p style="margin:0 0 16px 0;color:#666;font-size:14px">Valor original: R$ ' + appt.value.toFixed(2) + '</p>';
+  modal.innerHTML += '<input type="number" id="adjusted-value" value="' + appt.value + '" step="0.01" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-bottom:16px;box-sizing:border-box">';
+  modal.innerHTML += '<div style="display:flex;gap:8px">';
+  modal.innerHTML += '<button class="btn bg2" style="flex:1" onclick="updateAppointmentStatus(' + appointmentId + ', 'MISSED', parseFloat(document.getElementById('adjusted-value').value));this.parentElement.parentElement.parentElement.remove();toast('⚠ Marcado como falta com valor ajustado')">Confirmar</button>';
+  modal.innerHTML += '<button class="btn br" style="flex:1" onclick="this.parentElement.parentElement.parentElement.remove()">Cancelar</button>';
+  modal.innerHTML += '</div>';
+  modal.innerHTML += '</div>';
+  
+  document.body.appendChild(modal);
+  modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+}
+
+function updateAppointmentStatus(appointmentId, status, value) {
+  var appt = STATE.appointments.find(function(a) { return a.id === appointmentId; });
+  if (!appt) return;
+  
+  appt.status = status;
+  if (status === 'MISSED') appt.value = value;
+  
+  api('PUT', '/appointments/' + appointmentId, {status: status, value: value}, function(res) {
+    renderWeeklyGrid(new Date());
+    renderSessions();
+    toast('✓ Sessão atualizada!');
+  });
+}
+
+function init() {
   var loadingTimeout = setTimeout(function() {
     console.error('Timeout - forcing screen display');
     if (STATE.token) showScreen('app');
