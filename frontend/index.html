@@ -1353,7 +1353,7 @@ function updateAppointmentStatus(appointmentId, status, value) {
   });
 }
 
-function init() {
+async function init() {
   var loadingTimeout = setTimeout(function() {
     console.error('Timeout - forcing screen display');
     if (STATE.token) showScreen('app');
