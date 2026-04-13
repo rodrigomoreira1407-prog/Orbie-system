@@ -1306,7 +1306,7 @@ function openMissedDialog(appointmentId) {
   modal.innerHTML += '<h2 style="margin:0 0 12px 0;font-size:18px">Marcar como Falta</h2>';
   modal.innerHTML += '<p style="margin:0 0 16px 0;color:#666;font-size:14px">Valor da sessão: R$ ' + appt.value.toFixed(2) + '</p>';
   modal.innerHTML += '<div style="display:flex;gap:8px;flex-direction:column">';
-  modal.innerHTML += '<button class="btn bg2" style="width:100%" onclick="updateAppointmentStatus(' + appointmentId + ', 'MISSED', ' + appt.value + ');this.parentElement.parentElement.parentElement.remove();toast('⚠ Marcado como falta com valor integral')">Manter Valor Integral</button>';
+  modal.innerHTML += '<button class="btn bg2" style="width:100%" onclick="updateAppointmentStatus(' + appointmentId + ', \"MISSED\", ' + appt.value + ');this.parentElement.parentElement.parentElement.remove();toast(\"⚠ Marcado como falta com valor integral\")">Manter Valor Integral</button>';
   modal.innerHTML += '<button class="btn" style="width:100%;background:#f59e0b;color:white;border:none" onclick="openAdjustValueDialog(' + appointmentId + ');this.parentElement.parentElement.parentElement.remove()">Ajustar Valor</button>';
   modal.innerHTML += '</div>';
   modal.innerHTML += '</div>';
@@ -1327,7 +1327,7 @@ function openAdjustValueDialog(appointmentId) {
   modal.innerHTML += '<p style="margin:0 0 16px 0;color:#666;font-size:14px">Valor original: R$ ' + appt.value.toFixed(2) + '</p>';
   modal.innerHTML += '<input type="number" id="adjusted-value" value="' + appt.value + '" step="0.01" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-bottom:16px;box-sizing:border-box">';
   modal.innerHTML += '<div style="display:flex;gap:8px">';
-  modal.innerHTML += '<button class="btn bg2" style="flex:1" onclick="updateAppointmentStatus(' + appointmentId + ', 'MISSED', parseFloat(document.getElementById('adjusted-value').value));this.parentElement.parentElement.parentElement.remove();toast('⚠ Marcado como falta com valor ajustado')">Confirmar</button>';
+  modal.innerHTML += '<button class="btn bg2" style="flex:1" onclick="updateAppointmentStatus(' + appointmentId + ', \"MISSED\", parseFloat(document.getElementById(\"adjusted-value\").value));this.parentElement.parentElement.parentElement.remove();toast(\"⚠ Marcado como falta com valor ajustado\")">Confirmar</button>';
   modal.innerHTML += '<button class="btn br" style="flex:1" onclick="this.parentElement.parentElement.parentElement.remove()">Cancelar</button>';
   modal.innerHTML += '</div>';
   modal.innerHTML += '</div>';
