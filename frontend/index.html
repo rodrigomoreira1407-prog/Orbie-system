@@ -1343,10 +1343,13 @@ function updateAppointmentStatus(appointmentId, status, value) {
   appt.status = status;
   if (status === 'MISSED') appt.value = value;
   
-  api('PUT', '/appointments/' + appointmentId, {status: status, value: value}, function(res) {
+  api('PUT', '/appointments/' + appointmentId, {status: status, value: value}).then(function(res) {
     renderWeeklyGrid(new Date());
     renderSessions();
     toast('✓ Sessão atualizada!');
+  }).catch(function(err) {
+    console.error('Erro ao atualizar sessão:', err);
+    toast('✗ Erro ao atualizar sessão');
   });
 }
 
