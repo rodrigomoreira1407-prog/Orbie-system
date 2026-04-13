@@ -1870,60 +1870,19 @@ function renderAppointments(list) {
 function renderAppointmentsAsColumns(list) {
   var el = document.getElementById('appt-list');
   var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6'];
-  
-  // Agrupar consultas por data
-  var byDate = {};
+  var html = '';
   list.forEach(function(a) {
-    var dateKey = new Date(a.date).toISOString().split('T')[0];
-    if (!byDate[dateKey]) byDate[dateKey] = [];
-    byDate[dateKey].push(a);
+    var patName = a.patient ? a.patient.name : 'Paciente';
+    var ini = patName.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+    var color = colors[patName.charCodeAt(0) % colors.length];
+    var dt = new Date(a.date);
+    var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + ' · ' + dt.toLocaleDateString('pt-BR');
+    var typeColor = a.type === 'ONLINE' ? '#3b82f6' : '#10b981';
+    var phone = a.patient && a.patient.phone ? a.patient.phone.replace(/[^0-9]/g, '') : '';
+    if (phone.length === 11 && !phone.startsWith('55')) phone = '55' + phone;
+    var waLink = phone ? 'https://wa.me/' + phone : '';
+    html += '<div class="acard" style="border-left:3px solid ' + typeColor + ';margin-bottom:8px"><div style="display:flex;align-items:center;gap:10px"><div class="av avm" style="background:' + color + '">' + ini + '</div><div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700">' + patName + '</span></div><div class="rs" style="margin-top:3px">' + timeStr + ' · ' + a.duration + 'min · R$ ' + a.value.toFixed(2) + '</div></div>' + (waLink ? '<a href="' + waLink + '" target="_blank" style="color:#25D366;font-size:20px;display:inline-flex;align-items:center;justify-content:center;padding:8px;border-radius:50%;background:#f0fdf4;text-decoration:none;margin-left:8px"><i class="fa-brands fa-whatsapp"></i></a>' : '') + (a.meetLink ? '<a href="' + a.meetLink + '" target="_blank" style="color:#4285f4;font-size:20px;display:inline-flex;align-items:center;justify-content:center;padding:8px;border-radius:50%;background:#eff6ff;text-decoration:none;margin-left:4px"><i class="fa-brands fa-google-meet"></i></a>' : '') + '</div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn bg2 fw" style="font-size:11px;flex:1" onclick="openAppointmentConfirmation(' + a.id + ')">Confirmar</button><button class="btn br" style="font-size:11px;flex:1" onclick="updateAppointmentStatus(' + a.id + ', 'CANCELLED', 0)">Cancelar</button><button class="btn" style="font-size:11px;flex:1;background:#f59e0b;color:white;border:none" onclick="currentEditingAppointment={id:' + a.id + ',value:' + a.value + '};openMissedAppointmentDialog()">Falta</button></div></div>';
   });
-  
-  // Ordenar datas
-  var dates = Object.keys(byDate).sort();
-  
-  // Renderizar colunas
-  var dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-  var html = '<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:12px">';
-  
-  dates.forEach(function(dateKey) {
-    var date = new Date(dateKey + 'T00:00:00');
-    var dayName = dayNames[date.getDay()];
-    var dateStr = date.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
-    var appointments = byDate[dateKey].sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
-    
-    html += '<div style="flex-shrink:0;width:280px;background:white;border-radius:11px;border:1px solid var(--bd);overflow:hidden;display:flex;flex-direction:column">';
-    html += '<div style="background:linear-gradient(135deg, #3b82f6, #1e40af);color:white;padding:14px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1)">';
-    html += '<div style="font-weight:700;font-size:16px">' + dayName + '</div>';
-    html += '<div style="font-size:13px;opacity:0.9;margin-top:4px">' + dateStr + '</div>';
-    html += '</div>';
-    
-    html += '<div style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px">';
-    appointments.forEach(function(a) {
-      var patName = a.patient ? a.patient.name : 'Paciente';
-      var ini = patName.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
-      var color = colors[patName.charCodeAt(0) % colors.length];
-      var dt = new Date(a.date);
-      var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
-      var statusBadge = a.status === 'CONFIRMED' ? '<span class="bx bgn" style="font-size:10px">✓</span>' : a.status === 'COMPLETED' ? '<span class="bx bgr" style="font-size:10px">✓</span>' : a.status === 'CANCELLED' ? '<span class="bx brd" style="font-size:10px">✕</span>' : '<span class="bx bbl" style="font-size:10px">◯</span>';
-      
-      html += '<div style="background:#f8fafc;border-left:3px solid ' + color + ';border-radius:6px;padding:10px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background=\"#f1f5f9\"" onmouseout="this.style.background=\"#f8fafc\"">';
-      html += '<div style="font-weight:700;font-size:13px;color:' + color + ';margin-bottom:4px">' + timeStr + '</div>';
-      html += '<div style="display:flex;align-items:center;gap:6px">';
-      html += '<div class="av" style="background:' + color + ';width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:white;font-size:11px;font-weight:700">' + ini + '</div>';
-      html += '<div style="flex:1;min-width:0">';
-      html += '<div style="font-weight:600;font-size:12px;color:#1e293b;word-break:break-word">' + patName + '</div>';
-      html += '<div style="font-size:11px;color:var(--mt);margin-top:2px">' + a.duration + 'min · R$ ' + a.value.toFixed(2) + '</div>';
-      html += '</div>';
-      html += statusBadge;
-      html += '</div>';
-      html += '</div>';
-    });
-    html += '</div>';
-    html += '</div>';
-  });
-  
-  html += '</div>';
   el.innerHTML = html;
 }
 
