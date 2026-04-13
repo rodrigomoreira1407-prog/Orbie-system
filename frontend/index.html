@@ -1152,7 +1152,54 @@ function showScreen(name) {
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
-async 
+async function init() {
+  var loadingTimeout = setTimeout(function() {
+    console.error('Timeout - forcing screen display');
+    if (STATE.token) showScreen('app');
+    else showScreen('login');
+  }, 3000);
+  
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var verifyToken = params.get('token') && window.location.pathname.includes('verify');
+    var resetToken = params.get('token') && window.location.pathname.includes('reset');
+
+    if (verifyToken || (params.get('token') && !resetToken)) {
+      try {
+        var data = await api('GET', '/auth/verify/' + params.get('token'));
+        STATE.token = data.token;
+        localStorage.setItem('orbie_token', data.token);
+        window.history.replaceState({}, '', '/');
+        clearTimeout(loadingTimeout);
+        await loadApp();
+        return;
+      } catch(e) {
+        clearTimeout(loadingTimeout);
+        showScreen('login');
+        return;
+      }
+    }
+    if (resetToken) {
+      STATE.resetToken = params.get('token');
+      showScreen('reset');
+      clearTimeout(loadingTimeout);
+      return;
+    }
+    STATE.token = localStorage.getItem('orbie_token');
+    if (STATE.token) {
+      clearTimeout(loadingTimeout);
+      await loadApp();
+    } else {
+      clearTimeout(loadingTimeout);
+      showScreen('login');
+    }
+  } catch(e) {
+    clearTimeout(loadingTimeout);
+    console.error('Init error:', e);
+    showScreen('login');
+  }
+}
+
 // ===== WEEKLY TIME GRID VIEW =====
 function renderWeeklyGrid(startDate) {
   var cal = document.getElementById('appt-calendar');
