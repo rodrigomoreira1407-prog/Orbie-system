@@ -2846,42 +2846,87 @@ async function loadRecords() {
 }
 
 async function createRecord() {
-  var btn = document.getElementById('rec-btn');
+  var btn   = document.getElementById('rec-btn');
   var errEl = document.getElementById('rec-err');
+  if (!btn || !errEl) return; // safety: modal not in DOM
+
   errEl.classList.add('hidden');
-  var patId = document.getElementById('rec-pat-new').value;
-  var content = document.getElementById('rc').value.trim();
-  if (!patId || !content) { errEl.textContent = 'Preencha paciente e conteúdo'; errEl.classList.remove('hidden'); return; }
+
+  // Collect all form elements with null-checks so a missing element never
+  // causes "Cannot read properties of null" to bubble up to the user.
+  var patSel  = document.getElementById('rec-pat-new');
+  var rcEl    = document.getElementById('rc');
+  var dateEl  = document.getElementById('rec-date');
+  var techEl  = document.getElementById('rec-tech');
+  var evolEl  = document.getElementById('rec-evol');
+  var goalsEl = document.getElementById('rec-goals');
+  var risksEl = document.getElementById('rec-risks');
+  var aiResEl = document.getElementById('ai-res');
+  var mvEl    = document.getElementById('mv'); // optional mood element
+
+  if (!patSel || !rcEl) {
+    errEl.textContent = 'Erro interno: formulário incompleto. Recarregue a página.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  var patId   = patSel.value;
+  var content = rcEl.value.trim();
+
+  if (!patId) {
+    errEl.textContent = 'Selecione um paciente antes de salvar.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  if (!content) {
+    errEl.textContent = 'Preencha o conteúdo da sessão.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
   btn.disabled = true; btn.textContent = 'Salvando...';
+
   try {
+    // Build the session date: datetime-local values (e.g. "2026-04-14T10:30")
+    // must be parsed as LOCAL time, not UTC.  Using new Date(d) achieves this
+    // because JS treats strings without a timezone suffix as local time when
+    // they include a time component.  Appending 'Z' directly was wrong — it
+    // would shift the stored time by the user's UTC offset.
+    var sessionDate = (function () {
+      if (!dateEl || !dateEl.value) return new Date().toISOString();
+      var parsed = new Date(dateEl.value);
+      return isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+    })();
+
     await api('POST', '/records', {
-      patientId: patId,
-      content: content,
-      sessionDate: (function(){
-        var d = document.getElementById('rec-date').value;
-        if(!d) return new Date().toISOString();
-        // Se for datetime-local (contém T), já está quase pronto
-        if(d.indexOf('T') > -1) return d + ':00.000Z';
-        return d;
-      })(),
-      mood: parseInt(document.getElementById('mv').textContent) || null,
-      techniques: document.getElementById('rec-tech').value,
-      evolution: document.getElementById('rec-evol').value,
-      goals: document.getElementById('rec-goals').value,
-      risks: document.getElementById('rec-risks').value,
-      aiGenerated: document.getElementById('ai-res').classList.contains('hidden') ? false : true,
+      patientId:   patId,
+      content:     content,
+      sessionDate: sessionDate,
+      mood:        mvEl ? (parseInt(mvEl.textContent) || null) : null,
+      techniques:  techEl  ? techEl.value  : '',
+      evolution:   evolEl  ? evolEl.value  : '',
+      goals:       goalsEl ? goalsEl.value : '',
+      risks:       risksEl ? risksEl.value : '',
+      aiGenerated: aiResEl ? !aiResEl.classList.contains('hidden') : false,
     });
+
     closeM('m-rec');
     toast('✅ Evolução salva!');
-    document.getElementById('rc').value = '';
-    document.getElementById('ai-res').classList.add('hidden');
-    // Reload if same patient is selected
-    var selPat = document.getElementById('rec-pat-sel').value;
-    if (selPat === patId) await loadRecords();
-  } catch(e) {
-    errEl.textContent = e.message || 'Erro ao salvar';
+
+    // Reset fields
+    rcEl.value = '';
+    if (aiResEl) aiResEl.classList.add('hidden');
+
+    // If the records page already has this patient loaded, refresh the list
+    var recPatSel = document.getElementById('rec-pat-sel');
+    if (recPatSel && recPatSel.value === patId) await loadRecords();
+
+  } catch (e) {
+    errEl.textContent = e.message || 'Erro ao salvar evolução.';
     errEl.classList.remove('hidden');
-  } finally { btn.disabled = false; btn.textContent = 'Salvar evolução'; }
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar evolução';
+  }
 }
 
 // ══════════════════════════════════════════════
