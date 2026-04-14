@@ -507,10 +507,11 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
           <span style="font-size:15px">🔍</span>
           <input type="text" id="appt-cards-search" placeholder="Buscar por nome ou CPF do paciente..." style="border:none;outline:none;width:100%;font-size:13px;color:#334155;background:transparent" oninput="renderAgendaCards()"/>
         </div>
-        <!-- Hoje / Semana toggle -->
+        <!-- Hoje / Semana / Pendentes toggle -->
         <div style="background:white;border-radius:11px;border:1px solid var(--bd);margin-bottom:10px;display:flex;overflow:hidden">
           <button id="apv-today" onclick="setAgendaView('today')" style="flex:1;padding:10px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:#f0f4ff;color:#3b82f6;border-right:1px solid var(--bd)">Hoje</button>
-          <button id="apv-week" onclick="setAgendaView('week')" style="flex:1;padding:10px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b">Semana</button>
+          <button id="apv-week" onclick="setAgendaView('week')" style="flex:1;padding:10px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">Semana</button>
+          <button id="apv-pending" onclick="setAgendaView('pending')" style="flex:1;padding:10px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b">⏳ Pendentes</button>
         </div>
         <!-- Cards list -->
         <div id="appt-cards-list"></div>
@@ -672,7 +673,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
       <div class="ph"><div><div class="ptt">Sessões</div><div class="pst2">Histórico completo</div></div></div>
 
       <!-- Summary stats -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px" id="sess-stats">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px" id="sess-stats">
         <div style="background:white;border-radius:11px;padding:12px;border:1px solid var(--bd);text-align:center">
           <div style="font-size:20px;font-weight:800;color:#10b981" id="sess-count-completed">0</div>
           <div style="font-size:11px;color:#64748b;margin-top:2px">Concluídas</div>
@@ -685,12 +686,29 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
           <div style="font-size:20px;font-weight:800;color:#ef4444" id="sess-count-cancelled">0</div>
           <div style="font-size:11px;color:#64748b;margin-top:2px">Canceladas</div>
         </div>
+        <div style="background:white;border-radius:11px;padding:12px;border:1px solid var(--bd);text-align:center">
+          <div style="font-size:20px;font-weight:800;color:#f97316" id="sess-count-pending">0</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">Pendentes</div>
+        </div>
       </div>
 
-      <!-- Search -->
-      <div style="background:white;border-radius:11px;padding:10px 14px;border:1px solid var(--bd);margin-bottom:10px;display:flex;align-items:center;gap:8px">
-        <span style="font-size:15px">🔍</span>
-        <input type="text" id="sessions-search" placeholder="Buscar por nome ou CPF do paciente..." style="border:none;outline:none;width:100%;font-size:13px;color:#334155;background:transparent" oninput="renderSessions()"/>
+      <!-- Search + date filters -->
+      <div style="background:white;border-radius:11px;padding:12px 14px;border:1px solid var(--bd);margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:15px">🔍</span>
+          <input type="text" id="sessions-search" placeholder="Buscar por nome ou CPF do paciente..." style="border:none;outline:none;width:100%;font-size:13px;color:#334155;background:transparent" oninput="renderSessions()"/>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:130px">
+            <label style="font-size:11px;font-weight:600;color:#64748b;white-space:nowrap">De:</label>
+            <input type="date" id="sess-date-from" class="inp" style="padding:6px 8px;font-size:12px;flex:1" onchange="renderSessions()"/>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:130px">
+            <label style="font-size:11px;font-weight:600;color:#64748b;white-space:nowrap">Até:</label>
+            <input type="date" id="sess-date-to" class="inp" style="padding:6px 8px;font-size:12px;flex:1" onchange="renderSessions()"/>
+          </div>
+          <button onclick="clearSessionFilters()" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">✕ Limpar</button>
+        </div>
       </div>
 
       <!-- Status tabs -->
@@ -698,7 +716,8 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
         <button id="sessions-tab-all" onclick="switchSessionTab('all')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:#f0f4ff;color:#3b82f6;border-right:1px solid var(--bd)">Todos</button>
         <button id="sessions-tab-completed" onclick="switchSessionTab('completed')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">✓ Concluídas</button>
         <button id="sessions-tab-missed" onclick="switchSessionTab('missed')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">⚠ Falta</button>
-        <button id="sessions-tab-cancelled" onclick="switchSessionTab('cancelled')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b">✕ Canceladas</button>
+        <button id="sessions-tab-cancelled" onclick="switchSessionTab('cancelled')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">✕ Canceladas</button>
+        <button id="sessions-tab-pending" onclick="switchSessionTab('pending')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b">⏳ Pendentes</button>
       </div>
 
       <!-- List -->
@@ -1590,18 +1609,22 @@ STATE.agendaTypeFilter  = STATE.agendaTypeFilter  || null;
 
 function setAgendaView(view) {
   STATE.agendaView = view;
-  var btnToday = document.getElementById('apv-today');
-  var btnWeek  = document.getElementById('apv-week');
-  if (btnToday) {
-    btnToday.style.background = view === 'today' ? '#f0f4ff' : 'white';
-    btnToday.style.color      = view === 'today' ? '#3b82f6' : '#64748b';
-    btnToday.style.fontWeight = view === 'today' ? '700' : '600';
-  }
-  if (btnWeek) {
-    btnWeek.style.background  = view === 'week' ? '#f0f4ff' : 'white';
-    btnWeek.style.color       = view === 'week' ? '#3b82f6' : '#64748b';
-    btnWeek.style.fontWeight  = view === 'week' ? '700' : '600';
-  }
+  var btnToday   = document.getElementById('apv-today');
+  var btnWeek    = document.getElementById('apv-week');
+  var btnPending = document.getElementById('apv-pending');
+  var buttons = [
+    { el: btnToday,   key: 'today'   },
+    { el: btnWeek,    key: 'week'    },
+    { el: btnPending, key: 'pending' },
+  ];
+  buttons.forEach(function(b) {
+    if (!b.el) return;
+    var isActive = b.key === view;
+    var activeColor = b.key === 'pending' ? '#f97316' : '#3b82f6';
+    b.el.style.background = isActive ? '#f0f4ff' : 'white';
+    b.el.style.color      = isActive ? activeColor : '#64748b';
+    b.el.style.fontWeight = isActive ? '700' : '600';
+  });
   renderAgendaCards();
 }
 
@@ -1630,7 +1653,7 @@ function renderAgendaCards() {
   var search = (document.getElementById('appt-cards-search') || {}).value || '';
   search = search.toLowerCase();
 
-  var now     = new Date();
+  var now      = new Date();
   var todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
 
   var weekStart = new Date(STATE.weekGridDate || now);
@@ -1640,15 +1663,24 @@ function renderAgendaCards() {
   weekEnd.setDate(weekEnd.getDate() + 6);
   weekEnd.setHours(23, 59, 59, 999);
 
+  var isPending = STATE.agendaView === 'pending';
+
   var appts = (STATE.appointments || []).filter(function(a) {
     var d = new Date(a.date);
-    if (STATE.agendaView === 'today') {
-      // In "Hoje" view: only show non-finalized appointments for today (local date)
+    // "Pendentes": past SCHEDULED appointments (date already passed, no final status)
+    if (isPending) {
       if (a.status === 'CANCELLED' || a.status === 'COMPLETED' || a.status === 'MISSED') return false;
+      return d < now; // anything scheduled whose time has already passed
+    }
+    // "Hoje" and "Semana": only present/future, not finalized
+    if (a.status === 'CANCELLED' || a.status === 'COMPLETED' || a.status === 'MISSED') return false;
+    if (STATE.agendaView === 'today') {
       var localDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
       if (localDate !== todayStr) return false;
+      // Only future/current appointments (not already past their start time)
+      return d >= now || localDate === todayStr; // keep today's even if slightly past (user may be running late)
     } else {
-      if (a.status === 'CANCELLED' || a.status === 'COMPLETED' || a.status === 'MISSED') return false;
+      // "Semana": from now onward within the current week view, excluding past
       var startOfToday = new Date(now);
       startOfToday.setHours(0, 0, 0, 0);
       if (d < startOfToday || d > weekEnd) return false;
@@ -1660,11 +1692,18 @@ function renderAgendaCards() {
       if (!name.includes(search) && !cpf.includes(search)) return false;
     }
     return true;
-  }).sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+  }).sort(function(a, b) {
+    // Pendentes: most overdue first (oldest first)
+    return isPending
+      ? new Date(a.date) - new Date(b.date)
+      : new Date(a.date) - new Date(b.date);
+  });
 
   if (!appts.length) {
-    el.innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8;font-size:13px">' +
-      (STATE.agendaView === 'today' ? 'Nenhuma consulta hoje' : 'Nenhuma consulta esta semana') + '</div>';
+    var emptyMsg = isPending
+      ? '✅ Nenhuma sessão pendente de baixa'
+      : STATE.agendaView === 'today' ? 'Nenhuma consulta hoje' : 'Nenhuma consulta esta semana';
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8;font-size:13px">' + emptyMsg + '</div>';
     return;
   }
 
@@ -1672,17 +1711,20 @@ function renderAgendaCards() {
   var typeColor = function(t) { return t === 'ONLINE' ? '#3b82f6' : t === 'PRESENTIAL' ? '#10b981' : '#7c3aed'; };
   var typeLabel = function(t) { return t === 'ONLINE' ? 'Online' : t === 'PRESENTIAL' ? 'Presencial' : 'Avalia\u00e7\u00e3o'; };
 
-  var statusLabel = function(s) {
+  var statusLabel = function(s, overdue) {
+    if (overdue) return 'Pendente de Baixa';
     return s === 'COMPLETED' ? 'Conclu\u00edda' : s === 'MISSED' ? 'Falta' : 'Agendada';
   };
-  var statusColor = function(s) {
+  var statusColor = function(s, overdue) {
+    if (overdue) return '#f97316';
     return s === 'COMPLETED' ? '#10b981' : s === 'MISSED' ? '#f59e0b' : '#3b82f6';
   };
-  var statusBg = function(s) {
+  var statusBg = function(s, overdue) {
+    if (overdue) return '#fff7ed';
     return s === 'COMPLETED' ? '#f0fdf4' : s === 'MISSED' ? '#fffbeb' : '#eff6ff';
   };
 
-  // Compute session number per patient (position among all patient appointments sorted by date)
+  // Session number per patient
   var patAppts = {};
   (STATE.appointments || []).forEach(function(a) {
     var pid = a.patient ? a.patient.id : null;
@@ -1703,49 +1745,49 @@ function renderAgendaCards() {
     var dateStr  = dt.toLocaleDateString('pt-BR');
     var tc       = typeColor(a.type);
     var tl       = typeLabel(a.type);
-    var sc       = statusColor(a.status);
-    var sb_      = statusBg(a.status);
-    var sl       = statusLabel(a.status);
+    var sc       = statusColor(a.status, isPending);
+    var sb_      = statusBg(a.status, isPending);
+    var sl       = statusLabel(a.status, isPending);
+    var borderColor = isPending ? '#f97316' : tc;
 
-    // Session number
-    var pid      = a.patient ? a.patient.id : null;
-    var sessNum  = 1;
+    var pid     = a.patient ? a.patient.id : null;
+    var sessNum = 1;
     if (pid && patAppts[pid]) {
       var idx = patAppts[pid].findIndex(function(x){ return x.id === a.id; });
       if (idx >= 0) sessNum = idx + 1;
     }
 
-    var phone    = a.patient ? (a.patient.phone || '') : '';
-    var wa       = phone ? 'https://wa.me/' + phone.replace(/\D/g,'') : null;
-    var isActionable = a.status !== 'COMPLETED' && a.status !== 'MISSED';
+    var phone = a.patient ? (a.patient.phone || '') : '';
+    var wa    = phone ? 'https://wa.me/' + phone.replace(/\D/g,'') : null;
 
-    var card = '<div style="background:white;border-radius:14px;padding:16px;border:1px solid #e2e8f0;border-left:4px solid ' + tc + ';margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.04)">';
+    var card = '<div style="background:white;border-radius:14px;padding:16px;border:1px solid #e2e8f0;border-left:4px solid ' + borderColor + ';margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.04)">';
+
+    // Pending banner
+    if (isPending) {
+      card += '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:6px 10px;margin-bottom:10px;font-size:11px;font-weight:700;color:#c2410c;display:flex;align-items:center;gap:6px">' +
+        '<span>⏳</span> Sessão não registrada — aguardando baixa</div>';
+    }
 
     // Row 1: avatar + info + whatsapp
     card += '<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">';
-    // Avatar
     card += '<div style="width:46px;height:46px;border-radius:12px;background:' + avColor + ';flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:15px">' + ini + '</div>';
-    // Info
     card += '<div style="flex:1;min-width:0">';
     card += '<div style="font-weight:800;font-size:14px;letter-spacing:.3px;margin-bottom:6px">' + patName.toUpperCase() + '</div>';
-    // Badges row
     card += '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px">';
     card += '<span style="background:' + sb_ + ';color:' + sc + ';border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700">' + sl + '</span>';
     card += '<span style="border:1.5px solid ' + tc + ';color:' + tc + ';border-radius:6px;padding:2px 9px;font-size:11px;font-weight:600">' + tl + '</span>';
     card += '<span style="background:#f1f5f9;color:#475569;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:600">Sess\u00e3o ' + sessNum + '</span>';
     card += '</div>';
-    // Time info
     card += '<div style="font-size:12px;color:#64748b">' + timeStr + ' \u00b7 ' + dateStr + ' \u00b7 ' + (a.duration || 50) + 'min \u00b7 R$ ' + a.value.toFixed(2) + '</div>';
-    card += '</div>'; // end info
-    // WhatsApp button
+    card += '</div>';
     if (wa) {
       card += '<a href="' + wa + '" target="_blank" title="WhatsApp" style="width:38px;height:38px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-decoration:none;font-size:18px">🟢</a>';
     }
-    card += '</div>'; // end row 1
+    card += '</div>';
 
     // Row 2: Google Meet link (ONLINE only)
     if (a.type === 'ONLINE' && a.meetLink) {
-      var fullLink = a.meetLink.startsWith('http') ? a.meetLink : 'https://' + a.meetLink;
+      var fullLink  = a.meetLink.startsWith('http') ? a.meetLink : 'https://' + a.meetLink;
       var shortLink = a.meetLink.length > 28 ? a.meetLink.substring(0, 25) + '...' : a.meetLink;
       card += '<div style="background:#f8fafc;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:12px;border:1px solid #e2e8f0">';
       card += '<span style="font-size:16px">🎥</span>';
@@ -1754,16 +1796,17 @@ function renderAgendaCards() {
       card += '</div>';
     }
 
-    // Row 3: Action buttons
-    if (isActionable) {
+    // Row 3: Action buttons — always shown for pending; for others only if actionable
+    var showActions = isPending || (a.status !== 'COMPLETED' && a.status !== 'MISSED');
+    if (showActions) {
       card += '<div style="display:flex;gap:8px">';
-      card += '<button onclick="confirmAppointment(\'' + a.id + '\');renderAgendaCards()" style="flex:1;background:#dcfce7;color:#15803d;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u2713 Concluir</button>';
+      card += '<button onclick="confirmAppointment(\'' + a.id + '\');renderAgendaCards();renderSessions()" style="flex:1;background:#dcfce7;color:#15803d;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u2713 Concluir</button>';
       card += '<button onclick="openMissedDialog(\'' + a.id + '\')" style="flex:1;background:#fef9c3;color:#92400e;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u26a0 Falta</button>';
-      card += '<button onclick="cancelAppointment(\'' + a.id + '\');renderAgendaCards()" style="flex:1;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u00d7 Cancelar</button>';
+      card += '<button onclick="cancelAppointment(\'' + a.id + '\');renderAgendaCards();renderSessions()" style="flex:1;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u00d7 Cancelar</button>';
       card += '</div>';
     }
 
-    card += '</div>'; // end card
+    card += '</div>';
     return card;
   }).join('');
 
@@ -1775,17 +1818,28 @@ var currentSessionFilter = 'all';
 
 function switchSessionTab(tab) {
   currentSessionFilter = tab;
-  var tabs = { all: 'sessions-tab-all', completed: 'sessions-tab-completed', missed: 'sessions-tab-missed', cancelled: 'sessions-tab-cancelled' };
-  var colors = { all: '#3b82f6', completed: '#10b981', missed: '#f59e0b', cancelled: '#ef4444' };
+  var tabs   = { all: 'sessions-tab-all', completed: 'sessions-tab-completed', missed: 'sessions-tab-missed', cancelled: 'sessions-tab-cancelled', pending: 'sessions-tab-pending' };
+  var colors = { all: '#3b82f6', completed: '#10b981', missed: '#f59e0b', cancelled: '#ef4444', pending: '#f97316' };
   Object.keys(tabs).forEach(function(t) {
     var el = document.getElementById(tabs[t]);
     if (!el) return;
     var isActive = t === tab;
-    el.style.background  = isActive ? colors[t] : 'white';
-    el.style.color       = isActive ? '#fff' : '#64748b';
-    el.style.fontWeight  = isActive ? '700' : '600';
+    el.style.background = isActive ? colors[t] : 'white';
+    el.style.color      = isActive ? '#fff'     : '#64748b';
+    el.style.fontWeight = isActive ? '700'      : '600';
   });
   renderSessions();
+}
+
+function clearSessionFilters() {
+  var s = document.getElementById('sessions-search');
+  var f = document.getElementById('sess-date-from');
+  var t = document.getElementById('sess-date-to');
+  if (s) s.value = '';
+  if (f) f.value = '';
+  if (t) t.value = '';
+  currentSessionFilter = 'all';
+  switchSessionTab('all');
 }
 
 function filterSessions() { renderSessions(); }
@@ -1793,45 +1847,86 @@ function filterSessions() { renderSessions(); }
 function renderSessions() {
   var el = document.getElementById('sessions-list');
   if (!el) return;
-  var search = (document.getElementById('sessions-search') || {}).value || '';
-  search = search.toLowerCase();
+
+  var search   = ((document.getElementById('sessions-search') || {}).value || '').toLowerCase();
+  var dateFrom = (document.getElementById('sess-date-from') || {}).value || '';
+  var dateTo   = (document.getElementById('sess-date-to')   || {}).value || '';
 
   var AVATAR_COLORS = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6','#06b6d4','#ef4444'];
-  var typeLabel = function(t) { return t === 'ONLINE' ? 'Online' : t === 'PRESENTIAL' ? 'Presencial' : 'Avaliação'; };
+  var typeLabel = function(t) { return t === 'ONLINE' ? 'Online' : t === 'PRESENTIAL' ? 'Presencial' : 'Avalia\u00e7\u00e3o'; };
   var typeColor = function(t) { return t === 'ONLINE' ? '#3b82f6' : t === 'PRESENTIAL' ? '#10b981' : '#7c3aed'; };
 
-  var allFinished = (STATE.appointments || []).filter(function(a) {
-    return a.status === 'COMPLETED' || a.status === 'CANCELLED' || a.status === 'MISSED';
+  var now = new Date();
+
+  // "Pendentes de Baixa" = SCHEDULED but their scheduled time has already passed
+  var isPendingTab = currentSessionFilter === 'pending';
+
+  // Pool of appointments for each tab
+  var pool = isPendingTab
+    ? (STATE.appointments || []).filter(function(a) {
+        return (a.status === 'SCHEDULED' || a.status === 'PENDING') && new Date(a.date) < now;
+      })
+    : (STATE.appointments || []).filter(function(a) {
+        return a.status === 'COMPLETED' || a.status === 'CANCELLED' || a.status === 'MISSED';
+      });
+
+  // Update stats counters (always over full pool, ignoring current filter)
+  var all = STATE.appointments || [];
+  var cCompleted = all.filter(function(a){ return a.status === 'COMPLETED'; }).length;
+  var cMissed    = all.filter(function(a){ return a.status === 'MISSED'; }).length;
+  var cCancelled = all.filter(function(a){ return a.status === 'CANCELLED'; }).length;
+  var cPending   = all.filter(function(a){ return (a.status === 'SCHEDULED' || a.status === 'PENDING') && new Date(a.date) < now; }).length;
+  var counters   = { completed: cCompleted, missed: cMissed, cancelled: cCancelled, pending: cPending };
+  Object.keys(counters).forEach(function(k) {
+    var cnt = document.getElementById('sess-count-' + k);
+    if (cnt) cnt.textContent = counters[k];
   });
 
-  // Update stats
-  var cCompleted = allFinished.filter(function(a){ return a.status === 'COMPLETED'; }).length;
-  var cMissed    = allFinished.filter(function(a){ return a.status === 'MISSED'; }).length;
-  var cCancelled = allFinished.filter(function(a){ return a.status === 'CANCELLED'; }).length;
-  ['completed','missed','cancelled'].forEach(function(k) {
-    var cnt = document.getElementById('sess-count-' + k);
-    if (cnt) cnt.textContent = k === 'completed' ? cCompleted : k === 'missed' ? cMissed : cCancelled;
-  });
+  // Apply filters
+  var fromDate = dateFrom ? new Date(dateFrom + 'T00:00:00') : null;
+  var toDate   = dateTo   ? new Date(dateTo   + 'T23:59:59') : null;
 
   var statusMap = { completed: 'COMPLETED', cancelled: 'CANCELLED', missed: 'MISSED' };
-  var sessions = allFinished.filter(function(a) {
-    if (currentSessionFilter !== 'all' && a.status !== statusMap[currentSessionFilter]) return false;
+
+  var sessions = pool.filter(function(a) {
+    // Status filter (only for non-pending tabs)
+    if (!isPendingTab && currentSessionFilter !== 'all' && a.status !== statusMap[currentSessionFilter]) return false;
+    // Name / CPF search
     if (search) {
       var name = a.patient ? a.patient.name.toLowerCase() : '';
       var cpf  = a.patient ? (a.patient.cpf || '').toLowerCase() : '';
       if (!name.includes(search) && !cpf.includes(search)) return false;
     }
+    // Date-range filter
+    if (fromDate || toDate) {
+      var d = new Date(a.date);
+      if (fromDate && d < fromDate) return false;
+      if (toDate   && d > toDate)   return false;
+    }
     return true;
   }).sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
 
+  var hasActiveFilter = search || dateFrom || dateTo || currentSessionFilter !== 'all';
   if (!sessions.length) {
-    el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:28px;font-size:13px">Nenhuma sessão encontrada</div>';
+    var msg = hasActiveFilter
+      ? 'Nenhum registro encontrado para os filtros selecionados.'
+      : 'Nenhuma sess\u00e3o encontrada';
+    el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:28px;font-size:13px">' + msg + '</div>';
     return;
   }
 
-  var statusText  = function(s) { return s === 'COMPLETED' ? 'Concluída' : s === 'CANCELLED' ? 'Cancelada' : 'Falta'; };
-  var statusColor = function(s) { return s === 'COMPLETED' ? '#10b981' : s === 'CANCELLED' ? '#ef4444' : '#f59e0b'; };
-  var statusBg    = function(s) { return s === 'COMPLETED' ? '#f0fdf4' : s === 'CANCELLED' ? '#fee2e2' : '#fffbeb'; };
+  var statusText  = function(s, pending) {
+    if (pending) return 'Pendente de Baixa';
+    return s === 'COMPLETED' ? 'Conclu\u00edda' : s === 'CANCELLED' ? 'Cancelada' : 'Falta';
+  };
+  var statusColor = function(s, pending) {
+    if (pending) return '#f97316';
+    return s === 'COMPLETED' ? '#10b981' : s === 'CANCELLED' ? '#ef4444' : '#f59e0b';
+  };
+  var statusBg = function(s, pending) {
+    if (pending) return '#fff7ed';
+    return s === 'COMPLETED' ? '#f0fdf4' : s === 'CANCELLED' ? '#fee2e2' : '#fffbeb';
+  };
 
   var html = sessions.map(function(a) {
     var patName  = a.patient ? a.patient.name : 'Paciente';
@@ -1840,23 +1935,41 @@ function renderSessions() {
     var dt       = new Date(a.date);
     var timeStr  = dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
     var dateStr  = dt.toLocaleDateString('pt-BR');
-    var sc       = statusColor(a.status);
-    var sb_      = statusBg(a.status);
-    var sl       = statusText(a.status);
+    var sc       = statusColor(a.status, isPendingTab);
+    var sb_      = statusBg(a.status, isPendingTab);
+    var sl       = statusText(a.status, isPendingTab);
     var tc       = typeColor(a.type);
     var tl       = typeLabel(a.type);
 
-    return '<div style="background:white;border-radius:12px;padding:14px;border:1px solid #e2e8f0;border-left:4px solid ' + sc + ';margin-bottom:10px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">' +
-      '<div style="width:44px;height:44px;border-radius:12px;background:' + avColor + ';flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:14px">' + ini + '</div>' +
-      '<div style="flex:1;min-width:0">' +
-        '<div style="font-weight:700;font-size:13px;margin-bottom:5px">' + patName + '</div>' +
-        '<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:5px">' +
-          '<span style="background:' + sb_ + ';color:' + sc + ';border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">' + sl + '</span>' +
-          '<span style="border:1.5px solid ' + tc + ';color:' + tc + ';border-radius:5px;padding:2px 8px;font-size:10px;font-weight:600">' + tl + '</span>' +
-        '</div>' +
-        '<div style="font-size:11px;color:#64748b">' + timeStr + ' · ' + dateStr + ' · ' + (a.duration || 50) + 'min · <strong style="color:#10b981">R$ ' + a.value.toFixed(2) + '</strong></div>' +
-      '</div>' +
-    '</div>';
+    var card = '<div style="background:white;border-radius:12px;padding:14px;border:1px solid #e2e8f0;border-left:4px solid ' + sc + ';margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04)">';
+
+    if (isPendingTab) {
+      card += '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:5px 10px;margin-bottom:8px;font-size:11px;font-weight:700;color:#c2410c;display:flex;align-items:center;gap:6px">' +
+              '<span>⏳</span> Sess\u00e3o n\u00e3o registrada — aguardando baixa</div>';
+    }
+
+    card += '<div style="display:flex;align-items:center;gap:12px">';
+    card += '<div style="width:44px;height:44px;border-radius:12px;background:' + avColor + ';flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:14px">' + ini + '</div>';
+    card += '<div style="flex:1;min-width:0">';
+    card += '<div style="font-weight:700;font-size:13px;margin-bottom:5px">' + patName + '</div>';
+    card += '<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:5px">';
+    card += '<span style="background:' + sb_ + ';color:' + sc + ';border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">' + sl + '</span>';
+    card += '<span style="border:1.5px solid ' + tc + ';color:' + tc + ';border-radius:5px;padding:2px 8px;font-size:10px;font-weight:600">' + tl + '</span>';
+    card += '</div>';
+    card += '<div style="font-size:11px;color:#64748b">' + timeStr + ' \u00b7 ' + dateStr + ' \u00b7 ' + (a.duration || 50) + 'min \u00b7 <strong style="color:#10b981">R$ ' + a.value.toFixed(2) + '</strong></div>';
+    card += '</div></div>';
+
+    // Action buttons inside Pendentes tab in Sessions page
+    if (isPendingTab) {
+      card += '<div style="display:flex;gap:8px;margin-top:10px">';
+      card += '<button onclick="confirmAppointment(\'' + a.id + '\');renderSessions();renderAgendaCards()" style="flex:1;background:#dcfce7;color:#15803d;border:none;border-radius:8px;padding:9px 6px;font-size:12px;font-weight:700;cursor:pointer">\u2713 Concluir</button>';
+      card += '<button onclick="openMissedDialog(\'' + a.id + '\')" style="flex:1;background:#fef9c3;color:#92400e;border:none;border-radius:8px;padding:9px 6px;font-size:12px;font-weight:700;cursor:pointer">\u26a0 Falta</button>';
+      card += '<button onclick="cancelAppointment(\'' + a.id + '\');renderSessions();renderAgendaCards()" style="flex:1;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:9px 6px;font-size:12px;font-weight:700;cursor:pointer">\u00d7 Cancelar</button>';
+      card += '</div>';
+    }
+
+    card += '</div>';
+    return card;
   }).join('');
 
   el.innerHTML = html;
