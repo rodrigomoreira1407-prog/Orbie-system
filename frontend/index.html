@@ -1858,14 +1858,14 @@ function renderSessions() {
 
   var now = new Date();
 
-  // "Agendadas" tab = ALL SCHEDULED sessions (future + past without desfecho)
+  // "Agendadas" tab = future-only SCHEDULED sessions (date >= now)
   var isScheduledTab = currentSessionFilter === 'scheduled';
 
   // Pool of appointments for each tab
   var pool;
   if (isScheduledTab) {
     pool = (STATE.appointments || []).filter(function(a) {
-      return a.status === 'SCHEDULED' || a.status === 'PENDING';
+      return (a.status === 'SCHEDULED' || a.status === 'PENDING') && new Date(a.date) >= now;
     });
   } else if (currentSessionFilter === 'all') {
     pool = STATE.appointments || [];
@@ -1880,7 +1880,7 @@ function renderSessions() {
   var cCompleted  = all.filter(function(a){ return a.status === 'COMPLETED'; }).length;
   var cMissed     = all.filter(function(a){ return a.status === 'MISSED'; }).length;
   var cCancelled  = all.filter(function(a){ return a.status === 'CANCELLED'; }).length;
-  var cScheduled  = all.filter(function(a){ return a.status === 'SCHEDULED' || a.status === 'PENDING'; }).length;
+  var cScheduled  = all.filter(function(a){ return (a.status === 'SCHEDULED' || a.status === 'PENDING') && new Date(a.date) >= now; }).length;
   var counters    = { completed: cCompleted, missed: cMissed, cancelled: cCancelled, scheduled: cScheduled };
   Object.keys(counters).forEach(function(k) {
     var cnt = document.getElementById('sess-count-' + k);
@@ -1954,11 +1954,6 @@ function renderSessions() {
 
     var card = '<div style="background:white;border-radius:12px;padding:14px;border:1px solid #e2e8f0;border-left:4px solid ' + sc + ';margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04)">';
 
-    if (isOverdue) {
-      card += '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:5px 10px;margin-bottom:8px;font-size:11px;font-weight:700;color:#c2410c;display:flex;align-items:center;gap:6px">' +
-              '<span>⏳</span> Sess\u00e3o n\u00e3o registrada — aguardando baixa</div>';
-    }
-
     card += '<div style="display:flex;align-items:center;gap:12px">';
     card += '<div style="width:44px;height:44px;border-radius:12px;background:' + avColor + ';flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:14px">' + ini + '</div>';
     card += '<div style="flex:1;min-width:0">';
@@ -1969,15 +1964,6 @@ function renderSessions() {
     card += '</div>';
     card += '<div style="font-size:11px;color:#64748b">' + timeStr + ' \u00b7 ' + dateStr + ' \u00b7 ' + (a.duration || 50) + 'min \u00b7 <strong style="color:#10b981">R$ ' + a.value.toFixed(2) + '</strong></div>';
     card += '</div></div>';
-
-    // Action buttons for scheduled sessions (both overdue and future)
-    if (isOverdue || isFutureScheduled) {
-      card += '<div style="display:flex;gap:8px;margin-top:10px">';
-      card += '<button onclick="confirmAppointment(\'' + a.id + '\');renderSessions();renderAgendaCards()" style="flex:1;background:#dcfce7;color:#15803d;border:none;border-radius:8px;padding:9px 6px;font-size:12px;font-weight:700;cursor:pointer">\u2713 Concluir</button>';
-      card += '<button onclick="openMissedDialog(\'' + a.id + '\')" style="flex:1;background:#fef9c3;color:#92400e;border:none;border-radius:8px;padding:9px 6px;font-size:12px;font-weight:700;cursor:pointer">\u26a0 Falta</button>';
-      card += '<button onclick="cancelAppointment(\'' + a.id + '\');renderSessions();renderAgendaCards()" style="flex:1;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:9px 6px;font-size:12px;font-weight:700;cursor:pointer">\u00d7 Cancelar</button>';
-      card += '</div>';
-    }
 
     card += '</div>';
     return card;
