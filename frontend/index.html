@@ -1913,8 +1913,10 @@ function updateAppointmentStatus(appointmentId, status, value) {
     renderAgendaCards();
     renderSessions();
     renderDashboardSessions();
-    // Redirect finalized appointments to the Sessions page
-    go('sessions', null);
+    // Redirect to Sessions page when a record is finalized
+    if (status === 'COMPLETED' || status === 'MISSED' || status === 'CANCELLED') {
+      go('sessions', null);
+    }
   }).catch(function(err) {
     toast('✗ Erro ao atualizar sessão');
   });
