@@ -382,6 +382,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
       <div class="ni on" onclick="go('dashboard',this)"><span class="ni-ico">⚡</span><span>Dashboard</span></div>
       <div class="ni" onclick="go('patients',this)"><span class="ni-ico">👥</span><span>Pacientes</span></div>
       <div class="ni" onclick="go('appointments',this)"><span class="ni-ico">📅</span><span>Agenda</span></div>
+      <div class="ni" onclick="go('sessions',this)"><span class="ni-ico">🗂️</span><span>Sessões</span></div>
       <div class="ni" onclick="go('records',this)"><span class="ni-ico">📋</span><span>Prontuários</span></div>
       <div class="ni" onclick="go('financial',this)"><span class="ni-ico">💰</span><span>Financeiro</span></div>
       <div class="ni" onclick="go('reports',this)"><span class="ni-ico">📊</span><span>Relatórios</span></div>
@@ -492,6 +493,28 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
         </div>
       </div>
       <div id="appt-calendar" style="background:white;border-radius:11px;padding:14px;margin-bottom:12px;border:1px solid var(--bd)"></div>
+
+      <!-- ── Agenda Cards Section ── -->
+      <div id="appt-cards-section">
+        <!-- Type filter pills -->
+        <div style="background:white;border-radius:11px;padding:12px 14px;border:1px solid var(--bd);margin-bottom:10px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+          <span id="apf-online" onclick="setAgendaTypeFilter('ONLINE')" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;padding:4px 10px;border-radius:20px;background:#eff6ff;color:#3b82f6;border:1.5px solid #3b82f6"><span style="width:10px;height:10px;border-radius:50%;background:#3b82f6;display:inline-block;flex-shrink:0"></span>Online</span>
+          <span id="apf-presential" onclick="setAgendaTypeFilter('PRESENTIAL')" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;padding:4px 10px;border-radius:20px;background:#f0fdf4;color:#10b981;border:1.5px solid #10b981"><span style="width:10px;height:10px;border-radius:50%;background:#10b981;display:inline-block;flex-shrink:0"></span>Presencial</span>
+          <span id="apf-evaluation" onclick="setAgendaTypeFilter('EVALUATION')" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;padding:4px 10px;border-radius:20px;background:#f3e8ff;color:#7c3aed;border:1.5px solid #7c3aed"><span style="width:10px;height:10px;border-radius:50%;background:#7c3aed;display:inline-block;flex-shrink:0"></span>Avaliação</span>
+        </div>
+        <!-- Search -->
+        <div style="background:white;border-radius:11px;padding:10px 14px;border:1px solid var(--bd);margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span style="font-size:15px">🔍</span>
+          <input type="text" id="appt-cards-search" placeholder="Buscar por nome ou CPF do paciente..." style="border:none;outline:none;width:100%;font-size:13px;color:#334155;background:transparent" oninput="renderAgendaCards()"/>
+        </div>
+        <!-- Hoje / Semana toggle -->
+        <div style="background:white;border-radius:11px;border:1px solid var(--bd);margin-bottom:10px;display:flex;overflow:hidden">
+          <button id="apv-today" onclick="setAgendaView('today')" style="flex:1;padding:10px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:#f0f4ff;color:#3b82f6;border-right:1px solid var(--bd)">Hoje</button>
+          <button id="apv-week" onclick="setAgendaView('week')" style="flex:1;padding:10px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b">Semana</button>
+        </div>
+        <!-- Cards list -->
+        <div id="appt-cards-list"></div>
+      </div>
     </div>
 
     <!-- RECORDS -->
@@ -642,6 +665,44 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
         <button class="btn bp fw" style="margin-top:8px" onclick="showScreen('plans')">Trocar de plano</button>
         <button class="btn br fw" style="margin-top:8px" onclick="doLogout()">Sair da conta</button>
       </div>
+    </div>
+
+    <!-- SESSIONS HISTORY -->
+    <div id="pg-sessions" class="page">
+      <div class="ph"><div><div class="ptt">Sessões</div><div class="pst2">Histórico completo</div></div></div>
+
+      <!-- Summary stats -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px" id="sess-stats">
+        <div style="background:white;border-radius:11px;padding:12px;border:1px solid var(--bd);text-align:center">
+          <div style="font-size:20px;font-weight:800;color:#10b981" id="sess-count-completed">0</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">Concluídas</div>
+        </div>
+        <div style="background:white;border-radius:11px;padding:12px;border:1px solid var(--bd);text-align:center">
+          <div style="font-size:20px;font-weight:800;color:#f59e0b" id="sess-count-missed">0</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">Faltas</div>
+        </div>
+        <div style="background:white;border-radius:11px;padding:12px;border:1px solid var(--bd);text-align:center">
+          <div style="font-size:20px;font-weight:800;color:#ef4444" id="sess-count-cancelled">0</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">Canceladas</div>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div style="background:white;border-radius:11px;padding:10px 14px;border:1px solid var(--bd);margin-bottom:10px;display:flex;align-items:center;gap:8px">
+        <span style="font-size:15px">🔍</span>
+        <input type="text" id="sessions-search" placeholder="Buscar por nome ou CPF do paciente..." style="border:none;outline:none;width:100%;font-size:13px;color:#334155;background:transparent" oninput="renderSessions()"/>
+      </div>
+
+      <!-- Status tabs -->
+      <div style="background:white;border-radius:11px;border:1px solid var(--bd);margin-bottom:12px;display:flex;overflow:hidden">
+        <button id="sessions-tab-all" onclick="switchSessionTab('all')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:#f0f4ff;color:#3b82f6;border-right:1px solid var(--bd)">Todos</button>
+        <button id="sessions-tab-completed" onclick="switchSessionTab('completed')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">✓ Concluídas</button>
+        <button id="sessions-tab-missed" onclick="switchSessionTab('missed')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">⚠ Falta</button>
+        <button id="sessions-tab-cancelled" onclick="switchSessionTab('cancelled')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b">✕ Canceladas</button>
+      </div>
+
+      <!-- List -->
+      <div id="sessions-list"></div>
     </div>
 
     </div>
@@ -1453,56 +1514,280 @@ function renderWeeklyGrid(startDate) {
   // Scroll to 07:00 on initial render
   var body = document.getElementById('wg-body');
   if (body) body.scrollTop = 7 * ROW_H;
+
+  renderAgendaCards();
+}
+
+// ===== AGENDA CARDS =====
+STATE.agendaView        = STATE.agendaView        || 'today';
+STATE.agendaTypeFilter  = STATE.agendaTypeFilter  || null;
+
+function setAgendaView(view) {
+  STATE.agendaView = view;
+  var btnToday = document.getElementById('apv-today');
+  var btnWeek  = document.getElementById('apv-week');
+  if (btnToday) {
+    btnToday.style.background = view === 'today' ? '#f0f4ff' : 'white';
+    btnToday.style.color      = view === 'today' ? '#3b82f6' : '#64748b';
+    btnToday.style.fontWeight = view === 'today' ? '700' : '600';
+  }
+  if (btnWeek) {
+    btnWeek.style.background  = view === 'week' ? '#f0f4ff' : 'white';
+    btnWeek.style.color       = view === 'week' ? '#3b82f6' : '#64748b';
+    btnWeek.style.fontWeight  = view === 'week' ? '700' : '600';
+  }
+  renderAgendaCards();
+}
+
+function setAgendaTypeFilter(type) {
+  STATE.agendaTypeFilter = STATE.agendaTypeFilter === type ? null : type;
+  var ids = { ONLINE: 'apf-online', PRESENTIAL: 'apf-presential', EVALUATION: 'apf-evaluation' };
+  var activeType = STATE.agendaTypeFilter;
+  Object.keys(ids).forEach(function(t) {
+    var el = document.getElementById(ids[t]);
+    if (!el) return;
+    var isActive = t === activeType;
+    var colors = { ONLINE: ['#3b82f6','#eff6ff'], PRESENTIAL: ['#10b981','#f0fdf4'], EVALUATION: ['#7c3aed','#f3e8ff'] };
+    var c = colors[t];
+    el.style.opacity     = (!activeType || isActive) ? '1' : '0.45';
+    el.style.border      = '1.5px solid ' + c[0];
+    el.style.background  = isActive ? c[0] : c[1];
+    el.style.color       = isActive ? '#fff' : c[0];
+  });
+  renderAgendaCards();
+}
+
+function renderAgendaCards() {
+  var el = document.getElementById('appt-cards-list');
+  if (!el) return;
+
+  var search = (document.getElementById('appt-cards-search') || {}).value || '';
+  search = search.toLowerCase();
+
+  var now     = new Date();
+  var todayStr = now.toISOString().split('T')[0];
+
+  var weekStart = new Date(STATE.weekGridDate || now);
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  weekStart.setHours(0, 0, 0, 0);
+  var weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
+
+  var appts = (STATE.appointments || []).filter(function(a) {
+    if (a.status === 'CANCELLED') return false;
+    var d = new Date(a.date);
+    if (STATE.agendaView === 'today') {
+      if (d.toISOString().split('T')[0] !== todayStr) return false;
+    } else {
+      if (d < weekStart || d > weekEnd) return false;
+    }
+    if (STATE.agendaTypeFilter && a.type !== STATE.agendaTypeFilter) return false;
+    if (search) {
+      var name = a.patient ? a.patient.name.toLowerCase() : '';
+      var cpf  = a.patient ? (a.patient.cpf || '').toLowerCase() : '';
+      if (!name.includes(search) && !cpf.includes(search)) return false;
+    }
+    return true;
+  }).sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+
+  if (!appts.length) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8;font-size:13px">' +
+      (STATE.agendaView === 'today' ? 'Nenhuma consulta hoje' : 'Nenhuma consulta esta semana') + '</div>';
+    return;
+  }
+
+  var AVATAR_COLORS = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6','#06b6d4','#ef4444'];
+  var typeColor = function(t) { return t === 'ONLINE' ? '#3b82f6' : t === 'PRESENTIAL' ? '#10b981' : '#7c3aed'; };
+  var typeLabel = function(t) { return t === 'ONLINE' ? 'Online' : t === 'PRESENTIAL' ? 'Presencial' : 'Avalia\u00e7\u00e3o'; };
+
+  var statusLabel = function(s) {
+    return s === 'COMPLETED' ? 'Conclu\u00edda' : s === 'MISSED' ? 'Falta' : 'Agendada';
+  };
+  var statusColor = function(s) {
+    return s === 'COMPLETED' ? '#10b981' : s === 'MISSED' ? '#f59e0b' : '#3b82f6';
+  };
+  var statusBg = function(s) {
+    return s === 'COMPLETED' ? '#f0fdf4' : s === 'MISSED' ? '#fffbeb' : '#eff6ff';
+  };
+
+  // Compute session number per patient (position among all patient appointments sorted by date)
+  var patAppts = {};
+  (STATE.appointments || []).forEach(function(a) {
+    var pid = a.patient ? a.patient.id : null;
+    if (!pid) return;
+    if (!patAppts[pid]) patAppts[pid] = [];
+    patAppts[pid].push(a);
+  });
+  Object.keys(patAppts).forEach(function(pid) {
+    patAppts[pid].sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+  });
+
+  var html = appts.map(function(a) {
+    var patName  = a.patient ? a.patient.name : 'Paciente';
+    var ini      = patName.split(' ').map(function(w){ return w[0]; }).slice(0,2).join('').toUpperCase();
+    var avColor  = AVATAR_COLORS[patName.charCodeAt(0) % AVATAR_COLORS.length];
+    var dt       = new Date(a.date);
+    var timeStr  = dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    var dateStr  = dt.toLocaleDateString('pt-BR');
+    var tc       = typeColor(a.type);
+    var tl       = typeLabel(a.type);
+    var sc       = statusColor(a.status);
+    var sb_      = statusBg(a.status);
+    var sl       = statusLabel(a.status);
+
+    // Session number
+    var pid      = a.patient ? a.patient.id : null;
+    var sessNum  = 1;
+    if (pid && patAppts[pid]) {
+      var idx = patAppts[pid].findIndex(function(x){ return x.id === a.id; });
+      if (idx >= 0) sessNum = idx + 1;
+    }
+
+    var phone    = a.patient ? (a.patient.phone || '') : '';
+    var wa       = phone ? 'https://wa.me/' + phone.replace(/\D/g,'') : null;
+    var isActionable = a.status !== 'COMPLETED' && a.status !== 'MISSED';
+
+    var card = '<div style="background:white;border-radius:14px;padding:16px;border:1px solid #e2e8f0;border-left:4px solid ' + tc + ';margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.04)">';
+
+    // Row 1: avatar + info + whatsapp
+    card += '<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">';
+    // Avatar
+    card += '<div style="width:46px;height:46px;border-radius:12px;background:' + avColor + ';flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:15px">' + ini + '</div>';
+    // Info
+    card += '<div style="flex:1;min-width:0">';
+    card += '<div style="font-weight:800;font-size:14px;letter-spacing:.3px;margin-bottom:6px">' + patName.toUpperCase() + '</div>';
+    // Badges row
+    card += '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px">';
+    card += '<span style="background:' + sb_ + ';color:' + sc + ';border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700">' + sl + '</span>';
+    card += '<span style="border:1.5px solid ' + tc + ';color:' + tc + ';border-radius:6px;padding:2px 9px;font-size:11px;font-weight:600">' + tl + '</span>';
+    card += '<span style="background:#f1f5f9;color:#475569;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:600">Sess\u00e3o ' + sessNum + '</span>';
+    card += '</div>';
+    // Time info
+    card += '<div style="font-size:12px;color:#64748b">' + timeStr + ' \u00b7 ' + dateStr + ' \u00b7 ' + (a.duration || 50) + 'min \u00b7 R$ ' + a.value.toFixed(2) + '</div>';
+    card += '</div>'; // end info
+    // WhatsApp button
+    if (wa) {
+      card += '<a href="' + wa + '" target="_blank" title="WhatsApp" style="width:38px;height:38px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-decoration:none;font-size:18px">🟢</a>';
+    }
+    card += '</div>'; // end row 1
+
+    // Row 2: Google Meet link (ONLINE only)
+    if (a.type === 'ONLINE' && a.meetLink) {
+      var fullLink = a.meetLink.startsWith('http') ? a.meetLink : 'https://' + a.meetLink;
+      var shortLink = a.meetLink.length > 28 ? a.meetLink.substring(0, 25) + '...' : a.meetLink;
+      card += '<div style="background:#f8fafc;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:12px;border:1px solid #e2e8f0">';
+      card += '<span style="font-size:16px">🎥</span>';
+      card += '<span style="flex:1;font-size:12px;color:#475569;font-family:monospace;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + shortLink + '</span>';
+      card += '<a href="' + fullLink + '" target="_blank" style="background:#7c3aed;color:white;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap">Entrar</a>';
+      card += '</div>';
+    }
+
+    // Row 3: Action buttons
+    if (isActionable) {
+      card += '<div style="display:flex;gap:8px">';
+      card += '<button onclick="confirmAppointment(' + a.id + ');renderAgendaCards()" style="flex:1;background:#dcfce7;color:#15803d;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u2713 Concluir</button>';
+      card += '<button onclick="openMissedDialog(' + a.id + ')" style="flex:1;background:#fef9c3;color:#92400e;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u26a0 Falta</button>';
+      card += '<button onclick="cancelAppointment(' + a.id + ');renderAgendaCards()" style="flex:1;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u00d7 Cancelar</button>';
+      card += '</div>';
+    }
+
+    card += '</div>'; // end card
+    return card;
+  }).join('');
+
+  el.innerHTML = html;
 }
 
 // ===== SESSIONS MANAGEMENT =====
-var currentSessionFilter = 'completed';
+var currentSessionFilter = 'all';
 
 function switchSessionTab(tab) {
   currentSessionFilter = tab;
-  document.getElementById('sessions-tab-completed').style.background = tab === 'completed' ? '#10b981' : '#d1d5db';
-  document.getElementById('sessions-tab-cancelled').style.background = tab === 'cancelled' ? '#ef4444' : '#d1d5db';
-  document.getElementById('sessions-tab-missed').style.background = tab === 'missed' ? '#f59e0b' : '#d1d5db';
+  var tabs = { all: 'sessions-tab-all', completed: 'sessions-tab-completed', missed: 'sessions-tab-missed', cancelled: 'sessions-tab-cancelled' };
+  var colors = { all: '#3b82f6', completed: '#10b981', missed: '#f59e0b', cancelled: '#ef4444' };
+  Object.keys(tabs).forEach(function(t) {
+    var el = document.getElementById(tabs[t]);
+    if (!el) return;
+    var isActive = t === tab;
+    el.style.background  = isActive ? colors[t] : 'white';
+    el.style.color       = isActive ? '#fff' : '#64748b';
+    el.style.fontWeight  = isActive ? '700' : '600';
+  });
   renderSessions();
 }
 
-function filterSessions() {
-  renderSessions();
-}
+function filterSessions() { renderSessions(); }
 
 function renderSessions() {
   var el = document.getElementById('sessions-list');
-  var search = document.getElementById('sessions-search').value.toLowerCase();
-  
-  var statusMap = {
-    'completed': 'COMPLETED',
-    'cancelled': 'CANCELLED',
-    'missed': 'MISSED'
-  };
-  
-  var sessions = STATE.appointments.filter(function(a) {
-    var status = a.status === 'COMPLETED' ? 'COMPLETED' : a.status === 'CANCELLED' ? 'CANCELLED' : 'MISSED';
-    var matchStatus = status === statusMap[currentSessionFilter];
-    var matchSearch = !search || (a.patient && (a.patient.name.toLowerCase().includes(search) || (a.patient.cpf && a.patient.cpf.includes(search))));
-    return matchStatus && matchSearch;
+  if (!el) return;
+  var search = (document.getElementById('sessions-search') || {}).value || '';
+  search = search.toLowerCase();
+
+  var AVATAR_COLORS = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6','#06b6d4','#ef4444'];
+  var typeLabel = function(t) { return t === 'ONLINE' ? 'Online' : t === 'PRESENTIAL' ? 'Presencial' : 'Avaliação'; };
+  var typeColor = function(t) { return t === 'ONLINE' ? '#3b82f6' : t === 'PRESENTIAL' ? '#10b981' : '#7c3aed'; };
+
+  var allFinished = (STATE.appointments || []).filter(function(a) {
+    return a.status === 'COMPLETED' || a.status === 'CANCELLED' || a.status === 'MISSED';
   });
-  
-  var html = '';
-  sessions.forEach(function(a) {
-    var patName = a.patient ? a.patient.name : 'Paciente';
-    var dt = new Date(a.date);
-    var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + ' · ' + dt.toLocaleDateString('pt-BR');
-    var statusColor = a.status === 'COMPLETED' ? '#10b981' : a.status === 'CANCELLED' ? '#ef4444' : '#f59e0b';
-    var statusText = a.status === 'COMPLETED' ? 'Concluída' : a.status === 'CANCELLED' ? 'Cancelada' : 'Falta';
-    
-    html += '<div style="background:white;border-left:3px solid ' + statusColor + ';border-radius:6px;padding:12px;display:flex;justify-content:space-between;align-items:center">';
-    html += '<div><div style="font-weight:700;font-size:14px">' + patName + '</div>';
-    html += '<div style="font-size:12px;color:#666;margin-top:4px">' + timeStr + ' · R$ ' + a.value.toFixed(2) + '</div>';
-    html += '<div style="font-size:11px;color:' + statusColor + ';margin-top:4px;font-weight:700">' + statusText + '</div></div>';
-    html += '</div>';
+
+  // Update stats
+  var cCompleted = allFinished.filter(function(a){ return a.status === 'COMPLETED'; }).length;
+  var cMissed    = allFinished.filter(function(a){ return a.status === 'MISSED'; }).length;
+  var cCancelled = allFinished.filter(function(a){ return a.status === 'CANCELLED'; }).length;
+  ['completed','missed','cancelled'].forEach(function(k) {
+    var cnt = document.getElementById('sess-count-' + k);
+    if (cnt) cnt.textContent = k === 'completed' ? cCompleted : k === 'missed' ? cMissed : cCancelled;
   });
-  
-  if (html === '') html = '<div style="text-align:center;color:#999;padding:20px">Nenhuma sessão encontrada</div>';
+
+  var statusMap = { completed: 'COMPLETED', cancelled: 'CANCELLED', missed: 'MISSED' };
+  var sessions = allFinished.filter(function(a) {
+    if (currentSessionFilter !== 'all' && a.status !== statusMap[currentSessionFilter]) return false;
+    if (search) {
+      var name = a.patient ? a.patient.name.toLowerCase() : '';
+      var cpf  = a.patient ? (a.patient.cpf || '').toLowerCase() : '';
+      if (!name.includes(search) && !cpf.includes(search)) return false;
+    }
+    return true;
+  }).sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+
+  if (!sessions.length) {
+    el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:28px;font-size:13px">Nenhuma sessão encontrada</div>';
+    return;
+  }
+
+  var statusText  = function(s) { return s === 'COMPLETED' ? 'Concluída' : s === 'CANCELLED' ? 'Cancelada' : 'Falta'; };
+  var statusColor = function(s) { return s === 'COMPLETED' ? '#10b981' : s === 'CANCELLED' ? '#ef4444' : '#f59e0b'; };
+  var statusBg    = function(s) { return s === 'COMPLETED' ? '#f0fdf4' : s === 'CANCELLED' ? '#fee2e2' : '#fffbeb'; };
+
+  var html = sessions.map(function(a) {
+    var patName  = a.patient ? a.patient.name : 'Paciente';
+    var ini      = patName.split(' ').map(function(w){ return w[0]; }).slice(0,2).join('').toUpperCase();
+    var avColor  = AVATAR_COLORS[patName.charCodeAt(0) % AVATAR_COLORS.length];
+    var dt       = new Date(a.date);
+    var timeStr  = dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    var dateStr  = dt.toLocaleDateString('pt-BR');
+    var sc       = statusColor(a.status);
+    var sb_      = statusBg(a.status);
+    var sl       = statusText(a.status);
+    var tc       = typeColor(a.type);
+    var tl       = typeLabel(a.type);
+
+    return '<div style="background:white;border-radius:12px;padding:14px;border:1px solid #e2e8f0;border-left:4px solid ' + sc + ';margin-bottom:10px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">' +
+      '<div style="width:44px;height:44px;border-radius:12px;background:' + avColor + ';flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:14px">' + ini + '</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-weight:700;font-size:13px;margin-bottom:5px">' + patName + '</div>' +
+        '<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:5px">' +
+          '<span style="background:' + sb_ + ';color:' + sc + ';border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">' + sl + '</span>' +
+          '<span style="border:1.5px solid ' + tc + ';color:' + tc + ';border-radius:5px;padding:2px 8px;font-size:10px;font-weight:600">' + tl + '</span>' +
+        '</div>' +
+        '<div style="font-size:11px;color:#64748b">' + timeStr + ' · ' + dateStr + ' · ' + (a.duration || 50) + 'min · <strong style="color:#10b981">R$ ' + a.value.toFixed(2) + '</strong></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
   el.innerHTML = html;
 }
 
@@ -1623,6 +1908,7 @@ function updateAppointmentStatus(appointmentId, status, value) {
 
   api('PUT', '/appointments/' + appointmentId, {status: status, value: value}).then(function(res) {
     renderWeeklyGrid(new Date());
+    renderAgendaCards();
     renderSessions();
     renderDashboardSessions();
   }).catch(function(err) {
@@ -1828,7 +2114,7 @@ async function openPortal() {
 // NAVIGATION
 // ══════════════════════════════════════════════
 var sbOpen = false;
-var TITLES = {dashboard:'Dashboard',patients:'Pacientes',appointments:'Agenda',records:'Prontuários',financial:'Financeiro',reports:'Relatórios',settings:'Configurações'};
+var TITLES = {dashboard:'Dashboard',patients:'Pacientes',appointments:'Agenda',sessions:'Sessões',records:'Prontuários',financial:'Financeiro',reports:'Relatórios',settings:'Configurações'};
 function toggleSB() { sbOpen = !sbOpen; document.getElementById('sb').classList.toggle('open', sbOpen); }
 function swPTab(id, el) {
   document.querySelectorAll('.ptab').forEach(function(t){ t.classList.add('hidden'); });
@@ -1849,6 +2135,7 @@ function go(pg, el) {
   if (pg === 'records') populateRecordSelect();
   if (pg === 'settings') updateUserUI();
   if (pg === 'appointments') renderWeeklyGrid(STATE.weekGridDate || new Date());
+  if (pg === 'sessions') renderSessions();
 }
 function setTab(el) { el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); }); el.classList.add('on'); }
 
