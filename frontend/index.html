@@ -1969,28 +1969,110 @@ function editPatient(id) {
   var p = STATE.patients.find(function(x){ return x.id === id; });
   if (!p) return;
   closeM('m-pat');
-  var modal = document.createElement('div');
-  modal.id = 'm-epat-dyn';
-  modal.className = 'ov';
-  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;z-index:9999';
+  // Build modal via DOM manipulation to avoid XSS from patient data
+  var overlay = document.createElement('div');
+  overlay.id = 'm-epat-dyn';
+  overlay.className = 'ov';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;z-index:9999';
+
+  var inner = document.createElement('div');
+  inner.className = 'modal';
+  inner.setAttribute('onclick', 'event.stopPropagation()');
+  inner.style.cssText = 'max-height:93vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;background:white';
+
+  function makeField(labelText, inputId, inputValue, inputType) {
+    var wrap = document.createElement('div');
+    wrap.className = 'fr';
+    var lbl = document.createElement('label');
+    lbl.className = 'lbl';
+    lbl.textContent = labelText;
+    var inp = document.createElement('input');
+    inp.className = 'inp';
+    inp.id = inputId;
+    inp.type = inputType || 'text';
+    inp.value = inputValue || '';
+    wrap.appendChild(lbl);
+    wrap.appendChild(inp);
+    return wrap;
+  }
+
   var birthVal = p.birthDate ? new Date(p.birthDate).toISOString().split('T')[0] : '';
-  modal.innerHTML = '<div class="modal" onclick="event.stopPropagation()" style="max-height:93vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;background:white">' +
-    '<div class="mbar"></div>' +
-    '<div style="font-size:17px;font-weight:800;margin-bottom:4px">✎ Editar Paciente</div>' +
-    '<div style="font-size:12px;color:var(--mt);margin-bottom:14px">Atualize os dados do paciente</div>' +
-    '<div class="fr"><label class="lbl">Nome completo *</label><input class="inp" id="epat-name" value="' + (p.name||'').replace(/"/g,'&quot;') + '"/></div>' +
-    '<div style="display:flex;gap:8px"><div style="flex:1"><label class="lbl">CPF</label><input class="inp" id="epat-cpf" value="' + (p.cpf||'') + '"/></div><div style="flex:1"><label class="lbl">Telefone</label><input class="inp" id="epat-phone" value="' + (p.phone||'') + '"/></div></div>' +
-    '<div class="fr"><label class="lbl">E-mail</label><input class="inp" id="epat-email" value="' + (p.email||'') + '"/></div>' +
-    '<div style="display:flex;gap:8px"><div style="flex:1"><label class="lbl">Data de nascimento</label><input type="date" class="inp" id="epat-birth" value="' + birthVal + '"/></div><div style="flex:1"><label class="lbl">Status</label><select class="sel" id="epat-status"><option value="ACTIVE"' + (p.status==='ACTIVE'?' selected':'') + '>Ativo</option><option value="INACTIVE"' + (p.status==='INACTIVE'?' selected':'') + '>Inativo</option></select></div></div>' +
-    '<div style="display:flex;gap:8px;margin-top:4px"><div style="flex:2"><label class="lbl">Endereço</label><input class="inp" id="epat-address" value="' + (p.address||'').replace(/"/g,'&quot;') + '"/></div><div style="flex:1"><label class="lbl">Número</label><input class="inp" id="epat-address-num" value="' + (p.addressNum||'') + '"/></div></div>' +
-    '<div style="display:flex;gap:8px"><div style="flex:1"><label class="lbl">Complemento</label><input class="inp" id="epat-address-comp" value="' + (p.addressComp||'') + '"/></div><div style="flex:1"><label class="lbl">CEP</label><input class="inp" id="epat-address-cep" value="' + (p.addressCep||'') + '"/></div></div>' +
-    '<div id="epat-err" class="auth-err hidden" style="margin-top:8px"></div>' +
-    '<div style="display:flex;gap:8px;margin-top:16px">' +
-    '<button class="btn bs" style="flex:1" onclick="document.getElementById(\'m-epat-dyn\').remove()">Cancelar</button>' +
-    '<button class="btn bp" style="flex:1" id="epat-btn" onclick="saveEditPatient(\'' + id + '\')">Salvar</button>' +
-    '</div></div>';
-  document.body.appendChild(modal);
-  modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+
+  inner.innerHTML = '<div class="mbar"></div><div style="font-size:17px;font-weight:800;margin-bottom:4px">✎ Editar Paciente</div><div style="font-size:12px;color:var(--mt);margin-bottom:14px">Atualize os dados do paciente</div>';
+  inner.appendChild(makeField('Nome completo *', 'epat-name', p.name));
+
+  var row1 = document.createElement('div');
+  row1.style.cssText = 'display:flex;gap:8px';
+  row1.appendChild(makeField('CPF', 'epat-cpf', p.cpf));
+  row1.appendChild(makeField('Telefone', 'epat-phone', p.phone));
+  inner.appendChild(row1);
+
+  inner.appendChild(makeField('E-mail', 'epat-email', p.email));
+
+  var row2 = document.createElement('div');
+  row2.style.cssText = 'display:flex;gap:8px';
+  row2.appendChild(makeField('Data de nascimento', 'epat-birth', birthVal, 'date'));
+  var statusWrap = document.createElement('div');
+  statusWrap.style.flex = '1';
+  var statusLbl = document.createElement('label');
+  statusLbl.className = 'lbl';
+  statusLbl.textContent = 'Status';
+  var statusSel = document.createElement('select');
+  statusSel.className = 'sel';
+  statusSel.id = 'epat-status';
+  var optActive = document.createElement('option');
+  optActive.value = 'ACTIVE';
+  optActive.textContent = 'Ativo';
+  if (p.status === 'ACTIVE') optActive.selected = true;
+  var optInactive = document.createElement('option');
+  optInactive.value = 'INACTIVE';
+  optInactive.textContent = 'Inativo';
+  if (p.status === 'INACTIVE') optInactive.selected = true;
+  statusSel.appendChild(optActive);
+  statusSel.appendChild(optInactive);
+  statusWrap.appendChild(statusLbl);
+  statusWrap.appendChild(statusSel);
+  row2.appendChild(statusWrap);
+  inner.appendChild(row2);
+
+  var row3 = document.createElement('div');
+  row3.style.cssText = 'display:flex;gap:8px;margin-top:4px';
+  row3.appendChild(makeField('Endereço', 'epat-address', p.address));
+  row3.appendChild(makeField('Número', 'epat-address-num', p.addressNum));
+  inner.appendChild(row3);
+
+  var row4 = document.createElement('div');
+  row4.style.cssText = 'display:flex;gap:8px';
+  row4.appendChild(makeField('Complemento', 'epat-address-comp', p.addressComp));
+  row4.appendChild(makeField('CEP', 'epat-address-cep', p.addressCep));
+  inner.appendChild(row4);
+
+  var errDiv = document.createElement('div');
+  errDiv.id = 'epat-err';
+  errDiv.className = 'auth-err hidden';
+  errDiv.style.marginTop = '8px';
+  inner.appendChild(errDiv);
+
+  var btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:8px;margin-top:16px';
+  var cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn bs';
+  cancelBtn.style.flex = '1';
+  cancelBtn.textContent = 'Cancelar';
+  cancelBtn.onclick = function() { overlay.remove(); };
+  var saveBtn = document.createElement('button');
+  saveBtn.className = 'btn bp';
+  saveBtn.style.flex = '1';
+  saveBtn.id = 'epat-btn';
+  saveBtn.textContent = 'Salvar';
+  saveBtn.onclick = function() { saveEditPatient(id); };
+  btnRow.appendChild(cancelBtn);
+  btnRow.appendChild(saveBtn);
+  inner.appendChild(btnRow);
+
+  overlay.appendChild(inner);
+  document.body.appendChild(overlay);
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
 }
 
 async function saveEditPatient(id) {
