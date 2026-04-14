@@ -1338,10 +1338,20 @@ function navigateWeekGrid(offset) {
 }
 
 /**
- * Renders the weekly scheduling grid in #appt-calendar, matching the design
- * from the screenshot: "← Anterior / Hoje" left, date range centred,
- * "Próximo →" right; blue header for today; HH:00 time labels; appointment
- * blocks show time + UPPERCASE patient name; bottom type-colour legend.
+ * Renders the weekly scheduling grid in #appt-calendar.
+ *
+ * Layout fixes applied:
+ *  • Header is placed INSIDE the single scroll container (#wg-body) so both
+ *    header columns and body columns share the exact same parent width —
+ *    eliminating the scrollbar-width misalignment that caused a "crooked" grid.
+ *  • Outer wrapper uses clip-path:inset instead of overflow:hidden so that
+ *    position:sticky on the header works correctly.
+ *  • A min-width wrapper (420 px) prevents columns from becoming unreadably
+ *    narrow on small screens; overflow-x:auto on #wg-body provides horizontal
+ *    scroll instead of layout breakage.
+ *  • Time labels use padding:1px 6px 0 so the "HH:00" text is flush with the
+ *    top of its cell, matching exactly the pixel position of appointment blocks.
+ *
  * @param {Date} [startDate] - Any date within the desired week
  */
 function renderWeeklyGrid(startDate) {
@@ -1351,8 +1361,9 @@ function renderWeeklyGrid(startDate) {
   if (startDate) STATE.weekGridDate = new Date(startDate);
   if (!STATE.weekGridDate) STATE.weekGridDate = new Date();
 
-  var ROW_H = 52;   // px per hour
-  var TC_W  = 56;   // px for the "Hora" column
+  var ROW_H = 52;   // px per hour row
+  var TC_W  = 56;   // px for the time-label column
+  var MIN_W = 420;  // minimum total grid width (px); horizontal scroll below this
 
   // ── Week bounds ──────────────────────────────────────────────
   var sunday = new Date(STATE.weekGridDate);
@@ -1362,7 +1373,7 @@ function renderWeeklyGrid(startDate) {
   var saturday = new Date(sunday);
   saturday.setDate(saturday.getDate() + 6);
 
-  // ── Date-range header string  e.g. "12/04 — 18/04 de abril de 2026" ──
+  // ── Date-range header string ─────────────────────────────────
   var monthsFull = ['janeiro','fevereiro','março','abril','maio','junho',
                     'julho','agosto','setembro','outubro','novembro','dezembro'];
   var sDay  = sunday.getDate().toString().padStart(2,'0');
@@ -1370,67 +1381,67 @@ function renderWeeklyGrid(startDate) {
   var eDay  = saturday.getDate().toString().padStart(2,'0');
   var eMon  = (saturday.getMonth()+1).toString().padStart(2,'0');
   var yr    = saturday.getFullYear();
-  var rangeShort = sDay + '/' + sMon + ' \u2014 ' + eDay + '/' + eMon;
-  var rangeFull  = rangeShort + ' de ' + monthsFull[saturday.getMonth()] + ' de ' + yr;
+  var rangeFull = sDay + '/' + sMon + ' \u2014 ' + eDay + '/' + eMon +
+                  ' de ' + monthsFull[saturday.getMonth()] + ' de ' + yr;
 
-  // ── Day abbreviations (uppercase to match screenshot) ────────
-  var DAY_ABBR = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+  var DAY_ABBR = ['DOM','SEG','TER','QUA','QUI','SEX','S\u00c1B'];
 
   // ── 1. Navigation bar ────────────────────────────────────────
   var html =
     '<div style="display:flex;align-items:center;justify-content:space-between;' +
     'margin-bottom:10px;gap:6px;flex-wrap:wrap">' +
-
-    // Left: ← Anterior  Hoje
     '<div style="display:flex;align-items:center;gap:6px">' +
     '<button onclick="navigateWeekGrid(-1)" style="border:1px solid #cbd5e1;background:#fff;' +
     'border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;' +
-    'color:#475569;display:flex;align-items:center;gap:4px">' +
-    '&#8592; Anterior</button>' +
+    'color:#475569;display:flex;align-items:center;gap:4px">&#8592; Anterior</button>' +
     '<button onclick="navigateWeekGrid(0)" style="border:1px solid #cbd5e1;background:#fff;' +
     'border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;color:#475569">' +
     'Hoje</button>' +
     '</div>' +
-
-    // Centre: date range
     '<div style="font-size:14px;font-weight:700;color:#1e293b;text-align:center;flex:1;' +
     'min-width:160px">' + rangeFull + '</div>' +
-
-    // Right: Próximo →
     '<button onclick="navigateWeekGrid(1)" style="border:1px solid #cbd5e1;background:#fff;' +
     'border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;' +
-    'color:#475569;display:flex;align-items:center;gap:4px">' +
-    'Pr\u00f3ximo &#8594;</button>' +
+    'color:#475569;display:flex;align-items:center;gap:4px">Pr\u00f3ximo &#8594;</button>' +
     '</div>';
 
-  // ── 2. Availability legend (top, matching screenshot) ────────
+  // ── 2. Availability legend ───────────────────────────────────
   html +=
     '<div style="display:flex;gap:16px;margin-bottom:8px;font-size:11px;color:#64748b;' +
     'flex-wrap:wrap;align-items:center">' +
-    '<span style="display:flex;align-items:center;gap:5px">' +
-    '<span style="width:10px;height:10px;border-radius:50%;background:#10b981;' +
-    'display:inline-block"></span>Dispon\u00edvel</span>' +
-    '<span style="display:flex;align-items:center;gap:5px">' +
-    '<span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;' +
-    'display:inline-block"></span>Excepcionalmente dispon\u00edvel</span>' +
-    '<span style="display:flex;align-items:center;gap:5px">' +
-    '<span style="width:10px;height:10px;border-radius:50%;background:#cbd5e1;' +
-    'display:inline-block"></span>Bloqueado</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;' +
+    'border-radius:50%;background:#10b981;display:inline-block"></span>Dispon\u00edvel</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;' +
+    'border-radius:50%;background:#f59e0b;display:inline-block"></span>Excepcionalmente dispon\u00edvel</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;' +
+    'border-radius:50%;background:#cbd5e1;display:inline-block"></span>Bloqueado</span>' +
     '</div>';
 
   // ── 3. Grid wrapper ───────────────────────────────────────────
-  html += '<div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">';
+  // clip-path instead of overflow:hidden → rounds corners without creating a
+  // stacking context that would break position:sticky on the inner header.
+  html += '<div style="border:1px solid #e2e8f0;border-radius:10px;' +
+          'clip-path:inset(0 round 10px)">';
 
-  // ── 3a. Day-header row ────────────────────────────────────────
+  // Single scroll container for both axes.
+  // Because the header lives INSIDE this container, header and body columns
+  // always share the same effective width — the scrollbar never causes drift.
+  html += '<div id="wg-body" style="overflow-y:auto;overflow-x:auto;max-height:66vh">';
+
+  // Minimum-width wrapper: on screens narrower than MIN_W the user scrolls
+  // horizontally rather than having the columns squished to illegibility.
+  html += '<div style="min-width:' + MIN_W + 'px">';
+
+  // ── 3a. Day-header row (sticky inside the scroll container) ──
   html +=
     '<div style="display:flex;border-bottom:1px solid #e2e8f0;background:#f8fafc;' +
     'position:sticky;top:0;z-index:5">';
 
-  // "Hora" cell
+  // "HORA" cell — same fixed width as the time-label column below
   html +=
-    '<div style="width:' + TC_W + 'px;min-width:' + TC_W + 'px;border-right:1px solid #e2e8f0;' +
-    'font-size:10px;font-weight:700;color:#94a3b8;text-align:center;padding:10px 0;' +
-    'letter-spacing:.5px">HORA</div>';
+    '<div style="width:' + TC_W + 'px;min-width:' + TC_W + 'px;flex-shrink:0;' +
+    'border-right:1px solid #e2e8f0;font-size:10px;font-weight:700;color:#94a3b8;' +
+    'text-align:center;padding:10px 0;letter-spacing:.5px;background:#f8fafc">HORA</div>';
 
   for (var d = 0; d < 7; d++) {
     var hd = new Date(sunday);
@@ -1440,16 +1451,15 @@ function renderWeeklyGrid(startDate) {
                      (hd.getMonth()+1).toString().padStart(2,'0');
 
     if (isTodayHdr) {
-      // Blue pill background for today
       html +=
-        '<div style="flex:1;min-width:70px;padding:8px 4px 8px;text-align:center;' +
-        'background:#3b82f6;border-right:' + (d < 6 ? '1px solid #3b82f6' : 'none') + '">' +
+        '<div style="flex:1;min-width:0;padding:8px 4px;text-align:center;background:#3b82f6;' +
+        'border-right:' + (d < 6 ? '1px solid #3b82f6' : 'none') + '">' +
         '<div style="font-size:13px;font-weight:800;color:#fff">' + DAY_ABBR[d] + '</div>' +
         '<div style="font-size:11px;color:rgba(255,255,255,.85);margin-top:1px">' + dateLabel + '</div>' +
         '</div>';
     } else {
       html +=
-        '<div style="flex:1;min-width:70px;padding:8px 4px 8px;text-align:center;' +
+        '<div style="flex:1;min-width:0;padding:8px 4px;text-align:center;' +
         'border-right:' + (d < 6 ? '1px solid #e2e8f0' : 'none') + '">' +
         '<div style="font-size:12px;font-weight:700;color:#475569">' + DAY_ABBR[d] + '</div>' +
         '<div style="font-size:11px;color:#94a3b8;margin-top:1px">' + dateLabel + '</div>' +
@@ -1458,17 +1468,19 @@ function renderWeeklyGrid(startDate) {
   }
   html += '</div>'; // end header row
 
-  // ── 3b. Scrollable body ───────────────────────────────────────
-  html += '<div id="wg-body" style="overflow-y:auto;max-height:66vh">';
+  // ── 3b. Body row: time-label column + 7 day columns ──────────
   html += '<div style="display:flex">';
 
   // Time-label column
+  // padding:1px 6px 0 → label text starts 1 px below the cell top, which
+  // coincides visually with the border-bottom of the preceding cell (the hour
+  // line) and the top edge of any appointment block at that hour.
   html +=
     '<div style="width:' + TC_W + 'px;min-width:' + TC_W + 'px;flex-shrink:0;' +
     'border-right:1px solid #e2e8f0;background:#f8fafc">';
   for (var h = 0; h < 24; h++) {
     html +=
-      '<div style="height:' + ROW_H + 'px;padding:4px 6px 0;font-size:10px;color:#94a3b8;' +
+      '<div style="height:' + ROW_H + 'px;padding:1px 6px 0;font-size:10px;color:#94a3b8;' +
       'font-weight:500;box-sizing:border-box;border-bottom:1px solid #f1f5f9;' +
       'text-align:right">' +
       h.toString().padStart(2,'0') + ':00</div>';
@@ -1482,48 +1494,52 @@ function renderWeeklyGrid(startDate) {
     var dateKey    = dayDate.toISOString().split('T')[0];
     var isTodayCol = dayDate.toDateString() === new Date().toDateString();
 
+    // flex:1;min-width:0 → columns fill available space equally and can shrink
+    // overflow:hidden → clips appointment blocks that extend past the last hour row
     html +=
-      '<div style="flex:1;min-width:70px;position:relative;overflow:hidden;' +
+      '<div style="flex:1;min-width:0;position:relative;overflow:hidden;' +
       'background:' + (isTodayCol ? '#f0f4ff' : '#fff') + ';' +
       'border-right:' + (d < 6 ? '1px solid #e2e8f0' : 'none') + '">';
 
-    // Hour-row dividers
+    // Hour-row dividers — establish the grid lines and column height (24 × ROW_H)
     for (var h = 0; h < 24; h++) {
       html +=
         '<div style="height:' + ROW_H + 'px;border-bottom:1px solid ' +
         (isTodayCol ? '#dde4f8' : '#f1f5f9') + ';box-sizing:border-box"></div>';
     }
 
-    // Appointment blocks
+    // Appointment blocks — absolutely positioned over the hour-divider grid
     var dayAppts = STATE.appointments.filter(function(a) {
       return new Date(a.date).toISOString().split('T')[0] === dateKey;
     });
 
-    // Compute non-overlapping column layout for this day
     var apptLayout = layoutAppointments(dayAppts);
 
     dayAppts.forEach(function(a) {
       var ad       = new Date(a.date);
       var dur      = a.duration || 50;
+      // top = exact pixel offset from midnight: aligns with the hour-divider border
       var topPx    = ad.getHours() * ROW_H + ad.getMinutes() * (ROW_H / 60);
       var heightPx = Math.max(dur * (ROW_H / 60), 26);
       var bg       = apptBlockColor(a.type, a.status);
       var patName  = a.patient ? a.patient.name : 'Paciente';
       var timeStr  = ad.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
       var nameUC   = patName.toUpperCase();
-      var statusMk = a.status === 'COMPLETED' ? ' ✓' : a.status === 'MISSED' ? ' ✗' : '';
-      var typeLabel = a.type === 'ONLINE' ? 'Online' : a.type === 'PRESENTIAL' ? 'Presencial' : 'Avalia\u00e7\u00e3o';
+      var statusMk = a.status === 'COMPLETED' ? ' \u2713' : a.status === 'MISSED' ? ' \u2717' : '';
+      var typeLabel = a.type === 'ONLINE' ? 'Online' :
+                      a.type === 'PRESENTIAL' ? 'Presencial' : 'Avalia\u00e7\u00e3o';
 
       var lyt      = apptLayout[a.id] || { leftPct: 0, widthPct: 100 };
-      var leftCss  = 'calc(' + lyt.leftPct.toFixed(1) + '% + 3px)';
-      var widthCss = 'calc(' + lyt.widthPct.toFixed(1) + '% - 6px)';
+      // 2 px inset on each side so adjacent blocks have a small visual gap
+      var leftCss  = 'calc(' + lyt.leftPct.toFixed(1) + '% + 2px)';
+      var widthCss = 'calc(' + lyt.widthPct.toFixed(1) + '% - 4px)';
 
       html +=
         '<div title="' + patName + ' \u00b7 ' + timeStr + ' \u00b7 ' + typeLabel + statusMk + '" ' +
         'style="position:absolute;top:' + topPx + 'px;left:' + leftCss + ';width:' + widthCss + ';' +
-        'height:' + heightPx + 'px;background:' + bg + ';border-radius:5px;' +
-        'padding:4px 6px;cursor:pointer;overflow:hidden;z-index:2;box-sizing:border-box;' +
-        'box-shadow:0 2px 6px rgba(0,0,0,.15)" ' +
+        'height:' + heightPx + 'px;background:' + bg + ';border-radius:4px;' +
+        'padding:3px 5px;cursor:pointer;overflow:hidden;z-index:2;box-sizing:border-box;' +
+        'box-shadow:0 1px 4px rgba(0,0,0,.12)" ' +
         'onclick="openAppointmentConfirmation(\'' + a.id + '\')">' +
         '<div style="font-size:9px;color:rgba(255,255,255,.85);line-height:1.4;font-weight:500">' +
         timeStr + '</div>' +
@@ -1538,7 +1554,8 @@ function renderWeeklyGrid(startDate) {
     html += '</div>'; // day column
   }
 
-  html += '</div>'; // flex row
+  html += '</div>'; // body flex row
+  html += '</div>'; // min-width wrapper
   html += '</div>'; // #wg-body
   html += '</div>'; // grid wrapper
 
@@ -1546,26 +1563,21 @@ function renderWeeklyGrid(startDate) {
   html +=
     '<div style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:#64748b;' +
     'flex-wrap:wrap;align-items:center">' +
-    '<span style="display:flex;align-items:center;gap:5px">' +
-    '<span style="width:10px;height:10px;border-radius:50%;background:#3b82f6;' +
-    'display:inline-block"></span>Online</span>' +
-    '<span style="display:flex;align-items:center;gap:5px">' +
-    '<span style="width:10px;height:10px;border-radius:50%;background:#10b981;' +
-    'display:inline-block"></span>Presencial</span>' +
-    '<span style="display:flex;align-items:center;gap:5px">' +
-    '<span style="width:10px;height:10px;border-radius:50%;background:#7c3aed;' +
-    'display:inline-block"></span>Avalia\u00e7\u00e3o</span>' +
-    '<span style="display:flex;align-items:center;gap:5px">' +
-    '<span style="width:10px;height:10px;border-radius:50%;background:#059669;' +
-    'display:inline-block"></span>Conclu\u00edda</span>' +
-    '<span style="display:flex;align-items:center;gap:5px">' +
-    '<span style="width:10px;height:10px;border-radius:50%;background:#ef4444;' +
-    'display:inline-block"></span>Falta</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;' +
+    'border-radius:50%;background:#3b82f6;display:inline-block"></span>Online</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;' +
+    'border-radius:50%;background:#10b981;display:inline-block"></span>Presencial</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;' +
+    'border-radius:50%;background:#7c3aed;display:inline-block"></span>Avalia\u00e7\u00e3o</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;' +
+    'border-radius:50%;background:#059669;display:inline-block"></span>Conclu\u00edda</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;' +
+    'border-radius:50%;background:#ef4444;display:inline-block"></span>Falta</span>' +
     '</div>';
 
   cal.innerHTML = html;
 
-  // Scroll to 07:00 on initial render
+  // Scroll to 07:00 so working hours are visible without manual scrolling
   var body = document.getElementById('wg-body');
   if (body) body.scrollTop = 7 * ROW_H;
 
