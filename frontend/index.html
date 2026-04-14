@@ -1436,7 +1436,7 @@ function renderWeeklyGrid(startDate) {
     var isTodayCol = dayDate.toDateString() === new Date().toDateString();
 
     html +=
-      '<div style="flex:1;min-width:70px;position:relative;' +
+      '<div style="flex:1;min-width:70px;position:relative;overflow:hidden;' +
       'background:' + (isTodayCol ? '#f0f4ff' : '#fff') + ';' +
       'border-right:' + (d < 6 ? '1px solid #e2e8f0' : 'none') + '">';
 
@@ -1565,7 +1565,7 @@ function renderAgendaCards() {
   search = search.toLowerCase();
 
   var now     = new Date();
-  var todayStr = now.toISOString().split('T')[0];
+  var todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
 
   var weekStart = new Date(STATE.weekGridDate || now);
   weekStart.setDate(weekStart.getDate() - weekStart.getDay());
@@ -1575,11 +1575,14 @@ function renderAgendaCards() {
   weekEnd.setHours(23, 59, 59, 999);
 
   var appts = (STATE.appointments || []).filter(function(a) {
-    if (a.status === 'CANCELLED') return false;
     var d = new Date(a.date);
     if (STATE.agendaView === 'today') {
-      if (d.toISOString().split('T')[0] !== todayStr) return false;
+      // In "Hoje" view: only show non-finalized appointments for today (local date)
+      if (a.status === 'CANCELLED' || a.status === 'COMPLETED' || a.status === 'MISSED') return false;
+      var localDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      if (localDate !== todayStr) return false;
     } else {
+      if (a.status === 'CANCELLED') return false;
       if (d < weekStart || d > weekEnd) return false;
     }
     if (STATE.agendaTypeFilter && a.type !== STATE.agendaTypeFilter) return false;
@@ -1797,26 +1800,25 @@ var currentEditingAppointment = null;
 function openAppointmentConfirmation(appointmentId) {
   var appt = STATE.appointments.find(function(a) { return a.id === appointmentId; });
   if (!appt) return;
-  
-  currentEditingAppointment = appt;
-  
+
   var modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
-  
+
   var patName = appt.patient ? appt.patient.name : 'Paciente';
   var dt = new Date(appt.date);
   var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + ' · ' + dt.toLocaleDateString('pt-BR');
-  
-  modal.innerHTML = '<div style="background:white;border-radius:8px;padding:24px;max-width:400px;width:90%">';
-  modal.innerHTML += '<h2 style="margin:0 0 12px 0;font-size:18px">' + patName + '</h2>';
-  modal.innerHTML += '<p style="margin:0 0 16px 0;color:#666;font-size:14px">' + timeStr + ' · R$ ' + appt.value.toFixed(2) + '</p>';
-  modal.innerHTML += '<div style="display:flex;gap:8px;flex-direction:column">';
-  modal.innerHTML += '<button class="btn bg2" style="width:100%" onclick="confirmAppointment(\'' + appointmentId + '\');this.parentElement.parentElement.parentElement.remove()">✓ Confirmar</button>';
-  modal.innerHTML += '<button class="btn br" style="width:100%" onclick="cancelAppointment(\'' + appointmentId + '\');this.parentElement.parentElement.parentElement.remove()">✕ Cancelar</button>';
-  modal.innerHTML += '<button class="btn" style="width:100%;background:#f59e0b;color:white;border:none" onclick="openMissedDialog(\'' + appointmentId + '\');this.parentElement.parentElement.parentElement.remove()">⚠ Falta</button>';
-  modal.innerHTML += '</div>';
-  modal.innerHTML += '</div>';
-  
+  var typeLabel = appt.type === 'ONLINE' ? '🎥 Online' : appt.type === 'PRESENTIAL' ? '🏢 Presencial' : '📋 Avaliação';
+
+  modal.innerHTML =
+    '<div style="background:white;border-radius:12px;padding:24px;max-width:380px;width:90%">' +
+    '<div style="font-size:17px;font-weight:800;margin-bottom:6px">' + patName + '</div>' +
+    '<div style="font-size:13px;color:#64748b;margin-bottom:4px">' + timeStr + '</div>' +
+    '<div style="font-size:13px;color:#64748b;margin-bottom:4px">' + typeLabel + ' · ' + (appt.duration || 50) + 'min</div>' +
+    '<div style="font-size:13px;color:#10b981;font-weight:700;margin-bottom:16px">R$ ' + appt.value.toFixed(2) + '</div>' +
+    '<p style="font-size:12px;color:#94a3b8;margin:0 0 16px 0">Use os botões nos cards abaixo da agenda para confirmar presença, falta ou cancelamento.</p>' +
+    '<button class="btn bs" style="width:100%" onclick="this.parentElement.parentElement.remove()">Fechar</button>' +
+    '</div>';
+
   document.body.appendChild(modal);
   modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
 }
@@ -1911,6 +1913,10 @@ function updateAppointmentStatus(appointmentId, status, value) {
     renderAgendaCards();
     renderSessions();
     renderDashboardSessions();
+    // Redirect to Sessions page when a record is finalized
+    if (status === 'COMPLETED' || status === 'MISSED' || status === 'CANCELLED') {
+      go('sessions', null);
+    }
   }).catch(function(err) {
     toast('✗ Erro ao atualizar sessão');
   });
@@ -2636,7 +2642,7 @@ async function createAppointment() {
   var time = document.getElementById('appt-time').value;
   if (!patId || !date || !time) { errEl.textContent = 'Preencha paciente, data e horário'; errEl.classList.remove('hidden'); return; }
 
-  if (checkTimeConflict()) { errEl.textContent = '⚠️ Conflito de horário! Você já tem uma consulta nesse horário'; errEl.classList.remove('hidden'); return; }
+  if (checkTimeConflict()) { errEl.textContent = 'Atenção: Já existe um agendamento para este dia e horário. Por favor, escolha um horário vago.'; errEl.classList.remove('hidden'); return; }
 
   btn.disabled = true; btn.textContent = 'Agendando...';
   try {
