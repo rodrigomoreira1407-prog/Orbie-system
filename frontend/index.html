@@ -1400,55 +1400,6 @@ function updateAppointmentStatus(appointmentId, status, value) {
   });
 }
 
-async function init() {
-  var loadingTimeout = setTimeout(function() {
-    console.error('Timeout - forcing screen display');
-    if (STATE.token) showScreen('app');
-    else showScreen('login');
-  }, 3000);
-  
-  try {
-    var params = new URLSearchParams(window.location.search);
-    var verifyToken = params.get('token') && window.location.pathname.includes('verify');
-    var resetToken = params.get('token') && window.location.pathname.includes('reset');
-
-    if (verifyToken || (params.get('token') && !resetToken)) {
-      try {
-        var data = await api('GET', '/auth/verify/' + params.get('token'));
-        STATE.token = data.token;
-        localStorage.setItem('orbie_token', data.token);
-        window.history.replaceState({}, '', '/');
-        clearTimeout(loadingTimeout);
-        await loadApp();
-        return;
-      } catch(e) {
-        clearTimeout(loadingTimeout);
-        showScreen('login');
-        return;
-      }
-    }
-    if (params.get('token') && params.get('reset')) {
-      STATE.resetToken = params.get('token');
-      clearTimeout(loadingTimeout);
-      showScreen('reset');
-      return;
-    }
-    if (params.get('session')) {
-      window.history.replaceState({}, '', '/');
-    }
-    clearTimeout(loadingTimeout);
-    if (STATE.token) {
-      await loadApp();
-    } else {
-      showScreen('login');
-    }
-  } catch(e) {
-    console.error('Init error:', e);
-    clearTimeout(loadingTimeout);
-    showScreen('login');
-  }
-}
-
 async function loadApp() {
   try {
     document.addEventListener('click', function(e) {
