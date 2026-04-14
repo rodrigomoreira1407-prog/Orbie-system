@@ -1,0 +1,3028 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#5b5ef4"/>
+<title>Orbie — Sistema de Gestão Clínica</title>
+<link rel="manifest" href="/manifest.json"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#f0f4f8;--w:#fff;--bd:#e2e8f0;--ac:#5b5ef4;--ac2:#7c3aed;--tx:#0f172a;--mt:#475569;--dm:#94a3b8;--gn:#059669;--rd:#dc2626;--am:#d97706}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+
+/* ── AUTH SCREENS ── */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#f0f4ff 0%,#f5f0ff 100%)}
+.auth-card{background:#fff;border-radius:20px;padding:32px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(91,94,244,.12),0 0 0 1px rgba(91,94,244,.06)}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center}
+.auth-logo-icon{width:44px;height:44px}
+.auth-logo-name{font-size:22px;font-weight:800;color:var(--tx);letter-spacing:-.02em}
+.auth-title{font-size:22px;font-weight:800;color:var(--tx);margin-bottom:6px;text-align:center}
+.auth-sub{font-size:14px;color:var(--mt);text-align:center;margin-bottom:24px;line-height:1.6}
+.auth-inp{width:100%;background:#f8fafc;border:1.5px solid var(--bd);border-radius:11px;padding:12px 14px;color:var(--tx);font-size:14px;outline:none;font-family:inherit;transition:border-color .2s}
+.auth-inp:focus{border-color:var(--ac);background:#fff}
+.auth-lbl{font-size:12px;color:var(--mt);font-weight:600;margin-bottom:5px;display:block}
+.auth-fr{margin-bottom:14px}
+.auth-btn{width:100%;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;border:none;border-radius:11px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px;transition:all .2s;box-shadow:0 4px 14px rgba(91,94,244,.3)}
+.auth-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(91,94,244,.4)}
+.auth-btn:active{transform:scale(.98)}
+.auth-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.auth-link{color:var(--ac);font-weight:600;cursor:pointer;text-decoration:none;font-size:13px}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--dm);font-size:12px}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--bd)}
+.auth-err{background:#fff5f5;border:1px solid #fecaca;border-radius:9px;padding:10px 13px;font-size:13px;color:#dc2626;margin-bottom:14px}
+.auth-ok{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 13px;font-size:13px;color:#16a34a;margin-bottom:14px}
+.auth-footer{text-align:center;margin-top:20px;font-size:13px;color:var(--mt)}
+
+/* ── PLANS PAGE ── */
+.plans-wrap{min-height:100vh;background:var(--bg);padding:40px 20px}
+.plans-inner{max-width:720px;margin:0 auto}
+.plans-header{text-align:center;margin-bottom:36px}
+.plans-title{font-size:28px;font-weight:800;color:var(--tx);letter-spacing:-.02em;margin-bottom:8px}
+.plans-sub{font-size:15px;color:var(--mt)}
+.plans-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.plan-card{background:#fff;border:2px solid var(--bd);border-radius:18px;padding:28px;position:relative;transition:all .2s}
+.plan-card.featured{border-color:var(--ac);box-shadow:0 0 0 1px rgba(91,94,244,.15),0 20px 48px rgba(91,94,244,.1)}
+.plan-popular{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;font-size:11px;font-weight:700;padding:4px 16px;border-radius:100px;white-space:nowrap}
+.plan-name{font-size:13px;font-weight:700;color:var(--mt);margin-bottom:6px}
+.plan-price{font-size:36px;font-weight:800;color:var(--tx);letter-spacing:-.03em;margin-bottom:4px}
+.plan-period{font-size:14px;color:var(--mt);font-weight:400}
+.plan-trial{font-size:12px;color:var(--gn);font-weight:600;margin:6px 0 20px}
+.plan-feats{list-style:none;margin-bottom:24px}
+.plan-feats li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mt);margin-bottom:10px}
+.plan-feats li span:first-child{font-size:14px;flex-shrink:0}
+.plan-btn{width:100%;padding:13px;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .2s}
+.plan-btn-basic{background:#f1f5f9;color:var(--tx);border:1px solid var(--bd)}
+.plan-btn-basic:hover{border-color:var(--ac);color:var(--ac)}
+.plan-btn-pro{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;box-shadow:0 4px 14px rgba(91,94,244,.3)}
+.plan-btn-pro:hover{transform:translateY(-1px)}
+
+/* ── MAIN APP ── */
+.app{display:flex;height:100vh;height:100dvh;overflow:hidden}
+.sb{width:60px;background:var(--w);border-right:1px solid var(--bd);display:flex;flex-direction:column;transition:width .25s cubic-bezier(.4,0,.2,1);overflow:hidden;flex-shrink:0;z-index:50;box-shadow:2px 0 10px rgba(0,0,0,.05)}
+.sb.open{width:216px}
+.sb-logo{display:flex;align-items:center;gap:11px;padding:14px 12px;border-bottom:1px solid var(--bd);cursor:pointer;flex-shrink:0}
+.logo-svg{width:36px;height:36px;flex-shrink:0}
+.logo-txt{overflow:hidden}
+.logo-name{font-weight:800;font-size:15px;white-space:nowrap;color:var(--tx);letter-spacing:-.02em}
+.logo-sub{font-size:9px;color:var(--dm);white-space:nowrap;margin-top:1px;font-weight:500}
+.sb-nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.ni{display:flex;align-items:center;gap:11px;padding:10px 8px;border-radius:10px;cursor:pointer;transition:all .15s;color:var(--mt);font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;border:1px solid transparent}
+.ni:active{transform:scale(.97)}
+.ni.on{background:rgba(91,94,244,.09);color:var(--ac);border-color:rgba(91,94,244,.18);font-weight:600}
+.ni-ico{font-size:17px;width:22px;text-align:center;flex-shrink:0}
+.sb-foot{padding:10px 8px;border-top:1px solid var(--bd);flex-shrink:0}
+.urow{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;overflow:hidden;cursor:pointer}
+.uav{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--ac),var(--ac2));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.uinfo{min-width:0}
+.uname{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tx)}
+.uplan{font-size:9px;color:var(--gn);font-weight:600;margin-top:1px}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.hdr{background:rgba(255,255,255,.96);border-bottom:1px solid var(--bd);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;backdrop-filter:blur(16px);box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.hdr-t{font-size:16px;font-weight:700;flex:1;color:var(--tx)}
+.mbtn{background:none;border:none;color:var(--mt);font-size:20px;cursor:pointer;padding:4px 6px;border-radius:8px}
+.abtn{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;border:none;padding:8px 15px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(91,94,244,.3);font-family:inherit}
+.abtn:active{transform:scale(.96)}
+.content{flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.card{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);margin-bottom:10px}
+.sc{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd)}
+.row:last-child{border:none;padding-bottom:0}
+.ri{flex:1;min-width:0}
+.rn{font-size:13px;font-weight:600;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rs{font-size:11px;color:var(--mt);margin-top:2px}
+.av{border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;flex-shrink:0}
+.avs{width:32px;height:32px;font-size:11px}.avm{width:40px;height:40px;font-size:14px}.avl{width:46px;height:46px;font-size:15px}
+.bx{display:inline-flex;align-items:center;padding:2px 9px;border-radius:100px;font-size:10px;font-weight:700;white-space:nowrap}
+.bgn{background:#dcfce7;color:#16a34a}.bbl{background:#dbeafe;color:#2563eb}.bpu{background:#ede9fe;color:#7c3aed}.byw{background:#fef3c7;color:#d97706}.brd{background:#fee2e2;color:#dc2626}.bgr{background:#f1f5f9;color:#64748b}.bcy{background:#cffafe;color:#0891b2}.bai{background:rgba(91,94,244,.1);color:var(--ac2);border:1px solid rgba(91,94,244,.2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 14px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.btn:active{transform:scale(.96)}
+.bp{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;box-shadow:0 3px 10px rgba(91,94,244,.3)}
+.bs{background:#f1f5f9;color:var(--tx);border:1px solid var(--bd)}
+.bg2{background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0}
+.br{background:#fee2e2;color:#dc2626;border:1px solid #fecaca}
+.bai2{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff}
+.fw{width:100%}
+.bars{display:flex;align-items:flex-end;gap:5px;height:72px;margin-top:8px}
+.bw{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bar{width:100%;border-radius:4px 4px 0 0}
+.bl{font-size:9px;color:var(--dm)}
+.tabs{display:flex;background:var(--bg);border-radius:10px;padding:3px;margin-bottom:14px;gap:2px;flex-wrap:wrap}
+.tab{flex:1;min-width:40px;padding:7px 4px;border-radius:8px;border:none;background:transparent;font-size:11px;font-weight:600;cursor:pointer;color:var(--mt);text-align:center;transition:all .2s;white-space:nowrap;font-family:inherit}
+.tab.on{background:var(--w);color:var(--ac);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.inp{width:100%;background:#f8fafc;border:1px solid var(--bd);border-radius:9px;padding:10px 12px;color:var(--tx);font-size:13px;outline:none;-webkit-appearance:none;transition:border-color .2s;font-family:inherit}
+.inp:focus{border-color:var(--ac);background:var(--w)}
+.sel{width:100%;background:#f8fafc;border:1px solid var(--bd);border-radius:9px;padding:10px 12px;color:var(--tx);font-size:13px;outline:none;-webkit-appearance:none;font-family:inherit}
+.lbl{font-size:11px;color:var(--mt);margin-bottom:4px;display:block;font-weight:600}
+.fr{margin-bottom:12px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.sdv{font-size:10px;font-weight:700;color:var(--ac);letter-spacing:.08em;text-transform:uppercase;margin:16px 0 10px;padding-bottom:5px;border-bottom:1px solid rgba(91,94,244,.15)}
+.ov{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:flex-end;justify-content:center;z-index:200}
+.modal{background:var(--w);border-radius:22px 22px 0 0;width:100%;max-width:520px;max-height:93vh;overflow-y:auto;padding:20px;animation:sup .28s cubic-bezier(.16,1,.3,1)}
+@keyframes sup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mbar{width:36px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 16px}
+.hidden{display:none!important}
+.mbox{background:rgba(91,94,244,.07);border:1px solid rgba(91,94,244,.2);border-radius:11px;padding:10px 13px;margin:10px 0;display:flex;align-items:center;gap:8px}
+.murl{font-size:11px;color:var(--ac);font-family:monospace;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ibox{background:#f8fafc;border-radius:11px;padding:13px}
+.ir{display:flex;gap:8px;margin-bottom:8px}.ir:last-child{margin:0}
+.il{font-size:10px;color:var(--dm);font-weight:600;width:88px;flex-shrink:0;padding-top:1px}
+.iv{font-size:12px;color:var(--tx);font-weight:500;flex:1;line-height:1.5}
+.ebox{background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:12px}
+.etl{font-size:11px;font-weight:700;color:var(--rd);margin-bottom:8px}
+.acard{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.04);margin-bottom:10px}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;padding:9px 10px;font-size:10px;font-weight:700;color:var(--dm);text-transform:uppercase;border-bottom:1px solid var(--bd);background:#f8fafc}
+.tbl td{padding:10px;font-size:12px;border-bottom:1px solid #f8fafc;color:var(--tx);vertical-align:middle}
+.pss{background:var(--w);border:1px solid var(--bd);border-radius:13px;margin-bottom:10px;overflow:hidden}
+.pssh{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#f8fafc;border-bottom:1px solid var(--bd)}
+.psst{font-size:13px;font-weight:700}
+.pssb{padding:14px}
+.pf{background:#f8fafc;border-radius:9px;padding:12px;font-size:13px;color:var(--mt);line-height:1.7;min-height:56px}
+.aibox{background:linear-gradient(135deg,rgba(91,94,244,.06),rgba(124,58,237,.06));border:1px solid rgba(91,94,244,.18);border-radius:10px;padding:12px;margin-top:8px}
+.ailbl{font-size:10px;font-weight:700;color:var(--ac2);letter-spacing:.06em;margin-bottom:6px}
+.aitxt{font-size:12px;color:#4c1d95;line-height:1.65}
+.ev{border-left:3px solid var(--ac);padding:10px 12px;background:#f8fafc;border-radius:0 10px 10px 0;margin-bottom:8px}
+.evd{font-size:10px;color:var(--dm);font-weight:600;margin-bottom:4px}
+.evt{font-size:12px;color:var(--mt);line-height:1.6}
+.diag{display:flex;align-items:flex-start;gap:10px;padding:10px;background:#f8fafc;border-radius:9px;margin-bottom:8px}
+.dcid{font-size:12px;font-weight:700;color:var(--ac);width:58px;flex-shrink:0;padding-top:1px}
+.esc{border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:8px;background:#f8fafc}
+.prog{height:6px;border-radius:3px;background:#e2e8f0;flex:1;overflow:hidden}
+.progb{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--ac),var(--ac2))}
+.axl{display:flex;align-items:center;gap:10px;padding:10px;background:#f8fafc;border-radius:9px;margin-bottom:8px;border:1px solid var(--bd)}
+.an{font-size:10px;font-weight:700;color:var(--ac);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 8px;padding-bottom:5px;border-bottom:1px solid rgba(91,94,244,.12)}
+.an:first-child{margin-top:0}
+.af{background:#f8fafc;border-radius:8px;padding:8px 10px;margin-bottom:6px}
+.afl{font-size:10px;color:var(--dm);font-weight:600;margin-bottom:2px}
+.afv{font-size:12px;color:var(--tx);line-height:1.5}
+.mood{display:flex;gap:3px;margin:8px 0}
+.md{width:26px;height:26px;border-radius:50%;border:2px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all .15s;background:#f8fafc;flex-shrink:0}
+.md.on{border-color:var(--ac);background:rgba(91,94,244,.1);transform:scale(1.15)}
+.si{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--bd)}.si:last-child{border:none}
+.sico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.pcard{background:linear-gradient(135deg,var(--ac),var(--ac2));border-radius:16px;padding:20px;color:#fff;margin-bottom:12px}
+.ptbl{width:100%;border-collapse:collapse;font-size:12px}
+.ptbl th{background:#f8fafc;padding:9px 10px;font-weight:700;font-size:11px;color:var(--dm);border-bottom:1px solid var(--bd)}
+.ptbl th:first-child{text-align:left}
+.ptbl td{padding:9px 10px;border-bottom:1px solid var(--bd);text-align:center;color:var(--mt)}
+.ptbl td:first-child{text-align:left;font-weight:500;color:var(--tx)}
+.ptbl tr:last-child td{border:none}
+.al{border-radius:11px;padding:11px 14px;margin-bottom:12px;display:flex;align-items:flex-start;gap:10px}
+.ali{background:#eff6ff;border:1px solid #bfdbfe}.alw{background:#fffbeb;border:1px solid #fde68a}
+.alai{background:linear-gradient(135deg,rgba(91,94,244,.07),rgba(124,58,237,.05));border:1px solid rgba(91,94,244,.2)}
+.page{display:none}.page.on{display:block}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.ptt{font-size:18px;font-weight:800;color:var(--tx);letter-spacing:-.02em}
+.pst2{font-size:12px;color:var(--mt);margin-top:3px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{padding:5px 12px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--bd);background:var(--w);color:var(--mt);transition:all .15s}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1e293b;border-radius:12px;padding:10px 20px;font-size:13px;font-weight:500;color:#f1f5f9;box-shadow:0 8px 28px rgba(0,0,0,.22);z-index:500;white-space:nowrap;max-width:88vw;text-align:center;animation:fup .2s ease;pointer-events:none}
+@keyframes fup{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.spin{display:inline-block;animation:rot 1s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+#loading-screen{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000}
+.loading-logo{margin-bottom:20px;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@media(min-width:768px){
+  .sb{width:220px}.sb.open{width:220px}
+  .hdr{padding:14px 24px}.content{padding:20px 24px}
+  .modal{border-radius:22px;max-width:480px;margin:auto;bottom:auto;align-self:center}
+  .ov{align-items:center}
+  @keyframes sup{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+  .plans-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){
+  .plans-grid{grid-template-columns:1fr}
+  .auth-card{padding:24px}
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading-screen">
+  <svg class="loading-logo" width="60" height="60" viewBox="0 0 36 36" fill="none">
+    <defs><linearGradient id="llg" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse"><stop stop-color="#5b5ef4"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs>
+    <rect width="36" height="36" rx="10" fill="url(#llg)"/>
+    <circle cx="18" cy="18" r="9" stroke="white" stroke-width="2.2" fill="none"/>
+    <circle cx="18" cy="18" r="3.5" fill="white"/>
+    <circle cx="18" cy="7" r="2.2" fill="white" opacity=".75"/>
+    <circle cx="27.8" cy="23.5" r="2.2" fill="white" opacity=".75"/>
+    <circle cx="8.2" cy="23.5" r="2.2" fill="white" opacity=".75"/>
+  </svg>
+  <div style="font-size:11px;color:#94a3b8;font-weight:500">Carregando Orbie...</div>
+</div>
+
+<!-- Auth: Login -->
+<div id="screen-login" class="hidden">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <svg class="auth-logo-icon" viewBox="0 0 36 36" fill="none">
+          <defs><linearGradient id="alg" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse"><stop stop-color="#5b5ef4"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs>
+          <rect width="36" height="36" rx="10" fill="url(#alg)"/>
+          <circle cx="18" cy="18" r="9" stroke="white" stroke-width="2.2" fill="none"/>
+          <circle cx="18" cy="18" r="3.5" fill="white"/>
+          <circle cx="18" cy="7" r="2.2" fill="white" opacity=".75"/>
+          <circle cx="27.8" cy="23.5" r="2.2" fill="white" opacity=".75"/>
+          <circle cx="8.2" cy="23.5" r="2.2" fill="white" opacity=".75"/>
+        </svg>
+        <span class="auth-logo-name">Orbie</span>
+      </div>
+      <div class="auth-title">Bem-vindo de volta</div>
+      <div class="auth-sub">Entre na sua conta para continuar</div>
+      <div id="login-err" class="auth-err hidden"></div>
+      <div class="auth-fr"><label class="auth-lbl">E-mail</label><input class="auth-inp" id="login-email" type="email" placeholder="seu@email.com" autocomplete="email"/></div>
+      <div class="auth-fr"><label class="auth-lbl">Senha</label><input class="auth-inp" id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
+      <div style="text-align:right;margin-bottom:16px"><a class="auth-link" onclick="showScreen('forgot')">Esqueci a senha</a></div>
+      <button class="auth-btn" id="login-btn" onclick="doLogin()">Entrar</button>
+      <div class="auth-footer">Não tem conta? <a class="auth-link" onclick="showScreen('register')">Criar conta grátis</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- Auth: Register -->
+<div id="screen-register" class="hidden">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <svg class="auth-logo-icon" viewBox="0 0 36 36" fill="none"><use href="#alg-def"/><rect width="36" height="36" rx="10" fill="url(#alg)"/><circle cx="18" cy="18" r="9" stroke="white" stroke-width="2.2" fill="none"/><circle cx="18" cy="18" r="3.5" fill="white"/><circle cx="18" cy="7" r="2.2" fill="white" opacity=".75"/><circle cx="27.8" cy="23.5" r="2.2" fill="white" opacity=".75"/><circle cx="8.2" cy="23.5" r="2.2" fill="white" opacity=".75"/></svg>
+        <span class="auth-logo-name">Orbie</span>
+      </div>
+      <div class="auth-title">Criar conta grátis</div>
+      <div class="auth-sub">14 dias grátis · Sem cartão de crédito</div>
+      <div id="reg-err" class="auth-err hidden"></div>
+      <div id="reg-ok" class="auth-ok hidden"></div>
+      <div class="auth-fr"><label class="auth-lbl">Nome completo</label><input class="auth-inp" id="reg-name" type="text" placeholder="Dra. Maria Silva" autocomplete="name"/></div>
+      <div class="auth-fr"><label class="auth-lbl">E-mail</label><input class="auth-inp" id="reg-email" type="email" placeholder="seu@email.com" autocomplete="email"/></div>
+      <div class="auth-fr"><label class="auth-lbl">Senha</label><input class="auth-inp" id="reg-pass" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"/></div>
+      <button class="auth-btn" id="reg-btn" onclick="doRegister()">Criar conta</button>
+      <div class="auth-footer">Já tem conta? <a class="auth-link" onclick="showScreen('login')">Entrar</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- Auth: Verificar email -->
+<div id="screen-verify" class="hidden">
+  <div class="auth-wrap">
+    <div class="auth-card" style="text-align:center">
+      <div style="font-size:48px;margin-bottom:16px">📧</div>
+      <div class="auth-title">Verifique seu email</div>
+      <div class="auth-sub" id="verify-email-text">Enviamos um link de confirmação para o seu email. Clique no link para ativar sua conta.</div>
+      <div id="verify-ok" class="auth-ok hidden"></div>
+      <button class="auth-btn" style="margin-top:8px" onclick="doResendVerification()">Reenviar email</button>
+      <div class="auth-footer" style="margin-top:16px"><a class="auth-link" onclick="showScreen('login')">← Voltar ao login</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- Auth: Esqueci senha -->
+<div id="screen-forgot" class="hidden">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-title">Recuperar senha</div>
+      <div class="auth-sub">Digite seu email para receber as instruções</div>
+      <div id="forgot-err" class="auth-err hidden"></div>
+      <div id="forgot-ok" class="auth-ok hidden"></div>
+      <div class="auth-fr"><label class="auth-lbl">E-mail</label><input class="auth-inp" id="forgot-email" type="email" placeholder="seu@email.com"/></div>
+      <button class="auth-btn" id="forgot-btn" onclick="doForgotPassword()">Enviar instruções</button>
+      <div class="auth-footer"><a class="auth-link" onclick="showScreen('login')">← Voltar ao login</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- Auth: Reset senha -->
+<div id="screen-reset" class="hidden">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-title">Nova senha</div>
+      <div class="auth-sub">Escolha uma nova senha para sua conta</div>
+      <div id="reset-err" class="auth-err hidden"></div>
+      <div id="reset-ok" class="auth-ok hidden"></div>
+      <div class="auth-fr"><label class="auth-lbl">Nova senha</label><input class="auth-inp" id="reset-pass" type="password" placeholder="Mínimo 6 caracteres"/></div>
+      <div class="auth-fr"><label class="auth-lbl">Confirmar senha</label><input class="auth-inp" id="reset-pass2" type="password" placeholder="Repita a nova senha"/></div>
+      <button class="auth-btn" id="reset-btn" onclick="doResetPassword()">Redefinir senha</button>
+    </div>
+  </div>
+</div>
+
+<!-- Plans -->
+<div id="screen-plans" class="hidden">
+  <div class="plans-wrap">
+    <div class="plans-inner">
+      <div class="auth-logo" style="justify-content:flex-start;margin-bottom:0">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="10" fill="url(#alg)"/><circle cx="18" cy="18" r="9" stroke="white" stroke-width="2.2" fill="none"/><circle cx="18" cy="18" r="3.5" fill="white"/><circle cx="18" cy="7" r="2.2" fill="white" opacity=".75"/><circle cx="27.8" cy="23.5" r="2.2" fill="white" opacity=".75"/><circle cx="8.2" cy="23.5" r="2.2" fill="white" opacity=".75"/></svg>
+        <span style="font-weight:800;font-size:18px;color:var(--tx)">Orbie</span>
+        <button class="btn bs" style="margin-left:auto;font-size:12px" onclick="doLogout()">Sair</button>
+      </div>
+      <div class="plans-header" style="margin-top:32px">
+        <div class="plans-title">Escolha seu plano</div>
+        <div class="plans-sub">14 dias grátis · Cancele quando quiser · Sem cartão para o trial</div>
+      </div>
+      <div class="plans-grid">
+        <div class="plan-card">
+          <div class="plan-name">ORBIE BASIC</div>
+          <div class="plan-price">R$ 29<span style="font-size:20px">,90</span><span class="plan-period">/mês</span></div>
+          <div class="plan-trial">🎁 14 dias grátis</div>
+          <ul class="plan-feats">
+            <li><span>✅</span><span>Pacientes ilimitados</span></li>
+            <li><span>✅</span><span>Agenda + Google Meet</span></li>
+            <li><span>✅</span><span>Prontuário clínico completo</span></li>
+            <li><span>✅</span><span>Controle financeiro</span></li>
+            <li><span>✅</span><span>Relatórios PDF</span></li>
+            <li><span>❌</span><span style="color:var(--dm)">IA no prontuário</span></li>
+          </ul>
+          <button class="plan-btn plan-btn-basic" onclick="doCheckout('BASIC')">Começar com Basic</button>
+        </div>
+        <div class="plan-card featured">
+          <div class="plan-popular">⭐ Mais escolhido</div>
+          <div class="plan-name">ORBIE PRO + IA</div>
+          <div class="plan-price">R$ 59<span style="font-size:20px">,90</span><span class="plan-period">/mês</span></div>
+          <div class="plan-trial">🎁 14 dias grátis</div>
+          <ul class="plan-feats">
+            <li><span>✅</span><span>Tudo do Basic</span></li>
+            <li><span>🤖</span><span><strong>IA gera prontuários automaticamente</strong></span></li>
+            <li><span>🤖</span><span><strong>Análise de evolução com IA</strong></span></li>
+            <li><span>🤖</span><span><strong>Sugestões clínicas inteligentes</strong></span></li>
+            <li><span>✅</span><span>Relatórios avançados</span></li>
+            <li><span>✅</span><span>Suporte prioritário</span></li>
+          </ul>
+          <button class="plan-btn plan-btn-pro" onclick="doCheckout('PRO')">Assinar PRO + IA</button>
+        </div>
+      </div>
+      <div style="text-align:center;color:var(--dm);font-size:13px">🔒 Pagamento seguro via Stripe · Cancele a qualquer momento</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="screen-app" class="hidden">
+<div class="app">
+  <div class="sb" id="sb">
+    <div class="sb-logo" onclick="toggleSB()">
+      <svg class="logo-svg" viewBox="0 0 36 36" fill="none">
+        <rect width="36" height="36" rx="10" fill="url(#alg)"/>
+        <circle cx="18" cy="18" r="9" stroke="white" stroke-width="2.2" fill="none"/>
+        <circle cx="18" cy="18" r="3.5" fill="white"/>
+        <circle cx="18" cy="7" r="2.2" fill="white" opacity=".75"/>
+        <circle cx="27.8" cy="23.5" r="2.2" fill="white" opacity=".75"/>
+        <circle cx="8.2" cy="23.5" r="2.2" fill="white" opacity=".75"/>
+      </svg>
+      <div class="logo-txt"><div class="logo-name">Orbie</div><div class="logo-sub">Gestão Clínica</div></div>
+    </div>
+    <div class="sb-nav">
+      <div class="ni on" onclick="go('dashboard',this)"><span class="ni-ico">⚡</span><span>Dashboard</span></div>
+      <div class="ni" onclick="go('patients',this)"><span class="ni-ico">👥</span><span>Pacientes</span></div>
+      <div class="ni" onclick="go('appointments',this)"><span class="ni-ico">📅</span><span>Agenda</span></div>
+      <div class="ni" onclick="go('records',this)"><span class="ni-ico">📋</span><span>Prontuários</span></div>
+      <div class="ni" onclick="go('financial',this)"><span class="ni-ico">💰</span><span>Financeiro</span></div>
+      <div class="ni" onclick="go('reports',this)"><span class="ni-ico">📊</span><span>Relatórios</span></div>
+      <div class="ni" onclick="go('settings',this)"><span class="ni-ico">⚙️</span><span>Config</span></div>
+    </div>
+    <div class="sb-foot">
+      <div class="urow" onclick="go('settings',null)">
+        <div class="uav" id="user-av">A</div>
+        <div class="uinfo">
+          <div class="uname" id="user-name">Carregando...</div>
+          <div class="uplan" id="user-plan">● Carregando</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="hdr">
+      <button class="mbtn" onclick="toggleSB()">☰</button>
+      <div class="hdr-t" id="hdr-t">Dashboard</div>
+      <div style="font-size:11px;color:var(--dm);white-space:nowrap;margin-right:4px" id="hdr-d"></div>
+      <button class="abtn" onclick="openM('m-appt')">+ Consulta</button>
+    </div>
+    <div class="content" id="content">
+
+    <!-- DASHBOARD -->
+    <div id="pg-dashboard" class="page on">
+      <div class="al ali" id="dash-greeting"></div>
+      <div class="g2" style="margin-bottom:10px" id="dash-stats"></div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">📈 Receita — Últimos 6 meses</div>
+        <div class="bars">
+          <div class="bw"><div class="bar" style="height:38%;background:rgba(91,94,244,.25)"></div><div class="bl">M-5</div></div>
+          <div class="bw"><div class="bar" style="height:50%;background:rgba(91,94,244,.35)"></div><div class="bl">M-4</div></div>
+          <div class="bw"><div class="bar" style="height:36%;background:rgba(91,94,244,.35)"></div><div class="bl">M-3</div></div>
+          <div class="bw"><div class="bar" style="height:62%;background:rgba(91,94,244,.5)"></div><div class="bl">M-2</div></div>
+          <div class="bw"><div class="bar" style="height:76%;background:rgba(91,94,244,.65)"></div><div class="bl">M-1</div></div>
+          <div class="bw"><div class="bar" style="height:100%;background:linear-gradient(to top,var(--ac),var(--ac2))"></div><div class="bl">Atual</div></div>
+        </div>
+      </div>
+      <div class="card" id="dash-today">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:13px;font-weight:700">📅 Consultas Hoje</div>
+          <button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go('appointments',null)">Ver agenda →</button>
+        </div>
+        <div style="text-align:center;padding:20px;color:var(--dm);font-size:13px">Carregando consultas...</div>
+      </div>
+      <div class="card" id="dash-patients">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:13px;font-weight:700">👥 Pacientes Recentes</div>
+          <button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go('patients',null)">Ver todos →</button>
+        </div>
+        <div style="text-align:center;padding:20px;color:var(--dm);font-size:13px">Carregando pacientes...</div>
+      </div>
+    </div>
+
+    <!-- PATIENTS -->
+    <div id="pg-patients" class="page">
+      <div class="ph"><div><div class="ptt">Pacientes</div><div class="pst2" id="pat-count">Carregando...</div></div><button class="abtn" onclick="openM('m-npat')">+ Novo</button></div>
+      <input class="inp" id="pat-search" placeholder="🔍  Buscar por nome, CPF, telefone..." style="margin-bottom:12px" oninput="filterPatients()"/>
+      <div class="chips" id="pat-chips">
+        <div class="chip on" onclick="filterByType('',this)">Todos</div>
+        <div class="chip" onclick="filterByType('ADULT',this)">🧑 Adultos</div>
+        <div class="chip" onclick="filterByType('CHILD',this)">Infantojuvenil</div>
+        <div class="chip" onclick="filterByStatus('ACTIVE',this)">Ativos</div>
+        <div class="chip" onclick="filterByStatus('INACTIVE',this)">Inativos</div>
+      </div>
+      <div id="pat-list"><div style="text-align:center;padding:40px;color:var(--dm)">Carregando pacientes...</div></div>
+    </div>
+
+    <!-- APPOINTMENTS -->
+    <div id="pg-appointments" class="page">
+      <div class="ph"><div><div class="ptt">Agenda</div><div class="pst2" id="appt-date-title">Hoje</div></div><button class="abtn" onclick="openM('m-appt')">+ Nova</button></div>
+      <div id="appt-progress" style="background:white;border-radius:11px;padding:14px;margin-bottom:12px;border:1px solid var(--bd);display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:12px;font-weight:700;color:#1e293b">Progresso do Dia</div>
+          <div style="font-size:12px;color:#64748b" id="appt-progress-text">0 de 0</div>
+        </div>
+        <div style="background:#e2e8f0;border-radius:6px;height:6px;overflow:hidden">
+          <div id="appt-progress-bar" style="background:linear-gradient(90deg, #3b82f6, #1e40af);height:100%;width:0%;transition:width 0.3s ease"></div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:12px">
+          <div style="flex:1">
+            <div style="color:#64748b;margin-bottom:2px">Faturado Hoje</div>
+            <div style="font-size:16px;font-weight:700;color:#10b981" id="appt-revenue-today">R$ 0,00</div>
+          </div>
+          <div style="flex:1">
+            <div style="color:#64748b;margin-bottom:2px">Atendimentos</div>
+            <div style="font-size:16px;font-weight:700;color:#3b82f6" id="appt-count-today">0</div>
+          </div>
+        </div>
+      </div>
+      <div id="appt-next-card" style="background:linear-gradient(135deg, #10b981, #059669);border-radius:11px;padding:14px;margin-bottom:12px;color:white;display:none;cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 16px rgba(16,185,129,0.3)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <div style="font-size:11px;opacity:0.9;margin-bottom:6px">Próximo Paciente</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:700;margin-bottom:4px" id="appt-next-name">-</div>
+            <div style="font-size:12px;opacity:0.95" id="appt-next-time">-</div>
+            <div style="font-size:11px;opacity:0.85;margin-top:4px" id="appt-next-type">-</div>
+          </div>
+          <button class="btn" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);padding:6px 10px;font-size:10px;border-radius:6px;cursor:pointer;white-space:nowrap" onclick="openProntuarioFromNext()">Ver Prontuário →</button>
+        </div>
+      </div>
+      <div id="appt-calendar" style="background:white;border-radius:11px;padding:14px;margin-bottom:12px;border:1px solid var(--bd)"></div>
+      <div style="background:white;border-radius:11px;padding:12px;margin-bottom:12px;border:1px solid var(--bd);display:flex;gap:16px;flex-wrap:wrap;font-size:12px">
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;background:#3b82f6;border-radius:3px"></div><span>Online</span></div>
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;background:#10b981;border-radius:3px"></div><span>Presencial</span></div>
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;background:#8b5cf6;border-radius:3px"></div><span>Avaliação</span></div>
+      </div>
+      <input class="inp" id="appt-search" placeholder="🔍  Buscar por nome ou CPF do paciente..." style="margin-bottom:12px" oninput="filterAppointments()"/>
+      <div class="tabs"><div class="tab on" onclick="loadAppointments('today',this)">Hoje</div><div class="tab" onclick="loadAppointments('week',this)">Semana</div><div class="tab" onclick="loadAppointments('month',this)">Mês</div></div>
+      <div id="appt-list"><div style="text-align:center;padding:40px;color:var(--dm)">Carregando consultas...</div></div>
+    </div>
+
+    <!-- RECORDS -->
+    <div id="pg-records" class="page">
+      <div class="ph"><div><div class="ptt">Prontuários</div><div class="pst2">Histórico clínico completo</div></div><button class="abtn" onclick="openM('m-rec')">+ Evolução</button></div>
+      <div style="position:relative;margin-bottom:12px">
+        <input type="text" class="inp" id="rec-pat-search" placeholder="Buscar paciente por nome ou CPF..." style="width:100%;padding:10px" oninput="filterRecordsPatients(this.value)" />
+        <div id="rec-pat-dropdown" class="rec-pat-dropdown hidden" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:6px;max-height:300px;overflow-y:auto;z-index:1000;box-shadow:0 4px 6px rgba(0,0,0,0.1)"></div>
+      </div>
+      <select class="sel" id="rec-pat-sel" style="margin-bottom:12px;display:none" onchange="loadRecords()">
+        <option value="">— Selecione um paciente —</option>
+      </select>
+      <div id="rec-placeholder" class="al ali"><span style="font-size:20px">📋</span><div><div style="font-size:13px;font-weight:700;color:#1d4ed8">Selecione um paciente acima</div><div style="font-size:11px;color:#3b82f6;margin-top:2px">O prontuário será exibido aqui</div></div></div>
+      <div id="rec-tabs" class="tabs hidden" style="margin-bottom:12px">
+        <div class="tab on" onclick="swRecTab('evolutions',this)">Evoluções</div>
+        <div class="tab" onclick="swRecTab('anamnesis',this)">Anamnese</div>
+        <div class="tab" onclick="swRecTab('complaint',this)">💬 Queixa/Obs</div>
+        <div class="tab" onclick="swRecTab('attachments',this)">Anexos</div>
+      </div>
+      <div id="rec-evolutions" class="rec-tab"></div>
+      <div id="rec-anamnesis" class="rec-tab hidden"></div>
+      <div id="rec-complaint" class="rec-tab hidden">
+        <div class="card">
+          <div style="font-size:14px;font-weight:700;margin-bottom:12px">💬 Queixa Principal e Observações</div>
+          <div class="fr"><label class="lbl" style="display:flex;justify-content:space-between;align-items:center">Queixa Principal <button type="button" class="btn" style="font-size:12px;padding:4px 10px;background:#f0f4f8;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:6px" onclick="toggleVoiceInput('clin-complaint')"><span id="clin-complaint-voice-icon">🎙️</span> <span id="clin-complaint-voice-text">Ditar</span></button></label><textarea class="inp" id="clin-complaint" style="resize:none;height:100px" placeholder="Descreva a queixa principal do paciente..."></textarea></div>
+          <div class="fr"><label class="lbl" style="display:flex;justify-content:space-between;align-items:center">Observações Clínicas <button type="button" class="btn" style="font-size:12px;padding:4px 10px;background:#f0f4f8;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:6px" onclick="toggleVoiceInput('clin-obs')"><span id="clin-obs-voice-icon">🎙️</span> <span id="clin-obs-voice-text">Ditar</span></button></label><textarea class="inp" id="clin-obs" style="resize:none;height:100px" placeholder="Observações gerais sobre o caso..."></textarea></div>
+          <button class="btn bp fw" onclick="saveClinicalInfo()">Salvar Informações</button>
+        </div>
+      </div>
+      <div id="rec-attachments" class="rec-tab hidden"></div>
+    </div>
+
+    <!-- FINANCIAL -->
+    <div id="pg-financial" class="page">
+      <div class="ph"><div><div class="ptt">Financeiro</div><div class="pst2" id="fin-period">Mês atual</div></div><button class="abtn" onclick="openM('m-fin')">+ Lançar</button></div>
+      <div class="g3" style="margin-bottom:12px" id="fin-summary">
+        <div class="sc"><div style="font-size:20px;margin-bottom:6px">📈</div><div style="font-size:16px;font-weight:800;color:var(--gn)">R$0</div><div style="font-size:10px;color:var(--mt)">Recebido</div></div>
+        <div class="sc"><div style="font-size:20px;margin-bottom:6px">📉</div><div style="font-size:16px;font-weight:800;color:var(--rd)">R$0</div><div style="font-size:10px;color:var(--mt)">Despesas</div></div>
+        <div class="sc"><div style="font-size:20px;margin-bottom:6px">💎</div><div style="font-size:16px;font-weight:800;color:var(--ac)">R$0</div><div style="font-size:10px;color:var(--mt)">Saldo</div></div>
+      </div>
+      <div class="tabs"><div class="tab on" onclick="setTab(this)">Todos</div><div class="tab" onclick="setTab(this)">Receitas</div><div class="tab" onclick="setTab(this)">Despesas</div></div>
+      <div id="fin-list"><div style="text-align:center;padding:40px;color:var(--dm)">Carregando lançamentos...</div></div>
+    </div>
+
+    <!-- REPORTS -->
+    <div id="pg-reports" class="page">
+      <div class="ph"><div><div class="ptt">Relatórios</div><div class="pst2">Exporte os dados</div></div></div>
+      <div class="card" style="margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">📅 Filtros</div>
+        <div class="fg">
+          <div><label class="lbl">De</label><input type="date" class="inp" id="rep-from"/></div>
+          <div><label class="lbl">Até</label><input type="date" class="inp" id="rep-to"/></div>
+        </div>
+        <div class="fr" style="margin-top:10px">
+          <label class="lbl">Paciente (Opcional para Prontuários)</label>
+          <div style="position:relative">
+            <input type="text" class="inp" id="rep-pat-search" placeholder="Buscar paciente por nome ou CPF..." style="width:100%;padding:10px" oninput="filterReportsPatients(this.value)" />
+            <div id="rep-pat-dropdown" class="rep-pat-dropdown hidden" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:6px;max-height:300px;overflow-y:auto;z-index:1000;box-shadow:0 4px 6px rgba(0,0,0,0.1)"></div>
+          </div>
+          <select class="sel" id="rep-pat-sel" style="display:none"><option value="">Todos os pacientes</option></select>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">👥</div><div style="font-size:13px;font-weight:700">Pacientes</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Lista completa</div><button class="btn bp fw" style="font-size:11px" onclick="exportPDF('patients')">Gerar PDF</button></div>
+        <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">📅</div><div style="font-size:13px;font-weight:700">Consultas</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Histórico</div><button class="btn bp fw" style="font-size:11px" onclick="exportPDF('appointments')">Gerar PDF</button></div>
+        <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">💰</div><div style="font-size:13px;font-weight:700">Financeiro</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Receitas e despesas</div><button class="btn bp fw" style="font-size:11px" onclick="exportPDF('financial')">Gerar PDF</button></div>
+        <div class="card" style="text-align:center"><div style="font-size:30px;margin-bottom:8px">📋</div><div style="font-size:13px;font-weight:700">Prontuários</div><div style="font-size:11px;color:var(--mt);margin:4px 0 12px">Evolução clínica</div><button class="btn bp fw" style="font-size:11px" onclick="exportPDF('records')">Gerar PDF</button></div>
+      </div>
+      <div class="card" style="margin-top:12px;border:2px solid #8b5cf6;background:#f3e8ff">
+        <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#7c3aed">Meu Contador</div>
+        <div style="font-size:12px;color:#6b21a8;margin-bottom:12px">Configure os dados do seu contador para facilitar a emissão de notas fiscais</div>
+        <div class="fg">
+          <div><label class="lbl">Nome do Contador</label><input type="text" class="inp" id="acc-name" placeholder="Nome completo"/></div>
+          <div><label class="lbl">WhatsApp do Contador</label><input type="tel" class="inp" id="acc-whatsapp" placeholder="(11) 99999-9999"/></div>
+        </div>
+        <div class="fg" style="margin-top:10px">
+          <div><label class="lbl">De</label><input type="date" class="inp" id="acc-from"/></div>
+          <div><label class="lbl">Até</label><input type="date" class="inp" id="acc-to"/></div>
+        </div>
+        <div style="margin-top:10px">
+          <label class="lbl">Paciente</label>
+          <div style="position:relative">
+            <input type="text" class="inp" id="inv-pat-search" placeholder="Buscar paciente por nome ou CPF..." style="width:100%;padding:10px" oninput="filterInvoicePatients(this.value)" />
+            <div id="inv-pat-dropdown" class="inv-pat-dropdown hidden" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:6px;max-height:300px;overflow-y:auto;z-index:1000;box-shadow:0 4px 6px rgba(0,0,0,0.1)"></div>
+          </div>
+        </div>
+        <div id="invoice-form" class="hidden" style="margin-top:12px;padding:12px;background:white;border-radius:6px;border:1px solid #ddd">
+          <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#333">Formulário para Nota Fiscal</div>
+          <div class="fr"><label class="lbl">Nome completo</label><input type="text" class="inp" id="inv-name" readonly/></div>
+          <div class="fr"><label class="lbl">CPF</label><input type="text" class="inp" id="inv-cpf" readonly/></div>
+          <div class="fr"><label class="lbl">Data das sessões realizadas e pagas</label><input type="text" class="inp" id="inv-dates" readonly/></div>
+          <div class="fr"><label class="lbl">Valor total</label><input type="text" class="inp" id="inv-total" readonly/></div>
+          <div class="fr"><label class="lbl">Descrição do serviço</label><textarea class="inp" id="inv-desc" style="resize:none;height:60px" readonly placeholder="Datas das sessões e valores"></textarea></div>
+          <div class="fr"><label class="lbl">Obs da NF</label><textarea class="inp" id="inv-obs" style="resize:none;height:60px" placeholder="Observações para a nota fiscal"></textarea></div>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn bp fw" style="font-size:11px;background:#25D366;border:none;display:flex;align-items:center;gap:6px" onclick="sendInvoiceWhatsApp()">📱 WhatsApp</button>
+            <button class="btn bg2 fw" style="font-size:11px" onclick="generateInvoicePDF()">📄 Gerar PDF</button>
+            <button class="btn bg2 fw" style="font-size:11px" onclick="copyInvoiceText()">📋 Copiar</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn bp fw" style="font-size:11px" onclick="saveAccountantData()">Salvar Dados</button>
+          <button class="btn bg2 fw" style="font-size:11px" onclick="exportAccountantReport()">Exportar para Contador</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="pg-settings" class="page">
+      <div class="ph"><div class="ptt">Configurações</div></div>
+      <div class="tabs"><div class="tab on" onclick="showST('perfil',this)">Perfil</div><div class="tab" onclick="showST('senha',this)">Senha</div><div class="tab" onclick="showST('plano',this)">Plano</div></div>
+      <div id="st-perfil">
+        <div class="card">
+          <div class="fr"><label class="lbl">Nome completo</label><input class="inp" id="st-name"/></div>
+          <div class="fg"><div><label class="lbl">CRP</label><input class="inp" id="st-crp" placeholder="CRP 06/000000"/></div><div><label class="lbl">Telefone</label><input class="inp" id="st-phone"/></div></div>
+          <div class="fr"><label class="lbl">Especialidade</label><input class="inp" id="st-spec" placeholder="Psicologia Clínica"/></div>
+          <div class="fr"><label class="lbl">Bio</label><textarea class="inp" id="st-bio" style="resize:none;height:70px" placeholder="Breve descrição sobre você..."></textarea></div>
+          <button class="btn bp fw" onclick="saveProfile()">Salvar perfil</button>
+        </div>
+      </div>
+      <div id="st-senha" class="hidden">
+        <div class="card">
+          <div class="fr"><label class="lbl">Senha atual</label><input type="password" class="inp" id="pw-current" placeholder="••••••••"/></div>
+          <div class="fr"><label class="lbl">Nova senha</label><input type="password" class="inp" id="pw-new" placeholder="Mínimo 6 caracteres"/></div>
+          <div class="fr"><label class="lbl">Confirmar nova senha</label><input type="password" class="inp" id="pw-conf" placeholder="Repita a nova senha"/></div>
+          <button class="btn bp fw" onclick="savePassword()">Alterar senha</button>
+        </div>
+      </div>
+      <div id="st-plano" class="hidden">
+        <div class="pcard" id="plan-card-info">
+          <div style="font-size:14px;font-weight:700;margin-bottom:10px">Carregando plano...</div>
+        </div>
+        <button class="btn bs fw" id="plan-portal-btn" style="margin-bottom:14px" onclick="openPortal()">Gerenciar assinatura</button>
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">Comparativo de planos</div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <table class="ptbl">
+            <thead><tr><th>Recurso</th><th style="color:var(--ac)">Basic<br/>R$29,90</th><th style="color:var(--ac2)">PRO+IA<br/>R$59,90</th></tr></thead>
+            <tbody>
+              <tr><td>Pacientes ilimitados</td><td>✅</td><td>✅</td></tr>
+              <tr><td>Agenda + Google Meet</td><td>✅</td><td>✅</td></tr>
+              <tr><td>Prontuário clínico</td><td>✅</td><td>✅</td></tr>
+              <tr><td>Financeiro</td><td>✅</td><td>✅</td></tr>
+              <tr><td>🤖 IA no prontuário</td><td style="color:var(--dm)">❌</td><td style="color:var(--ac2);font-weight:700">✅</td></tr>
+              <tr><td>Suporte</td><td>Email</td><td style="color:var(--ac2);font-weight:700">Prioritário</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="btn bp fw" style="margin-top:8px" onclick="showScreen('plans')">Trocar de plano</button>
+        <button class="btn br fw" style="margin-top:8px" onclick="doLogout()">Sair da conta</button>
+      </div>
+    </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- MODALS -->
+<div id="m-meet" class="ov hidden" onclick="closeM('m-meet')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mbar"></div>
+    <div style="font-size:28px;text-align:center;margin-bottom:6px">🎥</div>
+    <div style="font-size:17px;font-weight:800;text-align:center;margin-bottom:4px" id="meet-n">Consulta</div>
+    <div style="font-size:12px;color:var(--mt);text-align:center;margin-bottom:14px" id="meet-i">Info</div>
+    <div class="mbox"><span>🔗</span><span class="murl" id="meet-u">url</span><button class="btn bs" style="font-size:10px;padding:5px 10px;flex-shrink:0" onclick="copyMeetLink()">Copiar</button></div>
+    <a id="meet-link-btn" href="#" target="_blank" class="btn bp fw" style="padding:14px;font-size:15px;margin-bottom:8px;text-decoration:none;display:flex">Entrar na consulta →</a>
+    <button class="btn bs fw" onclick="closeM('m-meet')">Fechar</button>
+  </div>
+</div>
+
+<div id="m-pat" class="ov hidden" onclick="closeM('m-pat')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:93vh">
+    <div class="mbar"></div><div id="m-pat-ct"></div>
+  </div>
+</div>
+
+<div id="m-npat" class="ov hidden" onclick="closeM('m-npat')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mbar"></div>
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">Novo Paciente</div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:14px">Preencha os dados do paciente</div>
+    <div class="tabs"><div class="tab on" onclick="swPT('ADULT',this)">Adulto</div><div class="tab" onclick="swPT('CHILD',this)">Infantojuvenil</div></div>
+    <input type="hidden" id="npat-type" value="ADULT"/>
+    <div class="fr"><label class="lbl">Nome completo *</label><input class="inp" id="npat-name" placeholder="Nome do paciente"/></div>
+    <div class="fg"><div><label class="lbl">CPF</label><input class="inp" id="npat-cpf" placeholder="000.000.000-00"/></div><div><label class="lbl">RG</label><input class="inp" id="npat-rg" placeholder="00.000.000-0"/></div></div>
+    <div class="fg"><div><label class="lbl">Data de nascimento</label><input type="date" class="inp" id="npat-birth"/></div><div><label class="lbl">Gênero</label><select class="sel" id="npat-gender"><option value="">Selecione</option><option>Masculino</option><option>Feminino</option><option>Outro</option></select></div></div>
+    <div class="fg"><div><label class="lbl">Telefone</label><input class="inp" id="npat-phone" placeholder="(11) 99999-9999"/></div><div><label class="lbl">E-mail</label><input class="inp" id="npat-email" placeholder="email@email.com"/></div></div>
+    <div class="fg">
+      <div style="flex:2"><label class="lbl">Endereço</label><input class="inp" id="npat-address" placeholder="Rua, Av..."/></div>
+      <div style="flex:1"><label class="lbl">Número</label><input class="inp" id="npat-address-num" placeholder="123"/></div>
+    </div>
+    <div class="fg">
+      <div style="flex:1"><label class="lbl">Complemento</label><input class="inp" id="npat-address-comp" placeholder="Apto, Bloco..."/></div>
+      <div style="flex:1"><label class="lbl">CEP</label><input class="inp" id="npat-address-cep" placeholder="00000-000"/></div>
+    </div>
+    <div id="npat-child-fields" class="hidden">
+      <div class="sdv" style="color:#0891b2;border-color:rgba(8,145,178,.15)">Responsável Principal</div>
+      <div class="fg"><div><label class="lbl">Nome *</label><input class="inp" id="npat-r1n" placeholder="Nome do responsável"/></div><div><label class="lbl">Parentesco</label><input class="inp" id="npat-r1r" placeholder="Mãe, Pai..."/></div></div>
+      <div class="fg"><div><label class="lbl">Telefone *</label><input class="inp" id="npat-r1p" placeholder="(11) 99999-9999"/></div><div><label class="lbl">CPF</label><input class="inp" id="npat-r1c" placeholder="000.000.000-00"/></div></div>
+    </div>
+    <div class="sdv" style="color:var(--rd);border-color:rgba(220,38,38,.15)">🚨 Contato de Emergência</div>
+    <div class="fg"><div><label class="lbl">Nome</label><input class="inp" id="npat-en" placeholder="Nome do contato"/></div><div><label class="lbl">Telefone</label><input class="inp" id="npat-ep" placeholder="(11) 99999-9999"/></div></div>
+    <div class="fg"><div><label class="lbl">Parentesco</label><input class="inp" id="npat-er" placeholder="Mãe, Pai..."/></div></div>
+
+    <div id="npat-err" class="auth-err hidden"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn bs" style="flex:1" onclick="closeM('m-npat')">Cancelar</button>
+      <button class="btn bp" style="flex:1" id="npat-btn" onclick="createPatient()">Cadastrar paciente</button>
+    </div>
+  </div>
+</div>
+
+<div id="m-appt" class="ov hidden" onclick="closeM('m-appt')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mbar"></div>
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">Nova Consulta</div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:14px">Preencha os dados abaixo</div>
+    <div class="fr"><label class="lbl">Paciente *</label><select class="sel" id="appt-pat"><option value="">Selecione o paciente...</option></select></div>
+    <div class="fg"><div><label class="lbl">Data *</label><input type="date" class="inp" id="appt-date" onchange="updateDayOfWeek()"/><div style="font-size:11px;color:var(--mt);margin-top:4px" id="appt-dow"></div></div><div><label class="lbl">Horário *</label><input type="time" class="inp" id="appt-time" value="09:00"/></div></div>
+    <div class="fg"><div><label class="lbl">Duração (min)</label><input type="number" class="inp" id="appt-dur" value="50" min="15" step="5"/></div><div><label class="lbl">Valor (R$)</label><input type="number" class="inp" id="appt-val" value="150" min="0" step="10"/></div></div>
+    <div class="fr"><label class="lbl">Tipo</label><select class="sel" id="appt-type"><option value="ONLINE">🎥 Online — Meet automático</option><option value="PRESENTIAL">🏢 Presencial</option></select></div>
+    <div class="fr"><label class="lbl">Tipo de sessão</label><input class="inp" id="appt-title" value="Consulta" placeholder="TCC, Avaliação..."/></div>
+    <div class="al ali" style="margin:4px 0 14px"><span>🎥</span><span style="font-size:11px;color:#1d4ed8">Link Meet gerado automaticamente para consultas online</span></div>
+    <div id="appt-err" class="auth-err hidden"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bs" style="flex:1" onclick="closeM('m-appt')">Cancelar</button>
+      <button class="btn bp" style="flex:1" id="appt-btn" onclick="createAppointment()">Agendar</button>
+    </div>
+  </div>
+</div>
+
+    <div id="m-rec" class="ov hidden" onclick="closeM('m-rec')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:93vh;overflow-y:auto">
+    <div class="mbar"></div>
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">Nova Evolução</div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:14px">Registro da sessão clínica</div>
+    <div id="ai-badge" class="al alai hidden" style="margin-bottom:14px"><span style="font-size:20px">🤖</span><div><div style="font-size:12px;font-weight:700;color:#5b21b6">IA disponível — Plano PRO</div><div style="font-size:11px;color:#7c3aed;margin-top:2px">Descreva a sessão e a IA estrutura o prontuário</div></div></div>
+    <div class="fg"><div><label class="lbl">Paciente *</label><select class="sel" id="rec-pat-new"><option value="">Selecione...</option></select></div><div><label class="lbl">Data</label><input type="datetime-local" class="inp" id="rec-date"/></div></div>
+    <div class="fr">
+      <label class="lbl" style="display:flex;justify-content:space-between;align-items:center">Conteúdo da sessão * <button type="button" class="btn" style="font-size:12px;padding:4px 10px;background:#f0f4f8;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:6px" onclick="toggleVoiceInput('rc')"><span id="rc-voice-icon">🎙️</span> <span id="rc-voice-text">Ditar</span></button></label>
+      <textarea id="rc" class="inp" style="resize:none;height:90px" placeholder="Descreva o que foi trabalhado na sessão..."></textarea>
+      <button id="ai-gen-btn" class="btn bai2 fw hidden" style="margin-top:6px;font-size:12px" onclick="callAI()">🤖 Gerar prontuário com IA</button>
+    </div>
+    <div id="ai-load" class="hidden"><div style="background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.2);border-radius:11px;padding:14px;text-align:center;margin-bottom:12px"><div class="spin" style="font-size:22px;margin-bottom:6px;display:block">⚙️</div><div style="font-size:13px;font-weight:600;color:#7c3aed">IA processando...</div></div></div>
+    <div id="ai-res" class="hidden"><div class="aibox" style="margin-bottom:12px"><div class="ailbl">🤖 Prontuário gerado — revise e aplique</div><div id="ai-txt" style="font-size:12px;color:#3b0764;line-height:1.7;white-space:pre-wrap;max-height:180px;overflow-y:auto"></div><div style="display:flex;gap:8px;margin-top:10px"><button class="btn bai2" style="flex:1;font-size:11px" onclick="useAI()">✓ Usar</button><button class="btn bs" style="font-size:11px" onclick="callAI()">↺ Regenerar</button></div></div></div>
+
+    <div class="fg"><div><label class="lbl">Técnicas</label><input class="inp" id="rec-tech" placeholder="TCC, Mindfulness..."/></div><div><label class="lbl">Evolução</label><input class="inp" id="rec-evol" placeholder="Positiva, estável..."/></div></div>
+    <div class="fg"><div><label class="lbl">Próx. sessão</label><input class="inp" id="rec-goals" placeholder="Objetivos..."/></div><div><label class="lbl">Riscos</label><input class="inp" id="rec-risks" placeholder="Nenhum..."/></div></div>
+    <div id="rec-err" class="auth-err hidden"></div>
+    <div style="display:flex;gap:8px;margin-top:4px"><button class="btn bs" style="flex:1" onclick="closeM('m-rec')">Cancelar</button><button class="btn bp" style="flex:1" id="rec-btn" onclick="createRecord()">Salvar evolução</button></div>
+  </div>
+</div>
+
+<div id="m-fin" class="ov hidden" onclick="closeM('m-fin')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mbar"></div>
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">Novo Lançamento</div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:14px">Registre uma receita ou despesa</div>
+    <div class="tabs"><div class="tab on" onclick="setFinType('INCOME',this)">📈 Receita</div><div class="tab" onclick="setFinType('EXPENSE',this)">📉 Despesa</div></div>
+    <input type="hidden" id="fin-type" value="INCOME"/>
+    <div class="fr"><label class="lbl">Descrição *</label><input class="inp" id="fin-desc" placeholder="Ex: Consulta TCC — Carlos"/></div>
+    <div class="fg"><div><label class="lbl">Valor (R$) *</label><input type="number" class="inp" id="fin-val" placeholder="150" min="0" step="0.01"/></div><div><label class="lbl">Data</label><input type="date" class="inp" id="fin-date"/></div></div>
+    <div class="fg"><div><label class="lbl">Paciente</label><select class="sel" id="fin-pat"><option value="">Nenhum</option></select></div><div><label class="lbl">Forma</label><input class="inp" id="fin-method" placeholder="PIX, Cartão..."/></div></div>
+    <div class="fr"><label class="lbl">Status</label><select class="sel" id="fin-status"><option value="PAID">Pago</option><option value="PENDING">Pendente</option></select></div>
+    <div id="fin-err" class="auth-err hidden"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bs" style="flex:1" onclick="closeM('m-fin')">Cancelar</button>
+      <button class="btn bp" style="flex:1" id="fin-btn" onclick="createFinancial()">Salvar lançamento</button>
+    </div>
+  </div>
+</div>
+
+<div id="m-anam" class="ov hidden" onclick="closeM('m-anam')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:93vh;overflow-y:auto;max-width:700px">
+    <div class="mbar"></div>
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px">Anamnese</div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:14px" id="anam-type-label">Anamnese do Paciente</div>
+    <div class="tabs" style="margin-bottom:14px">
+      <div class="tab on" onclick="swAnamType('ADULT',this)">Adulto</div>
+      <div class="tab" onclick="swAnamType('CHILD',this)">Infantojuvenil</div>
+    </div>
+    <input type="hidden" id="anam-type" value="ADULT"/>
+    <div id="anam-form-container"></div>
+    <div id="anam-err" class="auth-err hidden"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn bs" style="flex:1" onclick="closeM('m-anam')">Cancelar</button>
+      <button class="btn bp" style="flex:1" id="anam-btn" onclick="saveAnamnesis()">Salvar Anamnese</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// ANAMNESIS FORMS TEMPLATES
+// ══════════════════════════════════════════════
+const ANAMNESIS_FORMS = {
+  ADULT: {
+    sections: [
+      { title: "1. Identificação", fields: [{name:"fullName",label:"Nome completo",type:"text",required:true},{name:"birthDate",label:"Data de nascimento",type:"date"},{name:"age",label:"Idade",type:"number"},{name:"gender",label:"Sexo",type:"select",options:["Masculino","Feminino","Outro"]},{name:"maritalStatus",label:"Estado civil",type:"select",options:["Solteiro","Casado","Divorciado","Viúvo","União estável"]},{name:"profession",label:"Profissão",type:"text"},{name:"phone",label:"Telefone",type:"text"},{name:"address",label:"Endereço",type:"text"},{name:"responsible",label:"Nome do responsável (se necessário)",type:"text"}] },
+      { title: "2. Queixa Principal (QP)", fields: [{name:"mainComplaint",label:"Motivo da consulta",type:"textarea",required:true},{name:"durationTime",label:"Tempo de duração",type:"text"}] },
+      { title: "3. História da Doença Atual (HDA)", fields: [{name:"symptomsStart",label:"Início dos sintomas",type:"text"},{name:"evolution",label:"Evolução",type:"textarea"},{name:"intensity",label:"Intensidade",type:"select",options:["Leve","Moderada","Grave"]},{name:"aggravatingFactors",label:"Fatores que pioram",type:"textarea"},{name:"improvingFactors",label:"Fatores que melhoram",type:"textarea"},{name:"associatedSymptoms",label:"Sintomas associados",type:"textarea"},{name:"previousTreatment",label:"Já realizou tratamento?",type:"textarea"}] },
+      { title: "4. Histórico Médico Pessoal", fields: [{name:"previousDiseases",label:"Doenças prévias",type:"textarea"},{name:"hospitalizations",label:"Internações",type:"textarea"},{name:"surgeries",label:"Cirurgias",type:"textarea"},{name:"allergies",label:"Alergias",type:"textarea"},{name:"continuousMedications",label:"Uso de medicamentos contínuos",type:"textarea"},{name:"chronicDiseases",label:"Doenças crônicas (hipertensão, diabetes, etc.)",type:"textarea"}] },
+      { title: "5. Histórico Familiar", fields: [{name:"familyDiseases",label:"Doenças na família",type:"textarea"},{name:"hereditaryDiseases",label:"Histórico de doenças hereditárias",type:"textarea"}] },
+      { title: "6. Hábitos de Vida", fields: [{name:"diet",label:"Alimentação",type:"textarea"},{name:"waterConsumption",label:"Consumo de água",type:"text"},{name:"physicalActivity",label:"Atividade física",type:"textarea"},{name:"sleep",label:"Sono",type:"textarea"},{name:"alcoholUse",label:"Uso de álcool",type:"select",options:["Não","Ocasional","Frequente","Diário"]},{name:"smoking",label:"Tabagismo",type:"select",options:["Não","Ex-fumante","Fumante ocasional","Fumante regular"]},{name:"drugUse",label:"Uso de drogas",type:"textarea"}] },
+      { title: "7. Aspectos Psicossociais", fields: [{name:"dailyRoutine",label:"Rotina diária",type:"textarea"},{name:"stressLevel",label:"Nível de estresse",type:"select",options:["Baixo","Moderado","Alto","Muito alto"]},{name:"emotionalHealth",label:"Saúde emocional",type:"textarea"},{name:"familySupport",label:"Apoio familiar",type:"textarea"}] },
+      { title: "8. Revisão de Sistemas", fields: [{name:"cardiovascular",label:"Sistema cardiovascular",type:"textarea"},{name:"respiratory",label:"Sistema respiratório",type:"textarea"},{name:"digestive",label:"Sistema digestivo",type:"textarea"},{name:"urinary",label:"Sistema urinário",type:"textarea"},{name:"neurological",label:"Sistema neurológico",type:"textarea"},{name:"musculoskeletal",label:"Sistema musculoesquelético",type:"textarea"}] },
+      { title: "9. Avaliação Física", fields: [{name:"bloodPressure",label:"Pressão arterial",type:"text"},{name:"heartRate",label:"Frequência cardíaca",type:"text"},{name:"weight",label:"Peso (kg)",type:"number"},{name:"height",label:"Altura (cm)",type:"number"},{name:"imc",label:"IMC",type:"number"}] },
+      { title: "10. Diagnóstico / Hipótese Diagnóstica", fields: [{name:"diagnosis",label:"Diagnóstico",type:"textarea"}] },
+      { title: "11. Plano de Tratamento", fields: [{name:"conduct",label:"Conduta",type:"textarea"},{name:"prescriptions",label:"Prescrições",type:"textarea"},{name:"requestedExams",label:"Exames solicitados",type:"textarea"}] },
+      { title: "12. Observações Gerais", fields: [{name:"generalObservations",label:"Observações",type:"textarea"}] }
+    ]
+  },
+  CHILD: {
+    sections: [
+      { title: "1. Identificação", fields: [{name:"childName",label:"Nome da criança",type:"text",required:true},{name:"birthDate",label:"Data de nascimento",type:"date"},{name:"age",label:"Idade",type:"number"},{name:"gender",label:"Sexo",type:"select",options:["Masculino","Feminino","Outro"]},{name:"responsibles",label:"Nome dos responsáveis",type:"textarea",required:true},{name:"phone",label:"Telefone",type:"text"},{name:"address",label:"Endereço",type:"text"}] },
+      { title: "2. Queixa Principal (QP)", fields: [{name:"mainComplaint",label:"Motivo da consulta",type:"textarea",required:true},{name:"durationTime",label:"Tempo de duração",type:"text"}] },
+      { title: "3. História da Doença Atual (HDA)", fields: [{name:"symptomsStart",label:"Início dos sintomas",type:"text"},{name:"evolution",label:"Evolução",type:"textarea"},{name:"associatedSymptoms",label:"Sintomas associados",type:"textarea"},{name:"previousTreatment",label:"Tratamentos já realizados",type:"textarea"}] },
+      { title: "4. Histórico Gestacional e Nascimento", fields: [{name:"laborType",label:"Tipo de parto",type:"select",options:["Normal","Cesárea","Fórceps","Outro"]},{name:"gestationalAge",label:"Idade gestacional",type:"text"},{name:"pregnancyComplications",label:"Complicações na gestação",type:"textarea"},{name:"birthWeight",label:"Peso ao nascer (kg)",type:"number"},{name:"apgar",label:"APGAR (se disponível)",type:"text"}] },
+      { title: "5. Desenvolvimento Neuropsicomotor", fields: [{name:"headControl",label:"Sustentou a cabeça",type:"text"},{name:"sitting",label:"Sentou",type:"text"},{name:"crawling",label:"Engatinhou",type:"text"},{name:"walking",label:"Andou",type:"text"},{name:"speaking",label:"Falou",type:"text"}] },
+      { title: "6. Histórico Médico", fields: [{name:"previousDiseases",label:"Doenças prévias",type:"textarea"},{name:"hospitalizations",label:"Internações",type:"textarea"},{name:"surgeries",label:"Cirurgias",type:"textarea"},{name:"allergies",label:"Alergias",type:"textarea"},{name:"medications",label:"Uso de medicamentos",type:"textarea"}] },
+      { title: "7. Vacinação", fields: [{name:"vaccinationUpdated",label:"Carteira de vacinação atualizada?",type:"select",options:["Sim","Não","Parcialmente"]},{name:"pendingVaccines",label:"Vacinas pendentes",type:"textarea"}] },
+      { title: "8. Alimentação", fields: [{name:"breastfeeding",label:"Aleitamento materno",type:"select",options:["Exclusivo","Misto","Não"]},{name:"foodIntroduction",label:"Introdução alimentar",type:"textarea"},{name:"currentDiet",label:"Alimentação atual",type:"textarea"}] },
+      { title: "9. Sono", fields: [{name:"sleepHours",label:"Horas de sono",type:"text"},{name:"sleepQuality",label:"Qualidade do sono",type:"textarea"}] },
+      { title: "10. Hábitos e Rotina", fields: [{name:"schoolAttendance",label:"Frequenta escola/creche?",type:"select",options:["Sim","Não"]},{name:"dailyActivities",label:"Atividades diárias",type:"textarea"},{name:"screenTime",label:"Uso de telas",type:"textarea"}] },
+      { title: "11. Histórico Familiar", fields: [{name:"familyDiseases",label:"Doenças familiares",type:"textarea"},{name:"geneticHistory",label:"Histórico genético",type:"textarea"}] },
+      { title: "12. Aspectos Comportamentais", fields: [{name:"socialInteraction",label:"Interação social",type:"textarea"},{name:"behavior",label:"Comportamento",type:"textarea"},{name:"emotionalDevelopment",label:"Desenvolvimento emocional",type:"textarea"}] },
+      { title: "13. Revisão de Sistemas", fields: [{name:"respiratory",label:"Sistema respiratório",type:"textarea"},{name:"digestive",label:"Sistema digestivo",type:"textarea"},{name:"urinary",label:"Sistema urinário",type:"textarea"},{name:"neurological",label:"Sistema neurológico",type:"textarea"}] },
+      { title: "14. Avaliação Física", fields: [{name:"weight",label:"Peso (kg)",type:"number"},{name:"height",label:"Altura (cm)",type:"number"},{name:"headCircumference",label:"Perímetro cefálico (cm)",type:"number"},{name:"vitalSigns",label:"Sinais vitais",type:"textarea"}] },
+      { title: "15. Diagnóstico / Hipótese Diagnóstica", fields: [{name:"diagnosis",label:"Diagnóstico",type:"textarea"}] },
+      { title: "16. Plano de Tratamento", fields: [{name:"conduct",label:"Conduta",type:"textarea"},{name:"prescriptions",label:"Prescrições",type:"textarea"},{name:"requestedExams",label:"Exames solicitados",type:"textarea"}] },
+      { title: "17. Observações", fields: [{name:"observations",label:"Observações",type:"textarea"}] }
+    ]
+  }
+};
+
+// ══════════════════════════════════════════════
+// CONFIGURAÇÃO — altere para a URL do seu backend
+// ══════════════════════════════════════════════
+const API = window.location.hostname === 'localhost'
+  ? 'http://localhost:3001/api'
+  : 'https://orbie-api.onrender.com/api'; //https://orbie-api.onrender.com/api
+
+// ══════════════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════════════
+var STATE = {
+  token: localStorage.getItem('orbie_token'),
+  user: null,
+  patients: [],
+  appointments: [],
+  records: [],
+  financial: [],
+  plans: [],
+  resetToken: null,
+  verifyEmail: null
+};
+
+// ANAMNESIS_FORMS já declarado acima
+var _ANAMNESIS_FORMS_DUPLICATE_REMOVED = {
+  ADULT: {
+    sections: [
+      {
+        title: "1. Identificação",
+        fields: [
+          { name: "fullName", label: "Nome completo", type: "text", required: true },
+          { name: "birthDate", label: "Data de nascimento", type: "date" },
+          { name: "age", label: "Idade", type: "number" },
+          { name: "gender", label: "Sexo", type: "select", options: ["Masculino", "Feminino", "Outro"] },
+          { name: "maritalStatus", label: "Estado civil", type: "select", options: ["Solteiro", "Casado", "Divorciado", "Viúvo", "União estável"] },
+          { name: "profession", label: "Profissão", type: "text" },
+          { name: "phone", label: "Telefone", type: "text" },
+          { name: "address", label: "Endereço", type: "text" },
+          { name: "responsible", label: "Nome do responsável (se necessário)", type: "text" }
+        ]
+      },
+      {
+        title: "2. Queixa Principal (QP)",
+        fields: [
+          { name: "mainComplaint", label: "Motivo da consulta", type: "textarea", required: true },
+          { name: "durationTime", label: "Tempo de duração", type: "text" }
+        ]
+      },
+      {
+        title: "3. História da Doença Atual (HDA)",
+        fields: [
+          { name: "symptomsStart", label: "Início dos sintomas", type: "text" },
+          { name: "evolution", label: "Evolução", type: "textarea" },
+          { name: "intensity", label: "Intensidade", type: "select", options: ["Leve", "Moderada", "Grave"] },
+          { name: "aggravatingFactors", label: "Fatores que pioram", type: "textarea" },
+          { name: "improvingFactors", label: "Fatores que melhoram", type: "textarea" },
+          { name: "associatedSymptoms", label: "Sintomas associados", type: "textarea" },
+          { name: "previousTreatment", label: "Já realizou tratamento?", type: "textarea" }
+        ]
+      },
+      {
+        title: "4. Histórico Médico Pessoal",
+        fields: [
+          { name: "previousDiseases", label: "Doenças prévias", type: "textarea" },
+          { name: "hospitalizations", label: "Internações", type: "textarea" },
+          { name: "surgeries", label: "Cirurgias", type: "textarea" },
+          { name: "allergies", label: "Alergias", type: "textarea" },
+          { name: "continuousMedications", label: "Uso de medicamentos contínuos", type: "textarea" },
+          { name: "chronicDiseases", label: "Doenças crônicas (hipertensão, diabetes, etc.)", type: "textarea" }
+        ]
+      },
+      {
+        title: "5. Histórico Familiar",
+        fields: [
+          { name: "familyDiseases", label: "Doenças na família", type: "textarea" },
+          { name: "hereditaryDiseases", label: "Histórico de doenças hereditárias", type: "textarea" }
+        ]
+      },
+      {
+        title: "6. Hábitos de Vida",
+        fields: [
+          { name: "diet", label: "Alimentação", type: "textarea" },
+          { name: "waterConsumption", label: "Consumo de água", type: "text" },
+          { name: "physicalActivity", label: "Atividade física", type: "textarea" },
+          { name: "sleep", label: "Sono", type: "textarea" },
+          { name: "alcoholUse", label: "Uso de álcool", type: "select", options: ["Não", "Ocasional", "Frequente", "Diário"] },
+          { name: "smoking", label: "Tabagismo", type: "select", options: ["Não", "Ex-fumante", "Fumante ocasional", "Fumante regular"] },
+          { name: "drugUse", label: "Uso de drogas", type: "textarea" }
+        ]
+      },
+      {
+        title: "7. Aspectos Psicossociais",
+        fields: [
+          { name: "dailyRoutine", label: "Rotina diária", type: "textarea" },
+          { name: "stressLevel", label: "Nível de estresse", type: "select", options: ["Baixo", "Moderado", "Alto", "Muito alto"] },
+          { name: "emotionalHealth", label: "Saúde emocional", type: "textarea" },
+          { name: "familySupport", label: "Apoio familiar", type: "textarea" }
+        ]
+      },
+      {
+        title: "8. Revisão de Sistemas",
+        fields: [
+          { name: "cardiovascular", label: "Sistema cardiovascular", type: "textarea" },
+          { name: "respiratory", label: "Sistema respiratório", type: "textarea" },
+          { name: "digestive", label: "Sistema digestivo", type: "textarea" },
+          { name: "urinary", label: "Sistema urinário", type: "textarea" },
+          { name: "neurological", label: "Sistema neurológico", type: "textarea" },
+          { name: "musculoskeletal", label: "Sistema musculoesquelético", type: "textarea" }
+        ]
+      },
+      {
+        title: "9. Avaliação Física",
+        fields: [
+          { name: "bloodPressure", label: "Pressão arterial", type: "text" },
+          { name: "heartRate", label: "Frequência cardíaca", type: "text" },
+          { name: "weight", label: "Peso (kg)", type: "number" },
+          { name: "height", label: "Altura (cm)", type: "number" },
+          { name: "imc", label: "IMC", type: "number" }
+        ]
+      },
+      {
+        title: "10. Diagnóstico / Hipótese Diagnóstica",
+        fields: [
+          { name: "diagnosis", label: "Diagnóstico", type: "textarea" }
+        ]
+      },
+      {
+        title: "11. Plano de Tratamento",
+        fields: [
+          { name: "conduct", label: "Conduta", type: "textarea" },
+          { name: "prescriptions", label: "Prescrições", type: "textarea" },
+          { name: "requestedExams", label: "Exames solicitados", type: "textarea" }
+        ]
+      },
+      {
+        title: "12. Observações Gerais",
+        fields: [
+          { name: "generalObservations", label: "Observações", type: "textarea" }
+        ]
+      }
+    ]
+  },
+  CHILD: {
+    sections: [
+      {
+        title: "1. Identificação",
+        fields: [
+          { name: "childName", label: "Nome da criança", type: "text", required: true },
+          { name: "birthDate", label: "Data de nascimento", type: "date" },
+          { name: "age", label: "Idade", type: "number" },
+          { name: "gender", label: "Sexo", type: "select", options: ["Masculino", "Feminino", "Outro"] },
+          { name: "responsibles", label: "Nome dos responsáveis", type: "textarea", required: true },
+          { name: "phone", label: "Telefone", type: "text" },
+          { name: "address", label: "Endereço", type: "text" }
+        ]
+      },
+      {
+        title: "2. Queixa Principal (QP)",
+        fields: [
+          { name: "mainComplaint", label: "Motivo da consulta", type: "textarea", required: true },
+          { name: "durationTime", label: "Tempo de duração", type: "text" }
+        ]
+      },
+      {
+        title: "3. História da Doença Atual (HDA)",
+        fields: [
+          { name: "symptomsStart", label: "Início dos sintomas", type: "text" },
+          { name: "evolution", label: "Evolução", type: "textarea" },
+          { name: "associatedSymptoms", label: "Sintomas associados", type: "textarea" },
+          { name: "previousTreatment", label: "Tratamentos já realizados", type: "textarea" }
+        ]
+      },
+      {
+        title: "4. Histórico Gestacional e Nascimento",
+        fields: [
+          { name: "laborType", label: "Tipo de parto", type: "select", options: ["Normal", "Cesárea", "Fórceps", "Outro"] },
+          { name: "gestationalAge", label: "Idade gestacional", type: "text" },
+          { name: "pregnancyComplications", label: "Complicações na gestação", type: "textarea" },
+          { name: "birthWeight", label: "Peso ao nascer (kg)", type: "number" },
+          { name: "apgar", label: "APGAR (se disponível)", type: "text" }
+        ]
+      },
+      {
+        title: "5. Desenvolvimento Neuropsicomotor",
+        fields: [
+          { name: "headControl", label: "Sustentou a cabeça", type: "text" },
+          { name: "sitting", label: "Sentou", type: "text" },
+          { name: "crawling", label: "Engatinhou", type: "text" },
+          { name: "walking", label: "Andou", type: "text" },
+          { name: "speaking", label: "Falou", type: "text" }
+        ]
+      },
+      {
+        title: "6. Histórico Médico",
+        fields: [
+          { name: "previousDiseases", label: "Doenças prévias", type: "textarea" },
+          { name: "hospitalizations", label: "Internações", type: "textarea" },
+          { name: "surgeries", label: "Cirurgias", type: "textarea" },
+          { name: "allergies", label: "Alergias", type: "textarea" },
+          { name: "medications", label: "Uso de medicamentos", type: "textarea" }
+        ]
+      },
+      {
+        title: "7. Vacinação",
+        fields: [
+          { name: "vaccinationUpdated", label: "Carteira de vacinação atualizada?", type: "select", options: ["Sim", "Não", "Parcialmente"] },
+          { name: "pendingVaccines", label: "Vacinas pendentes", type: "textarea" }
+        ]
+      },
+      {
+        title: "8. Alimentação",
+        fields: [
+          { name: "breastfeeding", label: "Aleitamento materno", type: "select", options: ["Exclusivo", "Misto", "Não"] },
+          { name: "foodIntroduction", label: "Introdução alimentar", type: "textarea" },
+          { name: "currentDiet", label: "Alimentação atual", type: "textarea" }
+        ]
+      },
+      {
+        title: "9. Sono",
+        fields: [
+          { name: "sleepHours", label: "Horas de sono", type: "text" },
+          { name: "sleepQuality", label: "Qualidade do sono", type: "textarea" }
+        ]
+      },
+      {
+        title: "10. Hábitos e Rotina",
+        fields: [
+          { name: "schoolAttendance", label: "Frequenta escola/creche?", type: "select", options: ["Sim", "Não"] },
+          { name: "dailyActivities", label: "Atividades diárias", type: "textarea" },
+          { name: "screenTime", label: "Uso de telas", type: "textarea" }
+        ]
+      },
+      {
+        title: "11. Histórico Familiar",
+        fields: [
+          { name: "familyDiseases", label: "Doenças familiares", type: "textarea" },
+          { name: "geneticHistory", label: "Histórico genético", type: "textarea" }
+        ]
+      },
+      {
+        title: "12. Aspectos Comportamentais",
+        fields: [
+          { name: "socialInteraction", label: "Interação social", type: "textarea" },
+          { name: "behavior", label: "Comportamento", type: "textarea" },
+          { name: "emotionalDevelopment", label: "Desenvolvimento emocional", type: "textarea" }
+        ]
+      },
+      {
+        title: "13. Revisão de Sistemas",
+        fields: [
+          { name: "respiratory", label: "Sistema respiratório", type: "textarea" },
+          { name: "digestive", label: "Sistema digestivo", type: "textarea" },
+          { name: "urinary", label: "Sistema urinário", type: "textarea" },
+          { name: "neurological", label: "Sistema neurológico", type: "textarea" }
+        ]
+      },
+      {
+        title: "14. Avaliação Física",
+        fields: [
+          { name: "weight", label: "Peso (kg)", type: "number" },
+          { name: "height", label: "Altura (cm)", type: "number" },
+          { name: "headCircumference", label: "Perímetro cefálico (cm)", type: "number" },
+          { name: "vitalSigns", label: "Sinais vitais", type: "textarea" }
+        ]
+      },
+      {
+        title: "15. Diagnóstico / Hipótese Diagnóstica",
+        fields: [
+          { name: "diagnosis", label: "Diagnóstico", type: "textarea" }
+        ]
+      },
+      {
+        title: "16. Plano de Tratamento",
+        fields: [
+          { name: "conduct", label: "Conduta", type: "textarea" },
+          { name: "prescriptions", label: "Prescrições", type: "textarea" },
+          { name: "requestedExams", label: "Exames solicitados", type: "textarea" }
+        ]
+      },
+      {
+        title: "17. Observações",
+        fields: [
+          { name: "observations", label: "Observações", type: "textarea" }
+        ]
+      }
+    ]
+  }
+};
+
+// ══════════════════════════════════════════════
+// API HELPER
+// ══════════════════════════════════════════════
+async function api(method, path, body) {
+  var opts = {
+    method: method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (STATE.token) opts.headers['Authorization'] = 'Bearer ' + STATE.token;
+  if (body) opts.body = JSON.stringify(body);
+  var res = await fetch(API + path, opts);
+  var data = await res.json().catch(function() { return {}; });
+  if (!res.ok) throw { status: res.status, message: data.error || 'Erro desconhecido', data: data };
+  return data;
+}
+
+// ══════════════════════════════════════════════
+// SCREENS
+// ══════════════════════════════════════════════
+var SCREENS = ['loading-screen','login','register','verify','forgot','reset','plans','app'];
+function showScreen(name) {
+  document.getElementById('loading-screen').classList.add('hidden');
+  SCREENS.forEach(function(s) {
+    var el = document.getElementById('screen-' + s) || document.getElementById(s + '-screen');
+    if (el) el.classList.add('hidden');
+  });
+  var el = document.getElementById('screen-' + name);
+  if (el) el.classList.remove('hidden');
+  else document.getElementById(name + '-screen') && document.getElementById(name + '-screen').classList.remove('hidden');
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+async function init() {
+  var loadingTimeout = setTimeout(function() {
+    console.error('Timeout - forcing screen display');
+    if (STATE.token) showScreen('app');
+    else showScreen('login');
+  }, 3000);
+  
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var verifyToken = params.get('token') && window.location.pathname.includes('verify');
+    var resetToken = params.get('token') && window.location.pathname.includes('reset');
+
+    if (verifyToken || (params.get('token') && !resetToken)) {
+      try {
+        var data = await api('GET', '/auth/verify/' + params.get('token'));
+        STATE.token = data.token;
+        localStorage.setItem('orbie_token', data.token);
+        window.history.replaceState({}, '', '/');
+        clearTimeout(loadingTimeout);
+        await loadApp();
+        return;
+      } catch(e) {
+        clearTimeout(loadingTimeout);
+        showScreen('login');
+        return;
+      }
+    }
+    if (resetToken) {
+      STATE.resetToken = params.get('token');
+      showScreen('reset');
+      clearTimeout(loadingTimeout);
+      return;
+    }
+    STATE.token = localStorage.getItem('orbie_token');
+    if (STATE.token) {
+      clearTimeout(loadingTimeout);
+      await loadApp();
+    } else {
+      clearTimeout(loadingTimeout);
+      showScreen('login');
+    }
+  } catch(e) {
+    clearTimeout(loadingTimeout);
+    console.error('Init error:', e);
+    showScreen('login');
+  }
+}
+
+// ===== WEEKLY TIME GRID VIEW =====
+function renderWeeklyGrid(startDate) {
+  var cal = document.getElementById('appt-calendar');
+  if (!cal) return;
+  
+  var sunday = new Date(startDate);
+  sunday.setDate(sunday.getDate() - sunday.getDay());
+  
+  var dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  var hours = [];
+  for (var h = 0; h < 24; h++) {
+    hours.push(h.toString().padStart(2, '0') + ':00');
+  }
+  
+  var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+  html += '<thead><tr><th style="width:60px;padding:8px;border:1px solid #ddd">Hora</th>';
+  
+  for (var d = 0; d < 7; d++) {
+    var date = new Date(sunday);
+    date.setDate(date.getDate() + d);
+    var dateStr = date.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+    var isToday = date.toDateString() === new Date().toDateString();
+    html += '<th style="padding:8px;border:1px solid #ddd;background:' + (isToday ? '#3b82f6' : '#f8fafc') + ';color:' + (isToday ? 'white' : 'black') + '">' + dayNames[d] + '<br>' + dateStr + '</th>';
+  }
+  html += '</tr></thead><tbody>';
+  
+  hours.forEach(function(hour) {
+    html += '<tr><td style="padding:8px;border:1px solid #ddd;font-weight:700;background:#f8fafc">' + hour + '</td>';
+    for (var d = 0; d < 7; d++) {
+      var date = new Date(sunday);
+      date.setDate(date.getDate() + d);
+      var dateKey = date.toISOString().split('T')[0];
+      var cellAppts = STATE.appointments.filter(function(a) {
+        var aDate = new Date(a.date).toISOString().split('T')[0];
+        var aHour = new Date(a.date).getHours().toString().padStart(2, '0') + ':00';
+        return aDate === dateKey && aHour === hour && a.status === 'PENDING';
+      });
+      html += '<td style="padding:4px;border:1px solid #ddd;height:60px;vertical-align:top;background:#fafafa">';
+      cellAppts.forEach(function(a) {
+        var patName = a.patient ? a.patient.name.split(' ')[0] : 'Paciente';
+        html += '<div style="background:#5b5ef4;color:white;padding:4px;border-radius:4px;font-size:10px;margin-bottom:2px;cursor:pointer" onclick="openAppointmentConfirmation(' + a.id + ')">' + patName + '</div>';
+      });
+      html += '</td>';
+    }
+    html += '</tr>';
+  });
+  
+  html += '</tbody></table></div>';
+  cal.innerHTML = html;
+}
+
+// ===== SESSIONS MANAGEMENT =====
+var currentSessionFilter = 'completed';
+
+function switchSessionTab(tab) {
+  currentSessionFilter = tab;
+  document.getElementById('sessions-tab-completed').style.background = tab === 'completed' ? '#10b981' : '#d1d5db';
+  document.getElementById('sessions-tab-cancelled').style.background = tab === 'cancelled' ? '#ef4444' : '#d1d5db';
+  document.getElementById('sessions-tab-missed').style.background = tab === 'missed' ? '#f59e0b' : '#d1d5db';
+  renderSessions();
+}
+
+function filterSessions() {
+  renderSessions();
+}
+
+function renderSessions() {
+  var el = document.getElementById('sessions-list');
+  var search = document.getElementById('sessions-search').value.toLowerCase();
+  
+  var statusMap = {
+    'completed': 'COMPLETED',
+    'cancelled': 'CANCELLED',
+    'missed': 'MISSED'
+  };
+  
+  var sessions = STATE.appointments.filter(function(a) {
+    var status = a.status === 'COMPLETED' ? 'COMPLETED' : a.status === 'CANCELLED' ? 'CANCELLED' : 'MISSED';
+    var matchStatus = status === statusMap[currentSessionFilter];
+    var matchSearch = !search || (a.patient && (a.patient.name.toLowerCase().includes(search) || (a.patient.cpf && a.patient.cpf.includes(search))));
+    return matchStatus && matchSearch;
+  });
+  
+  var html = '';
+  sessions.forEach(function(a) {
+    var patName = a.patient ? a.patient.name : 'Paciente';
+    var dt = new Date(a.date);
+    var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + ' · ' + dt.toLocaleDateString('pt-BR');
+    var statusColor = a.status === 'COMPLETED' ? '#10b981' : a.status === 'CANCELLED' ? '#ef4444' : '#f59e0b';
+    var statusText = a.status === 'COMPLETED' ? 'Concluída' : a.status === 'CANCELLED' ? 'Cancelada' : 'Falta';
+    
+    html += '<div style="background:white;border-left:3px solid ' + statusColor + ';border-radius:6px;padding:12px;display:flex;justify-content:space-between;align-items:center">';
+    html += '<div><div style="font-weight:700;font-size:14px">' + patName + '</div>';
+    html += '<div style="font-size:12px;color:#666;margin-top:4px">' + timeStr + ' · R$ ' + a.value.toFixed(2) + '</div>';
+    html += '<div style="font-size:11px;color:' + statusColor + ';margin-top:4px;font-weight:700">' + statusText + '</div></div>';
+    html += '</div>';
+  });
+  
+  if (html === '') html = '<div style="text-align:center;color:#999;padding:20px">Nenhuma sessão encontrada</div>';
+  el.innerHTML = html;
+}
+
+// ===== APPOINTMENT CONFIRMATION FLOW =====
+var currentEditingAppointment = null;
+
+function openAppointmentConfirmation(appointmentId) {
+  var appt = STATE.appointments.find(function(a) { return a.id === appointmentId; });
+  if (!appt) return;
+  
+  currentEditingAppointment = appt;
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+  
+  var patName = appt.patient ? appt.patient.name : 'Paciente';
+  var dt = new Date(appt.date);
+  var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + ' · ' + dt.toLocaleDateString('pt-BR');
+  
+  modal.innerHTML = '<div style="background:white;border-radius:8px;padding:24px;max-width:400px;width:90%">';
+  modal.innerHTML += '<h2 style="margin:0 0 12px 0;font-size:18px">' + patName + '</h2>';
+  modal.innerHTML += '<p style="margin:0 0 16px 0;color:#666;font-size:14px">' + timeStr + ' · R$ ' + appt.value.toFixed(2) + '</p>';
+  modal.innerHTML += '<div style="display:flex;gap:8px;flex-direction:column">';
+  modal.innerHTML += '<button class="btn bg2" style="width:100%" onclick="confirmAppointment(' + appointmentId + ');this.parentElement.parentElement.parentElement.remove()">✓ Confirmar</button>';
+  modal.innerHTML += '<button class="btn br" style="width:100%" onclick="cancelAppointment(' + appointmentId + ');this.parentElement.parentElement.parentElement.remove()">✕ Cancelar</button>';
+  modal.innerHTML += '<button class="btn" style="width:100%;background:#f59e0b;color:white;border:none" onclick="openMissedDialog(' + appointmentId + ');this.parentElement.parentElement.parentElement.remove()">⚠ Falta</button>';
+  modal.innerHTML += '</div>';
+  modal.innerHTML += '</div>';
+  
+  document.body.appendChild(modal);
+  modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+}
+
+function confirmAppointment(appointmentId) {
+  updateAppointmentStatus(appointmentId, 'COMPLETED', 0);
+  toast('✓ Sessão confirmada!');
+}
+
+function cancelAppointment(appointmentId) {
+  updateAppointmentStatus(appointmentId, 'CANCELLED', 0);
+  toast('✕ Sessão cancelada!');
+}
+
+function openMissedDialog(appointmentId) {
+  var appt = STATE.appointments.find(function(a) { return a.id === appointmentId; });
+  if (!appt) return;
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+  
+  modal.innerHTML = '<div style="background:white;border-radius:8px;padding:24px;max-width:400px;width:90%">';
+  modal.innerHTML += '<h2 style="margin:0 0 12px 0;font-size:18px">Marcar como Falta</h2>';
+  modal.innerHTML += '<p style="margin:0 0 16px 0;color:#666;font-size:14px">Valor da sessão: R$ ' + appt.value.toFixed(2) + '</p>';
+  modal.innerHTML += '<div style="display:flex;gap:8px;flex-direction:column">';
+  modal.innerHTML += '<button class="btn bg2" style="width:100%" onclick="updateAppointmentStatus(' + appointmentId + ', \"MISSED\", ' + appt.value + ');this.parentElement.parentElement.parentElement.remove();toast(\"⚠ Marcado como falta com valor integral\")">Manter Valor Integral</button>';
+  modal.innerHTML += '<button class="btn" style="width:100%;background:#f59e0b;color:white;border:none" onclick="openAdjustValueDialog(' + appointmentId + ');this.parentElement.parentElement.parentElement.remove()">Ajustar Valor</button>';
+  modal.innerHTML += '</div>';
+  modal.innerHTML += '</div>';
+  
+  document.body.appendChild(modal);
+  modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+}
+
+function openAdjustValueDialog(appointmentId) {
+  var appt = STATE.appointments.find(function(a) { return a.id === appointmentId; });
+  if (!appt) return;
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+  
+  modal.innerHTML = '<div style="background:white;border-radius:8px;padding:24px;max-width:400px;width:90%">';
+  modal.innerHTML += '<h2 style="margin:0 0 12px 0;font-size:18px">Ajustar Valor da Falta</h2>';
+  modal.innerHTML += '<p style="margin:0 0 16px 0;color:#666;font-size:14px">Valor original: R$ ' + appt.value.toFixed(2) + '</p>';
+  modal.innerHTML += '<input type="number" id="adjusted-value" value="' + appt.value + '" step="0.01" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-bottom:16px;box-sizing:border-box">';
+  modal.innerHTML += '<div style="display:flex;gap:8px">';
+  modal.innerHTML += '<button class="btn bg2" style="flex:1" onclick="updateAppointmentStatus(' + appointmentId + ', \"MISSED\", parseFloat(document.getElementById(\"adjusted-value\").value));this.parentElement.parentElement.parentElement.remove();toast(\"⚠ Marcado como falta com valor ajustado\")">Confirmar</button>';
+  modal.innerHTML += '<button class="btn br" style="flex:1" onclick="this.parentElement.parentElement.parentElement.remove()">Cancelar</button>';
+  modal.innerHTML += '</div>';
+  modal.innerHTML += '</div>';
+  
+  document.body.appendChild(modal);
+  modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+}
+
+function updateAppointmentStatus(appointmentId, status, value) {
+  var appt = STATE.appointments.find(function(a) { return a.id === appointmentId; });
+  if (!appt) return;
+  
+  appt.status = status;
+  if (status === 'MISSED') appt.value = value;
+  
+  api('PUT', '/appointments/' + appointmentId, {status: status, value: value}).then(function(res) {
+    renderWeeklyGrid(new Date());
+    renderSessions();
+    toast('✓ Sessão atualizada!');
+  }).catch(function(err) {
+    console.error('Erro ao atualizar sessão:', err);
+    toast('✗ Erro ao atualizar sessão');
+  });
+}
+
+async function loadApp() {
+  try {
+    document.addEventListener('click', function(e) {
+      var recDropdown = document.getElementById('rec-pat-dropdown');
+      var recSearch = document.getElementById('rec-pat-search');
+      if (recDropdown && recSearch && !recDropdown.contains(e.target) && !recSearch.contains(e.target)) {
+        recDropdown.classList.add('hidden');
+      }
+      
+      var repDropdown = document.getElementById('rep-pat-dropdown');
+      var repSearch = document.getElementById('rep-pat-search');
+      if (repDropdown && repSearch && !repDropdown.contains(e.target) && !repSearch.contains(e.target)) {
+        repDropdown.classList.add('hidden');
+      }
+    });
+    
+    STATE.user = await api('GET', '/auth/me');
+    updateUserUI();
+    if (STATE.user.plan === 'NONE') {
+      showScreen('plans');
+      return;
+    }
+    showScreen('app');
+    await Promise.all([loadPatients(), loadAppointments('today', null), loadFinancial()]);
+    renderDashboard();
+    if (window.innerWidth >= 768) {
+      document.getElementById('sb').classList.add('open');
+    }
+  } catch(e) {
+    STATE.token = null;
+    localStorage.removeItem('orbie_token');
+    showScreen('login');
+  }
+}
+
+function updateUserUI() {
+  if (!STATE.user) return;
+  document.getElementById('user-name').textContent = STATE.user.name;
+  document.getElementById('user-av').textContent = STATE.user.name[0].toUpperCase();
+  var planLabel = STATE.user.plan === 'PRO' ? '● PRO+IA Ativo' : STATE.user.plan === 'BASIC' ? '● Basic Ativo' : '● Sem plano';
+  document.getElementById('user-plan').textContent = planLabel;
+  // Show AI features for PRO
+  if (STATE.user.plan === 'PRO') {
+    var aiB = document.getElementById('ai-badge');
+    var aiBtn = document.getElementById('ai-gen-btn');
+    if (aiB) aiB.classList.remove('hidden');
+    if (aiBtn) aiBtn.classList.remove('hidden');
+  }
+  // Settings fields
+  if (document.getElementById('st-name')) {
+    document.getElementById('st-name').value = STATE.user.name || '';
+    document.getElementById('st-crp').value = STATE.user.crp || '';
+    document.getElementById('st-phone').value = STATE.user.phone || '';
+    document.getElementById('st-spec').value = STATE.user.specialty || '';
+    document.getElementById('st-bio').value = STATE.user.bio || '';
+  }
+  // Plan info
+  var planCard = document.getElementById('plan-card-info');
+  if (planCard) {
+    var pn = STATE.user.plan === 'PRO' ? 'PRO + IA' : STATE.user.plan === 'BASIC' ? 'Basic' : 'Nenhum';
+    var price = STATE.user.plan === 'PRO' ? 'R$ 59,90' : STATE.user.plan === 'BASIC' ? 'R$ 29,90' : '—';
+    var exp = STATE.user.planExpiresAt ? new Date(STATE.user.planExpiresAt).toLocaleDateString('pt-BR') : '—';
+    planCard.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:14px;font-weight:700">ORBIE ' + pn + '</span><span style="background:rgba(255,255,255,.2);padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700">● ATIVO</span></div>' +
+      '<div style="font-size:28px;font-weight:800;margin-bottom:4px">' + price + '<span style="font-size:14px;font-weight:400;opacity:.8">/mês</span></div>' +
+      '<div style="font-size:12px;opacity:.8">Próxima cobrança: ' + exp + '</div>';
+  }
+}
+
+// ══════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════
+async function doLogin() {
+  var email = document.getElementById('login-email').value.trim();
+  var pass = document.getElementById('login-pass').value;
+  var errEl = document.getElementById('login-err');
+  var btn = document.getElementById('login-btn');
+  errEl.classList.add('hidden');
+  if (!email || !pass) { errEl.textContent = 'Preencha email e senha'; errEl.classList.remove('hidden'); return; }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  try {
+    var data = await api('POST', '/auth/login', { email, password: pass });
+    STATE.token = data.token;
+    STATE.user = data.user;
+    localStorage.setItem('orbie_token', data.token);
+    await loadApp();
+  } catch(e) {
+    errEl.textContent = e.message || 'Erro ao fazer login';
+    errEl.classList.remove('hidden');
+    if (e.data && e.data.emailNotVerified) {
+      STATE.verifyEmail = email;
+      showScreen('verify');
+      document.getElementById('verify-email-text').textContent = 'Enviamos um link para ' + email + '. Verifique sua caixa de entrada.';
+    }
+  } finally { btn.disabled = false; btn.textContent = 'Entrar'; }
+}
+
+async function doRegister() {
+  var name = document.getElementById('reg-name').value.trim();
+  var email = document.getElementById('reg-email').value.trim();
+  var pass = document.getElementById('reg-pass').value;
+  var errEl = document.getElementById('reg-err');
+  var okEl = document.getElementById('reg-ok');
+  var btn = document.getElementById('reg-btn');
+  errEl.classList.add('hidden'); okEl.classList.add('hidden');
+  if (!name || !email || !pass) { errEl.textContent = 'Preencha todos os campos'; errEl.classList.remove('hidden'); return; }
+  btn.disabled = true; btn.textContent = 'Criando conta...';
+  try {
+    await api('POST', '/auth/register', { name, email, password: pass });
+    toast('✅ Conta criada com sucesso!');
+    showScreen('login');
+    document.getElementById('login-email').value = email;
+  } catch(e) {
+    errEl.textContent = e.message || 'Erro ao criar conta';
+    errEl.classList.remove('hidden');
+  } finally { btn.disabled = false; btn.textContent = 'Criar conta'; }
+}
+
+async function doResendVerification() {
+  if (!STATE.verifyEmail) return;
+  try {
+    await api('POST', '/auth/resend-verification', { email: STATE.verifyEmail });
+    var el = document.getElementById('verify-ok');
+    el.textContent = 'Email reenviado!';
+    el.classList.remove('hidden');
+  } catch(e) { toast('Erro ao reenviar email'); }
+}
+
+async function doForgotPassword() {
+  var email = document.getElementById('forgot-email').value.trim();
+  var errEl = document.getElementById('forgot-err');
+  var okEl = document.getElementById('forgot-ok');
+  var btn = document.getElementById('forgot-btn');
+  errEl.classList.add('hidden'); okEl.classList.add('hidden');
+  if (!email) { errEl.textContent = 'Digite seu email'; errEl.classList.remove('hidden'); return; }
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    await api('POST', '/auth/forgot-password', { email });
+    okEl.textContent = 'Se o email existir, você receberá as instruções em instantes.';
+    okEl.classList.remove('hidden');
+  } catch(e) {
+    okEl.textContent = 'Se o email existir, você receberá as instruções.';
+    okEl.classList.remove('hidden');
+  } finally { btn.disabled = false; btn.textContent = 'Enviar instruções'; }
+}
+
+async function doResetPassword() {
+  var pass = document.getElementById('reset-pass').value;
+  var pass2 = document.getElementById('reset-pass2').value;
+  var errEl = document.getElementById('reset-err');
+  var okEl = document.getElementById('reset-ok');
+  var btn = document.getElementById('reset-btn');
+  errEl.classList.add('hidden'); okEl.classList.add('hidden');
+  if (!pass || pass !== pass2) { errEl.textContent = 'Senhas não conferem'; errEl.classList.remove('hidden'); return; }
+  btn.disabled = true; btn.textContent = 'Redefinindo...';
+  try {
+    await api('POST', '/auth/reset-password', { token: STATE.resetToken, password: pass });
+    okEl.textContent = 'Senha redefinida! Redirecionando...';
+    okEl.classList.remove('hidden');
+    setTimeout(function() { showScreen('login'); }, 2000);
+  } catch(e) {
+    errEl.textContent = e.message || 'Erro ao redefinir senha';
+    errEl.classList.remove('hidden');
+  } finally { btn.disabled = false; btn.textContent = 'Redefinir senha'; }
+}
+
+function doLogout() {
+  STATE.token = null;
+  STATE.user = null;
+  STATE.patients = [];
+  localStorage.removeItem('orbie_token');
+  showScreen('login');
+}
+
+// ══════════════════════════════════════════════
+// PLANS & CHECKOUT
+// ══════════════════════════════════════════════
+async function doCheckout(plan) {
+  try {
+    var data = await api('POST', '/subscriptions/checkout', { plan });
+    if (data.url) window.location.href = data.url;
+  } catch(e) {
+    toast('Erro ao iniciar checkout: ' + (e.message || 'Tente novamente'));
+  }
+}
+
+async function openPortal() {
+  try {
+    var data = await api('POST', '/subscriptions/portal');
+    if (data.url) window.location.href = data.url;
+  } catch(e) {
+    toast('Sem assinatura ativa pelo Stripe');
+  }
+}
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+var sbOpen = false;
+var TITLES = {dashboard:'Dashboard',patients:'Pacientes',appointments:'Agenda',records:'Prontuários',financial:'Financeiro',reports:'Relatórios',settings:'Configurações'};
+function toggleSB() { sbOpen = !sbOpen; document.getElementById('sb').classList.toggle('open', sbOpen); }
+function swPTab(id, el) {
+  document.querySelectorAll('.ptab').forEach(function(t){ t.classList.add('hidden'); });
+  el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
+  document.getElementById('ptab-' + id).classList.remove('hidden');
+  el.classList.add('on');
+}
+function go(pg, el) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('on'); });
+  var t = document.getElementById('pg-' + pg);
+  if (t) t.classList.add('on');
+  document.querySelectorAll('.ni').forEach(function(n){ n.classList.remove('on'); });
+  if (el) { el.classList.add('on'); }
+  else { document.querySelectorAll('.ni').forEach(function(n){ var o = n.getAttribute('onclick')||''; if (o.indexOf("'"+pg+"'") > -1) n.classList.add('on'); }); }
+  document.getElementById('hdr-t').textContent = TITLES[pg] || pg;
+  if (sbOpen && window.innerWidth < 768) toggleSB();
+  document.getElementById('content').scrollTop = 0;
+  if (pg === 'records') populateRecordSelect();
+  if (pg === 'settings') updateUserUI();
+}
+function setTab(el) { el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); }); el.classList.add('on'); }
+
+// ══════════════════════════════════════════════
+// MODALS
+// ══════════════════════════════════════════════
+function openM(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeM(id) { document.getElementById(id).classList.add('hidden'); }
+function showST(tab, el) {
+  ['perfil','senha','plano'].forEach(function(t){ var e = document.getElementById('st-'+t); if(e) e.classList.toggle('hidden', t!==tab); });
+  el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); }); el.classList.add('on');
+  if (tab === 'plano') updateUserUI();
+}
+function swPT(type, el) {
+  el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); }); el.classList.add('on');
+  document.getElementById('npat-type').value = type;
+  document.getElementById('npat-child-fields').classList.toggle('hidden', type !== 'CHILD');
+}
+function setFinType(type, el) {
+  el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); }); el.classList.add('on');
+  document.getElementById('fin-type').value = type;
+}
+
+function openMeet(name, url, time) {
+  document.getElementById('meet-n').textContent = 'Consulta com ' + name;
+  document.getElementById('meet-i').textContent = name + ' · ' + time + ' · 50 minutos';
+  document.getElementById('meet-u').textContent = url;
+  var fullUrl = url.startsWith('http') ? url : 'https://' + url;
+  document.getElementById('meet-link-btn').href = fullUrl;
+  openM('m-meet');
+}
+function copyMeetLink() {
+  var url = document.getElementById('meet-u').textContent;
+  navigator.clipboard && navigator.clipboard.writeText('https://' + url);
+  toast('✅ Link copiado!');
+}
+
+// ══════════════════════════════════════════════
+// PATIENTS
+// ══════════════════════════════════════════════
+async function loadPatients() {
+  try {
+    STATE.patients = await api('GET', '/patients');
+    renderPatients(STATE.patients);
+    populatePatientSelects();
+  } catch(e) { console.error('Load patients:', e); }
+}
+
+function renderPatients(list) {
+  var el = document.getElementById('pat-list');
+  document.getElementById('pat-count').textContent = list.length + ' pacientes';
+  if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Nenhum paciente cadastrado</div>'; return; }
+  el.innerHTML = list.map(function(p) {
+    var ini = p.name.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+    var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6','#06b6d4'];
+    var color = colors[p.name.charCodeAt(0) % colors.length];
+    var lastDate = p.updatedAt ? new Date(p.updatedAt).toLocaleDateString('pt-BR') : '—';
+    return '<div class="card" style="cursor:pointer" onclick="viewPatient(\'' + p.id + '\')">' +
+      '<div style="display:flex;align-items:center;gap:12px">' +
+      '<div class="av avl" style="background:' + color + '">' + ini + '</div>' +
+      '<div style="flex:1;min-width:0">' +
+      '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700">' + p.name + '</span>' +
+      '<span class="bx ' + (p.status === 'ACTIVE' ? 'bgn' : 'bgr') + '">' + (p.status === 'ACTIVE' ? 'Ativo' : 'Inativo') + '</span>' +
+      (p.type === 'CHILD' ? '<span class="bx bcy">Infantojuvenil</span>' : '') + '</div>' +
+      '<div class="rs" style="margin-top:3px">' + (p.phone || p.email || '—') + '</div>' +
+      (p.cpf ? '<div class="rs">CPF: ' + p.cpf + '</div>' : '') +
+      '</div></div>' +
+      '<div style="display:flex;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--bd)">' +
+      '<span style="font-size:11px;color:var(--dm)">📅 ' + (p._count ? p._count.appointments : 0) + ' consultas</span>' +
+      '<span style="font-size:11px;color:var(--dm)">🕒 ' + lastDate + '</span>' +
+      (p.emergName ? '<span style="font-size:11px;color:var(--rd)">🚨 ' + p.emergName + '</span>' : '') +
+      '</div></div>';
+  }).join('');
+}
+
+function filterPatients() {
+  var q = document.getElementById('pat-search').value.toLowerCase();
+  var filtered = STATE.patients.filter(function(p) {
+    return p.name.toLowerCase().indexOf(q) > -1 ||
+      (p.cpf && p.cpf.indexOf(q) > -1) ||
+      (p.phone && p.phone.indexOf(q) > -1) ||
+      (p.email && p.email.toLowerCase().indexOf(q) > -1);
+  });
+  renderPatients(filtered);
+}
+
+var _typeFilter = '', _statusFilter = '';
+function filterByType(type, el) {
+  document.querySelectorAll('#pat-chips .chip').forEach(function(c){ c.classList.remove('on'); }); el.classList.add('on');
+  _typeFilter = type; applyFilters();
+}
+function filterByStatus(status, el) {
+  document.querySelectorAll('#pat-chips .chip').forEach(function(c){ c.classList.remove('on'); }); el.classList.add('on');
+  _statusFilter = status; applyFilters();
+}
+function applyFilters() {
+  var list = STATE.patients;
+  if (_typeFilter) list = list.filter(function(p){ return p.type === _typeFilter; });
+  if (_statusFilter) list = list.filter(function(p){ return p.status === _statusFilter; });
+  renderPatients(list);
+}
+
+function populatePatientSelects() {
+  var selects = ['appt-pat', 'rec-pat-new', 'fin-pat', 'rec-pat-sel', 'rep-pat-sel'];
+  selects.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var first = el.options[0] ? el.options[0].text : '';
+    el.innerHTML = (id === 'fin-pat' ? '<option value="">Nenhum</option>' : '<option value="">Selecione...</option>');
+    STATE.patients.forEach(function(p) {
+      var opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.name + (p.type === 'CHILD' ? ' (Infantojuvenil)' : '');
+      el.appendChild(opt);
+    });
+  });
+}
+
+function populateRecordSelect() {
+  populatePatientSelects();
+}
+
+function filterRecordsPatients(query) {
+  var dropdown = document.getElementById('rec-pat-dropdown');
+  var search = document.getElementById('rec-pat-search');
+  var select = document.getElementById('rec-pat-sel');
+  
+  query = query.toLowerCase().trim();
+  
+  if (!query) {
+    dropdown.classList.add('hidden');
+    select.value = '';
+    loadRecords();
+    return;
+  }
+  
+  var filtered = STATE.patients.filter(function(p) {
+    var name = (p.name || '').toLowerCase();
+    var cpf = (p.cpf || '').toLowerCase();
+    return name.indexOf(query) > -1 || cpf.indexOf(query) > -1;
+  });
+  
+  if (filtered.length === 0) {
+    dropdown.innerHTML = '<div style="padding:12px;text-align:center;color:#999;font-size:12px">Nenhum paciente encontrado</div>';
+    dropdown.classList.remove('hidden');
+    return;
+  }
+  
+  dropdown.innerHTML = filtered.map(function(p) {
+    var label = p.name + (p.cpf ? ' • ' + p.cpf : '') + (p.type === 'CHILD' ? ' (Infantojuvenil)' : '');
+    return '<div style="padding:10px;cursor:pointer;border-bottom:1px solid #eee;hover:background:#f5f5f5" onclick="selectRecordsPatient(\''+p.id+'\', \''+p.name.replace(/'/g, "\\'")+'\')">' + label + '</div>';
+  }).join('');
+  
+  dropdown.classList.remove('hidden');
+}
+
+function selectRecordsPatient(patId, patName) {
+  document.getElementById('rec-pat-search').value = patName;
+  document.getElementById('rec-pat-sel').value = patId;
+  document.getElementById('rec-pat-dropdown').classList.add('hidden');
+  loadRecords();
+}
+
+function filterReportsPatients(query) {
+  var dropdown = document.getElementById('rep-pat-dropdown');
+  var search = document.getElementById('rep-pat-search');
+  var select = document.getElementById('rep-pat-sel');
+  
+  query = query.toLowerCase().trim();
+  
+  if (!query) {
+    dropdown.classList.add('hidden');
+    select.value = '';
+    return;
+  }
+  
+  var filtered = STATE.patients.filter(function(p) {
+    var name = (p.name || '').toLowerCase();
+    var cpf = (p.cpf || '').toLowerCase();
+    return name.indexOf(query) > -1 || cpf.indexOf(query) > -1;
+  });
+  
+  if (filtered.length === 0) {
+    dropdown.innerHTML = '<div style="padding:12px;text-align:center;color:#999;font-size:12px">Nenhum paciente encontrado</div>';
+    dropdown.classList.remove('hidden');
+    return;
+  }
+  
+  dropdown.innerHTML = filtered.map(function(p) {
+    var label = p.name + (p.cpf ? ' • ' + p.cpf : '') + (p.type === 'CHILD' ? ' (Infantojuvenil)' : '');
+    return '<div style="padding:10px;cursor:pointer;border-bottom:1px solid #eee;hover:background:#f5f5f5" onclick="selectReportsPatient(\''+p.id+'\', \''+p.name.replace(/'/g, "\\'")+'\')">' + label + '</div>';
+  }).join('');
+  
+  dropdown.classList.remove('hidden');
+}
+
+function selectReportsPatient(patId, patName) {
+  document.getElementById('rep-pat-search').value = patName;
+  document.getElementById('rep-pat-sel').value = patId;
+  document.getElementById('rep-pat-dropdown').classList.add('hidden');
+}
+
+async function createPatient() {
+  var btn = document.getElementById('npat-btn');
+  var errEl = document.getElementById('npat-err');
+  errEl.classList.add('hidden');
+  var name = document.getElementById('npat-name').value.trim();
+  if (!name) { errEl.textContent = 'Nome é obrigatório'; errEl.classList.remove('hidden'); return; }
+  btn.disabled = true; btn.textContent = 'Cadastrando...';
+  try {
+    var rawDate = document.getElementById('npat-birth').value;
+    var formattedDate = null;
+    if (rawDate) {
+      if (rawDate.includes('/')) {
+        var parts = rawDate.split('/');
+        if (parts.length === 3) formattedDate = parts[2] + '-' + parts[1] + '-' + parts[0];
+      } else {
+        formattedDate = rawDate;
+      }
+      // Adicionar o horário para satisfazer o formato ISO-8601 esperado pelo Prisma
+      if (formattedDate && formattedDate.length === 10) {
+        formattedDate = formattedDate + 'T00:00:00.000Z';
+      }
+    }
+    var body = {
+      type: document.getElementById('npat-type').value,
+      name: name,
+      cpf: document.getElementById('npat-cpf').value,
+      rg: document.getElementById('npat-rg').value,
+      birthDate: formattedDate,
+      gender: document.getElementById('npat-gender').value,
+      phone: document.getElementById('npat-phone').value,
+      email: document.getElementById('npat-email').value,
+      address: document.getElementById('npat-address').value,
+      addressNum: document.getElementById('npat-address-num').value,
+      addressComp: document.getElementById('npat-address-comp').value,
+      addressCep: document.getElementById('npat-address-cep').value,
+      emergName: document.getElementById('npat-en').value,
+      emergPhone: document.getElementById('npat-ep').value,
+      emergRelation: document.getElementById('npat-er').value,
+
+      resp1Name: document.getElementById('npat-r1n') ? document.getElementById('npat-r1n').value : '',
+      resp1Phone: document.getElementById('npat-r1p') ? document.getElementById('npat-r1p').value : '',
+      resp1Relation: document.getElementById('npat-r1r') ? document.getElementById('npat-r1r').value : '',
+      resp1Cpf: document.getElementById('npat-r1c') ? document.getElementById('npat-r1c').value : '',
+    };
+    await api('POST', '/patients', body);
+    await loadPatients();
+    closeM('m-npat');
+    toast('✅ Paciente cadastrado!');
+    // Clear fields
+    ['npat-name','npat-cpf','npat-rg','npat-phone','npat-email','npat-address','npat-address-num','npat-address-comp','npat-address-cep','npat-en','npat-ep','npat-er'].forEach(function(id){ var el = document.getElementById(id); if(el) el.value=''; });
+  } catch(e) {
+    errEl.textContent = e.message || 'Erro ao cadastrar';
+    errEl.classList.remove('hidden');
+  } finally { btn.disabled = false; btn.textContent = 'Cadastrar paciente'; }
+}
+
+async function viewPatient(id) {
+  var p = STATE.patients.find(function(x){ return x.id === id; });
+  if (!p) return;
+  var ini = p.name.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+  var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6','#06b6d4'];
+  var color = colors[p.name.charCodeAt(0) % colors.length];
+  var fullAddr = p.address || '—';
+  if (p.addressNum) fullAddr += ', ' + p.addressNum;
+  if (p.addressComp) fullAddr += ' (' + p.addressComp + ')';
+  if (p.addressCep) fullAddr += ' - CEP: ' + p.addressCep;
+
+  var h = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">' +
+    '<div class="av avl" style="background:' + color + '">' + ini + '</div>' +
+    '<div style="flex:1"><div style="font-size:17px;font-weight:800">' + p.name + '</div>' +
+      '<div style="font-size:12px;color:var(--mt);margin-top:2px">' + (p.birthDate ? new Date(p.birthDate).getFullYear() : '—') + ' · ' + (p.type === 'CHILD' ? 'Infantojuvenil' : 'Adulto') + '</div></div>' +
+    '<span class="bx ' + (p.status === 'ACTIVE' ? 'bgn' : 'bgr') + '">' + (p.status === 'ACTIVE' ? 'Ativo' : 'Inativo') + '</span></div>' +
+    '<div class="tabs"><div class="tab on" onclick="swPTab(\'info\',this)">Info</div></div>' +
+    '<div id="ptab-info" class="ptab">' +
+    '<div class="ibox">' +
+    '<div class="ir"><div class="il">📞 Telefone</div><div class="iv">' + (p.phone || '—') + '</div></div>' +
+    '<div class="ir"><div class="il">✉️ E-mail</div><div class="iv">' + (p.email || '—') + '</div></div>' +
+    '<div class="ir"><div class="il">📄 CPF</div><div class="iv">' + (p.cpf || '—') + '</div></div>' +
+    '<div class="ir"><div class="il">📍 Endereço</div><div class="iv">' + fullAddr + '</div></div>' +
+    '</div></div>' +
+    (p.emergName ? '<div class="ebox" style="margin-top:10px"><div class="etl">🚨 Emergência</div>' +
+    '<div class="ir"><div class="il">Nome</div><div class="iv">' + p.emergName + '</div></div>' +
+    '<div class="ir"><div class="il">Telefone</div><div class="iv">' + (p.emergPhone || '—') + '</div></div>' +
+    '<div class="ir"><div class="il">Parentesco</div><div class="iv">' + (p.emergRelation || '—') + '</div></div></div>' : '') +
+    '<div style="display:flex;gap:8px;margin-top:14px">' +
+    '<button class="btn bp" style="flex:1;font-size:11px" onclick="closeM(\'m-pat\');openM(\'m-appt\')">+ Agendar</button>' +
+    '<button class="btn bs" style="flex:1;font-size:11px" onclick="closeM(\'m-pat\');go(\'records\',null)">📋 Prontuário</button>' +
+    '</div>' +
+    '<button class="btn bs fw" style="margin-top:8px" onclick="closeM(\'m-pat\')">Fechar</button>';
+  document.getElementById('m-pat-ct').innerHTML = h;
+  openM('m-pat');
+}
+
+// ══════════════════════════════════════════════
+// APPOINTMENTS
+// ══════════════════════════════════════════════
+async function loadAppointments(filter, el, specificDate) {
+  if (el) setTab(el);
+  try {
+    var path = '/appointments';
+    var today = new Date();
+    
+    if (filter === 'today') {
+      var todayStr = today.toISOString().split('T')[0];
+      path += '?date=' + todayStr;
+      document.getElementById('appt-date-title').textContent = 'Hoje';
+    } else if (filter === 'week') {
+      var dayOfWeek = today.getDay();
+      var startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - dayOfWeek);
+      var endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      
+      var startStr = startOfWeek.toISOString().split('T')[0];
+      var endStr = endOfWeek.toISOString().split('T')[0];
+      path += '?startDate=' + startStr + '&endDate=' + endStr;
+      
+      var startFormatted = startOfWeek.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+      var endFormatted = endOfWeek.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+      document.getElementById('appt-date-title').textContent = startFormatted + ' - ' + endFormatted;
+    } else if (filter === 'month') {
+      var firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      var lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      
+      var startStr = firstDay.toISOString().split('T')[0];
+      var endStr = lastDay.toISOString().split('T')[0];
+      path += '?startDate=' + startStr + '&endDate=' + endStr;
+      
+      var monthName = firstDay.toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+      document.getElementById('appt-date-title').textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+    } else if (filter === 'day' && specificDate) {
+      path += '?date=' + specificDate;
+    }
+    
+    STATE.appointments = await api('GET', path);
+    renderAppointments(STATE.appointments);
+    renderDashboardToday();
+    renderCalendar(today.getFullYear(), today.getMonth());
+  } catch(e) { console.error('Load appointments:', e); }
+}
+
+function updateProgressAndNext() {
+  var today = new Date().toISOString().split('T')[0];
+  var todayAppointments = STATE.appointments.filter(function(a) {
+    return a.date.split('T')[0] === today && a.status !== 'CANCELLED';
+  });
+  
+  var completed = todayAppointments.filter(function(a) { return a.status === 'COMPLETED'; }).length;
+  var total = todayAppointments.length;
+  var revenue = todayAppointments.filter(function(a) { return a.status === 'COMPLETED'; }).reduce(function(sum, a) { return sum + (a.value || 0); }, 0);
+  
+  var progressEl = document.getElementById('appt-progress');
+  var nextCardEl = document.getElementById('appt-next-card');
+  
+  if (total > 0) {
+    progressEl.style.display = 'block';
+    document.getElementById('appt-progress-text').textContent = completed + ' de ' + total;
+    document.getElementById('appt-progress-bar').style.width = (completed / total * 100) + '%';
+    document.getElementById('appt-revenue-today').textContent = 'R$ ' + revenue.toFixed(2).replace('.', ',');
+    document.getElementById('appt-count-today').textContent = completed;
+  } else {
+    progressEl.style.display = 'none';
+  }
+  
+  var now = new Date();
+  var nextAppt = todayAppointments.sort(function(a, b) { return new Date(a.date) - new Date(b.date); }).find(function(a) {
+    return new Date(a.date) > now && a.status !== 'COMPLETED';
+  });
+  
+  if (nextAppt) {
+    nextCardEl.style.display = 'block';
+    var patName = nextAppt.patient ? nextAppt.patient.name : 'Paciente';
+    var dt = new Date(nextAppt.date);
+    var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+    var typeStr = nextAppt.type === 'ONLINE' ? 'Online' : 'Presencial';
+    
+    document.getElementById('appt-next-name').textContent = patName;
+    document.getElementById('appt-next-time').textContent = timeStr + ' (' + nextAppt.duration + 'min)';
+    document.getElementById('appt-next-type').textContent = typeStr;
+    STATE.nextPatientId = nextAppt.patientId;
+  } else {
+    nextCardEl.style.display = 'none';
+  }
+}
+
+function openProntuarioFromNext() {
+  if (STATE.nextPatientId) {
+    go('records', null);
+    setTimeout(function() {
+      document.getElementById('rec-pat-sel').value = STATE.nextPatientId;
+      loadRecords();
+    }, 100);
+  }
+}
+
+function renderAppointments(list) {
+  var el = document.getElementById('appt-list');
+  if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Nenhuma consulta encontrada</div>'; return; }
+  
+  var activeTab = document.querySelector('.tab.on');
+  if (activeTab && activeTab.textContent.trim() === 'Semana') {
+    renderAppointmentsAsColumns(list);
+    updateProgressAndNext();
+    return;
+  }
+  
+  updateProgressAndNext();
+  var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6'];
+  el.innerHTML = list.map(function(a) {
+    var patName = a.patient ? a.patient.name : 'Paciente';
+    var ini = patName.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+    var typeColor = a.type === 'ONLINE' ? '#3b82f6' : '#10b981';
+    var typeBg = a.type === 'ONLINE' ? '#eff6ff' : '#f0fdf4';
+    var color = colors[patName.charCodeAt(0) % colors.length];
+    var dt = new Date(a.date);
+    var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + ' · ' + dt.toLocaleDateString('pt-BR');
+    var borderColor = typeColor;
+    var statusBadge = a.status === 'CONFIRMED' ? '<span class="bx bgn">Confirmada</span>' : a.status === 'COMPLETED' ? '<span class="bx bgr">Concluída</span>' : a.status === 'CANCELLED' ? '<span class="bx brd">Cancelada</span>' : '<span class="bx bbl">Agendada</span>';
+    var typeBadge = a.type === 'ONLINE' ? '<span class="bx" style="background:' + typeBg + ';color:' + typeColor + ';border:1px solid ' + typeColor + ';border-radius:4px;padding:4px 8px;font-size:10px;font-weight:600">Online</span>' : '<span class="bx" style="background:' + typeBg + ';color:' + typeColor + ';border:1px solid ' + typeColor + ';border-radius:4px;padding:4px 8px;font-size:10px;font-weight:600">Presencial</span>';
+    var sessNum = a.patient && a.patient._count ? a.patient._count.records : 0;
+    var sessBadge = '<span class="bx bbl" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0">Sessão ' + (sessNum + 1) + '</span>';
+
+    // Preparar link do WhatsApp
+    var waLink = '';
+    if (a.patient && a.patient.phone) {
+      var phone = a.patient.phone.replace(/\D/g, '');
+      if (phone.length === 11 && !phone.startsWith('55')) phone = '55' + phone;
+      var msg = encodeURIComponent('Olá, ' + patName + '! 👋 Confirmamos sua consulta no Orbie System para o dia ' + dt.toLocaleDateString('pt-BR') + ' às ' + dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + '. Podemos confirmar sua presença? ✨');
+      waLink = 'https://wa.me/' + phone + '?text=' + msg;
+    }
+
+    return '<div class="acard" style="border-left:3px solid ' + borderColor + '">' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+      '<div class="av avm" style="background:' + color + '">' + ini + '</div>' +
+      '<div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700">' + patName + '</span>' + statusBadge + typeBadge + sessBadge + '</div>' +
+      '<div class="rs" style="margin-top:3px">' + timeStr + ' · ' + a.duration + 'min · R$ ' + a.value.toFixed(2) + '</div></div>' +
+      (waLink ? '<a href="' + waLink + '" target="_blank" title="Enviar lembrete WhatsApp" style="color:#25D366;font-size:22px;display:inline-flex;align-items:center;justify-content:center;padding:8px;border-radius:50%;background:#f0fdf4;margin-left:8px;text-decoration:none;transition:all 0.2s" onmouseover="this.style.background=\'#dcfce7\'" onmouseout="this.style.background=\'#f0fdf4\'"><i class="fa-brands fa-whatsapp"></i></a>' : '') +
+      '</div>' +
+      (a.meetLink ? '<div class="mbox"><span>🎥</span><span class="murl">' + a.meetLink + '</span><button class="btn bp" style="font-size:10px;padding:5px 10px;flex-shrink:0" onclick="openMeet(\'' + patName + '\',\'' + a.meetLink + '\',\'' + timeStr.split(' · ')[0] + '\')">Entrar</button></div>' : '') +
+      '<div style="display:flex;gap:8px;margin-top:8px">' +
+      (a.status !== 'COMPLETED' && a.status !== 'CANCELLED' ? '<button class="btn bg2 fw" style="font-size:11px" onclick="updateApptStatus(\'' + a.id + '\',\'COMPLETED\')">✓ Concluir</button>' : '') +
+      (a.status === 'SCHEDULED' ? '<button class="btn br" style="font-size:11px;padding:8px 10px" onclick="updateApptStatus(\'' + a.id + '\',\'CANCELLED\')">✕ Cancelar</button>' : '') +
+      '</div></div>';
+  }).join('');
+}
+
+function renderAppointmentsAsColumns(list) {
+  var el = document.getElementById('appt-list');
+  var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6'];
+  var html = '';
+  list.forEach(function(a) {
+    var patName = a.patient ? a.patient.name : 'Paciente';
+    var ini = patName.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+    var color = colors[patName.charCodeAt(0) % colors.length];
+    var dt = new Date(a.date);
+    var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + ' · ' + dt.toLocaleDateString('pt-BR');
+    var typeColor = a.type === 'ONLINE' ? '#3b82f6' : '#10b981';
+    var phone = a.patient && a.patient.phone ? a.patient.phone.replace(/[^0-9]/g, '') : '';
+    if (phone.length === 11 && !phone.startsWith('55')) phone = '55' + phone;
+    var waLink = phone ? 'https://wa.me/' + phone : '';
+    html += '<div class="acard" style="border-left:3px solid ' + typeColor + ';margin-bottom:8px"><div style="display:flex;align-items:center;gap:10px"><div class="av avm" style="background:' + color + '">' + ini + '</div><div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700">' + patName + '</span></div><div class="rs" style="margin-top:3px">' + timeStr + ' · ' + a.duration + 'min · R$ ' + a.value.toFixed(2) + '</div></div>' + (waLink ? '<a href="' + waLink + '" target="_blank" style="color:#25D366;font-size:20px;display:inline-flex;align-items:center;justify-content:center;padding:8px;border-radius:50%;background:#f0fdf4;text-decoration:none;margin-left:8px"><i class="fa-brands fa-whatsapp"></i></a>' : '') + (a.meetLink ? '<a href="' + a.meetLink + '" target="_blank" style="color:#4285f4;font-size:20px;display:inline-flex;align-items:center;justify-content:center;padding:8px;border-radius:50%;background:#eff6ff;text-decoration:none;margin-left:4px"><i class="fa-brands fa-google-meet"></i></a>' : '') + '</div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn bg2 fw" style="font-size:11px;flex:1" onclick="openAppointmentConfirmation(' + a.id + ')">Confirmar</button><button class="btn br" style="font-size:11px;flex:1" onclick="updateAppointmentStatus(' + a.id + ', \"CANCELLED\", 0)">Cancelar</button><button class="btn" style="font-size:11px;flex:1;background:#f59e0b;color:white;border:none" onclick="currentEditingAppointment={id:' + a.id + ',value:' + a.value + '};openMissedAppointmentDialog()">Falta</button></div></div>';
+  });
+  el.innerHTML = html;
+}
+
+function renderCalendar(year, month) {
+  var cal = document.getElementById('appt-calendar');
+  var firstDay = new Date(year, month, 1);
+  var lastDay = new Date(year, month + 1, 0);
+  var daysInMonth = lastDay.getDate();
+  var startingDayOfWeek = firstDay.getDay();
+  
+  var monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  var dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  html += '<button class="btn bs" style="padding:6px 10px;font-size:11px" onclick="renderCalendar(' + (month === 0 ? year - 1 : year) + ', ' + (month === 0 ? 11 : month - 1) + ')">← Anterior</button>';
+  html += '<div style="font-weight:700;font-size:14px">' + monthNames[month] + ' ' + year + '</div>';
+  html += '<button class="btn bs" style="padding:6px 10px;font-size:11px" onclick="renderCalendar(' + (month === 11 ? year + 1 : year) + ', ' + (month === 11 ? 0 : month + 1) + ')">Próximo →</button>';
+  html += '</div>';
+  
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px">';
+  dayNames.forEach(function(d) { html += '<div style="text-align:center;font-weight:700;font-size:11px;padding:6px;color:var(--mt)">' + d + '</div>'; });
+  
+  for (var i = 0; i < startingDayOfWeek; i++) { html += '<div></div>'; }
+  
+  var today = new Date();
+  for (var day = 1; day <= daysInMonth; day++) {
+    var d = new Date(year, month, day);
+    var isToday = d.toDateString() === today.toDateString();
+    var dayAppointments = STATE.appointments && STATE.appointments.filter(function(a) { return new Date(a.date).toDateString() === d.toDateString() && a.status !== 'CANCELLED'; }) || [];
+    var hasAppointments = dayAppointments.length > 0;
+    var bg = '';
+    if (isToday) {
+      bg = 'background:#3b82f6;color:white';
+    } else if (hasAppointments) {
+      var firstAppointmentType = dayAppointments[0].type;
+      var typeColor = firstAppointmentType === 'ONLINE' ? '#3b82f6' : (firstAppointmentType === 'PRESENTIAL' ? '#10b981' : '#8b5cf6');
+      var typeBg = firstAppointmentType === 'ONLINE' ? '#eff6ff' : (firstAppointmentType === 'PRESENTIAL' ? '#f0fdf4' : '#f3e8ff');
+      bg = 'background:' + typeBg + ';border:2px solid ' + typeColor + ';color:' + typeColor + ';font-weight:700';
+    }
+    html += '<div style="' + bg + ';text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" onclick="selectCalendarDate(' + year + ',' + month + ',' + day + ')">' + day + '</div>';
+  }
+  html += '</div>';
+  cal.innerHTML = html;
+}
+
+function renderCalendarWithFilter(filteredAppointments) {
+  var cal = document.getElementById('appt-calendar');
+  var today = new Date();
+  var year = today.getFullYear();
+  var month = today.getMonth();
+  
+  var firstDay = new Date(year, month, 1);
+  var lastDay = new Date(year, month + 1, 0);
+  var daysInMonth = lastDay.getDate();
+  var startingDayOfWeek = firstDay.getDay();
+  
+  var monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  var dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  html += '<button class="btn bs" style="padding:6px 10px;font-size:11px" onclick="renderCalendar(' + (month === 0 ? year - 1 : year) + ', ' + (month === 0 ? 11 : month - 1) + ')">← Anterior</button>';
+  html += '<div style="font-weight:700;font-size:14px">' + monthNames[month] + ' ' + year + '</div>';
+  html += '<button class="btn bs" style="padding:6px 10px;font-size:11px" onclick="renderCalendar(' + (month === 11 ? year + 1 : year) + ', ' + (month === 11 ? 0 : month + 1) + ')">Próximo →</button>';
+  html += '</div>';
+  
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px">';
+  dayNames.forEach(function(d) { html += '<div style="text-align:center;font-weight:700;font-size:11px;padding:6px;color:var(--mt)">' + d + '</div>'; });
+  
+  for (var i = 0; i < startingDayOfWeek; i++) { html += '<div></div>'; }
+  
+  for (var day = 1; day <= daysInMonth; day++) {
+    var d = new Date(year, month, day);
+    var isToday = d.toDateString() === today.toDateString();
+    var dayAppointments = filteredAppointments && filteredAppointments.filter(function(a) { return new Date(a.date).toDateString() === d.toDateString() && a.status !== 'CANCELLED'; }) || [];
+    var hasFilteredAppointments = dayAppointments.length > 0;
+    var bg = '';
+    if (isToday) {
+      bg = 'background:#3b82f6;color:white';
+    } else if (hasFilteredAppointments) {
+      var firstAppointmentType = dayAppointments[0].type;
+      var typeColor = firstAppointmentType === 'ONLINE' ? '#3b82f6' : (firstAppointmentType === 'PRESENTIAL' ? '#10b981' : '#8b5cf6');
+      var typeBg = firstAppointmentType === 'ONLINE' ? '#eff6ff' : (firstAppointmentType === 'PRESENTIAL' ? '#f0fdf4' : '#f3e8ff');
+      bg = 'background:' + typeBg + ';border:2px solid ' + typeColor + ';color:' + typeColor + ';font-weight:700';
+    }
+    html += '<div style="' + bg + ';text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" onclick="selectCalendarDate(' + year + ',' + month + ',' + day + ')">' + day + '</div>';
+  }
+  html += '</div>';
+  cal.innerHTML = html;
+}
+
+function selectCalendarDate(year, month, day) {
+  var date = new Date(year, month, day);
+  var dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+  loadAppointments('day', null, dateStr);
+}
+
+function updateDayOfWeek() {
+  var dateInput = document.getElementById('appt-date').value;
+  if (!dateInput) {
+    document.getElementById('appt-dow').textContent = '';
+    return;
+  }
+  var date = new Date(dateInput + 'T00:00:00');
+  var days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+  var dayName = days[date.getDay()];
+  document.getElementById('appt-dow').textContent = dayName;
+}
+
+function checkTimeConflict() {
+  var date = document.getElementById('appt-date').value;
+  var time = document.getElementById('appt-time').value;
+  var duration = parseInt(document.getElementById('appt-dur').value) || 50;
+  
+  if (!date || !time) return false;
+  
+  var newStart = new Date(date + 'T' + time + ':00');
+  var newEnd = new Date(newStart.getTime() + duration * 60000);
+  
+  var hasConflict = STATE.appointments && STATE.appointments.some(function(a) {
+    if (a.status === 'CANCELLED') return false;
+    var existStart = new Date(a.date);
+    var existEnd = new Date(existStart.getTime() + a.duration * 60000);
+    return newStart < existEnd && newEnd > existStart;
+  });
+  
+  return hasConflict;
+}
+
+async function createAppointment() {
+  var btn = document.getElementById('appt-btn');
+  var errEl = document.getElementById('appt-err');
+  errEl.classList.add('hidden');
+  var patId = document.getElementById('appt-pat').value;
+  var date = document.getElementById('appt-date').value;
+  var time = document.getElementById('appt-time').value;
+  if (!patId || !date || !time) { errEl.textContent = 'Preencha paciente, data e horário'; errEl.classList.remove('hidden'); return; }
+  
+  if (checkTimeConflict()) { errEl.textContent = '⚠️ Conflito de horário! Você já tem uma consulta nesse horário'; errEl.classList.remove('hidden'); return; }
+  
+  btn.disabled = true; btn.textContent = 'Agendando...';
+  try {
+    var dt = new Date(date + 'T' + time + ':00');
+    await api('POST', '/appointments', {
+      patientId: patId,
+      date: dt.toISOString(),
+      duration: parseInt(document.getElementById('appt-dur').value) || 50,
+      value: parseFloat(document.getElementById('appt-val').value) || 0,
+      type: document.getElementById('appt-type').value,
+      title: document.getElementById('appt-title').value || 'Consulta',
+    });
+    await loadAppointments('today', null);
+    closeM('m-appt');
+    toast('✅ Consulta agendada! 🎥 Meet gerado!');
+  } catch(e) {
+    errEl.textContent = e.message || 'Erro ao agendar';
+    errEl.classList.remove('hidden');
+  } finally { btn.disabled = false; btn.textContent = 'Agendar'; }
+}
+
+async function updateApptStatus(id, status) {
+  try {
+    await api('PUT', '/appointments/' + id, { status: status });
+    await loadAppointments('today', null);
+    toast(status === 'COMPLETED' ? '✅ Consulta concluída!' : 'Consulta cancelada');
+  } catch(e) { toast('Erro ao atualizar consulta'); }
+}
+function filterAppointments() {
+  var q = document.getElementById('appt-search').value.toLowerCase();
+  var filtered = STATE.appointments.filter(function(a) {
+    if (!a.patient) return false;
+    var name = (a.patient.name || '').toLowerCase();
+    var cpf = (a.patient.cpf || '').toLowerCase();
+    return name.indexOf(q) > -1 || cpf.indexOf(q) > -1;
+  });
+  renderAppointments(filtered);
+  renderCalendarWithFilter(filtered);
+}
+
+// ══════════════════════════════════════════════
+// RECORDS
+// ══════════════════════════════════════════════
+async function loadRecords() {
+  var patId = document.getElementById('rec-pat-sel').value;
+  if (!patId) {
+    document.getElementById('rec-placeholder').classList.remove('hidden');
+    document.getElementById('rec-tabs').classList.add('hidden');
+    document.getElementById('rec-evolutions').classList.add('hidden');
+    document.getElementById('rec-anamnesis').classList.add('hidden');
+    document.getElementById('rec-attachments').classList.add('hidden');
+    return;
+  }
+  document.getElementById('rec-placeholder').classList.add('hidden');
+  document.getElementById('rec-tabs').classList.remove('hidden');
+  
+  // Default to evolutions tab
+  swRecTab('evolutions', document.querySelectorAll('#rec-tabs .tab')[0]);
+
+  try {
+    STATE.records = await api('GET', '/records?patientId=' + patId);
+    var el = document.getElementById('rec-evolutions');
+    if (!STATE.records.length) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Nenhuma evolução registrada para este paciente</div>';
+      return;
+    }
+    el.innerHTML = STATE.records.map(function(r) {
+      var dt = new Date(r.sessionDate).toLocaleDateString('pt-BR');
+      return '<div class="ev" style="border-left-width:3px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+        '<div class="evd">📅 ' + dt + ' · Sessão ' + r.sessionNum + (r.mood ? ' · ' + r.mood + '/10' : '') + '</div>' +
+        (r.aiGenerated ? '<span class="bx bai">🤖 IA</span>' : '') +
+        '</div>' +
+        '<div class="evt" style="margin-top:6px;white-space:pre-wrap">' + r.content + '</div>' +
+        (r.techniques ? '<div style="font-size:11px;color:var(--dm);margin-top:4px">🛠 ' + r.techniques + '</div>' : '') +
+        '</div>';
+    }).join('');
+  } catch(e) { toast('Erro ao carregar prontuários'); }
+}
+
+async function createRecord() {
+  var btn = document.getElementById('rec-btn');
+  var errEl = document.getElementById('rec-err');
+  errEl.classList.add('hidden');
+  var patId = document.getElementById('rec-pat-new').value;
+  var content = document.getElementById('rc').value.trim();
+  if (!patId || !content) { errEl.textContent = 'Preencha paciente e conteúdo'; errEl.classList.remove('hidden'); return; }
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    await api('POST', '/records', {
+      patientId: patId,
+      content: content,
+      sessionDate: (function(){
+        var d = document.getElementById('rec-date').value;
+        if(!d) return new Date().toISOString();
+        // Se for datetime-local (contém T), já está quase pronto
+        if(d.indexOf('T') > -1) return d + ':00.000Z';
+        return d;
+      })(),
+      mood: parseInt(document.getElementById('mv').textContent) || null,
+      techniques: document.getElementById('rec-tech').value,
+      evolution: document.getElementById('rec-evol').value,
+      goals: document.getElementById('rec-goals').value,
+      risks: document.getElementById('rec-risks').value,
+      aiGenerated: document.getElementById('ai-res').classList.contains('hidden') ? false : true,
+    });
+    closeM('m-rec');
+    toast('✅ Evolução salva!');
+    document.getElementById('rc').value = '';
+    document.getElementById('ai-res').classList.add('hidden');
+    // Reload if same patient is selected
+    var selPat = document.getElementById('rec-pat-sel').value;
+    if (selPat === patId) await loadRecords();
+  } catch(e) {
+    errEl.textContent = e.message || 'Erro ao salvar';
+    errEl.classList.remove('hidden');
+  } finally { btn.disabled = false; btn.textContent = 'Salvar evolução'; }
+}
+
+// ══════════════════════════════════════════════
+// AI INTEGRATION
+// ══════════════════════════════════════════════
+async function callAI() {
+  var content = document.getElementById('rc').value.trim();
+  if (content.length < 15) { toast('⚠️ Descreva o conteúdo da sessão'); return; }
+  document.getElementById('ai-load').classList.remove('hidden');
+  document.getElementById('ai-res').classList.add('hidden');
+  try {
+    var data = await api('POST', '/ai/generate-record', { content: content });
+    document.getElementById('ai-load').classList.add('hidden');
+    document.getElementById('ai-txt').textContent = data.text;
+    document.getElementById('ai-res').classList.remove('hidden');
+    toast('🤖 Prontuário gerado!');
+  } catch(e) {
+    document.getElementById('ai-load').classList.add('hidden');
+    toast('❌ ' + (e.message || 'Erro ao gerar prontuário'));
+  }
+}
+function useAI() {
+  document.getElementById('rc').value = document.getElementById('ai-txt').textContent;
+  document.getElementById('ai-res').classList.add('hidden');
+  toast('✅ Prontuário aplicado! Revise e salve.');
+}
+
+// ══════════════════════════════════════════════
+// CLINICAL (ANAMNESIS & ATTACHMENTS)
+// ══════════════════════════════════════════════
+function swRecTab(tab, el) {
+  document.querySelectorAll('#rec-tabs .tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.rec-tab').forEach(p => p.classList.add('hidden'));
+  document.getElementById('rec-' + tab).classList.remove('hidden');
+  if (tab === 'anamnesis') loadAnamnesis();
+  if (tab === 'complaint') loadComplaint();
+  if (tab === 'attachments') loadAttachments();
+}
+
+function swAnamType(type, el) {
+  document.querySelectorAll('#m-anam .tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('anam-type').value = type;
+  renderAnamnesisForm(type);
+}
+
+function renderAnamnesisForm(type, existingData = {}) {
+  const template = ANAMNESIS_FORMS[type];
+  const container = document.getElementById('anam-form-container');
+  let h = '';
+  template.sections.forEach(s => {
+    h += `<div class="sdv" style="margin-top:20px">${s.title}</div>`;
+    s.fields.forEach(f => {
+      const val = existingData[f.name] || '';
+      h += `<div class="fr"><label class="lbl">${f.label}${f.required ? ' *' : ''}</label>`;
+      if (f.type === 'textarea') {
+        h += `<textarea class="inp anam-field" id="af-${f.name}" style="height:80px;resize:none" data-name="${f.name}">${val}</textarea>`;
+      } else if (f.type === 'select') {
+        h += `<select class="sel anam-field" id="af-${f.name}" data-name="${f.name}"><option value="">Selecione...</option>`;
+        f.options.forEach(o => h += `<option ${val === o ? 'selected' : ''}>${o}</option>`);
+        h += `</select>`;
+      } else {
+        h += `<input type="${f.type}" class="inp anam-field" id="af-${f.name}" data-name="${f.name}" value="${val}" />`;
+      }
+      h += `</div>`;
+    });
+  });
+  container.innerHTML = h;
+}
+
+async function loadAnamnesis() {
+  const patId = document.getElementById('rec-pat-sel').value;
+  const container = document.getElementById('rec-anamnesis');
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm)">Carregando anamnese...</div>';
+  try {
+    const p = STATE.patients.find(x => x.id === patId);
+    const anam = await api('GET', '/clinical/anamnesis/' + patId).catch(() => null);
+    if (!anam) {
+      container.innerHTML = `<div class="al ali"><span style="font-size:20px">📋</span><div><div style="font-size:13px;font-weight:700;color:#1d4ed8">Nenhuma anamnese encontrada</div><div style="font-size:11px;color:#3b82f6;margin-top:2px">Clique abaixo para criar</div></div></div>
+      <button class="btn bp fw" style="margin-top:12px" onclick="openAnamModal('${p.type}')">+ Criar Anamnese</button>`;
+      return;
+    }
+    // Render anamnesis view
+    let h = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:14px;font-weight:700">Anamnese ${anam.type === 'ADULT' ? 'Adulto' : 'Infantojuvenil'}</div>
+      <button class="btn bs" style="font-size:11px;padding:6px 12px" onclick="openAnamModal('${anam.type}', true)">✎ Editar</button>
+    </div>`;
+    const template = ANAMNESIS_FORMS[anam.type];
+    template.sections.forEach(s => {
+      h += `<div class="sdv" style="margin-top:16px">${s.title}</div><div class="ibox">`;
+      s.fields.forEach(f => {
+        h += `<div class="ir"><div class="il">${f.label}</div><div class="iv">${anam.data[f.name] || '—'}</div></div>`;
+      });
+      h += `</div>`;
+    });
+    container.innerHTML = h;
+  } catch(e) { container.innerHTML = 'Erro ao carregar anamnese'; }
+}
+
+function openAnamModal(type, isEdit = false) {
+  const patId = document.getElementById('rec-pat-sel').value;
+  const p = STATE.patients.find(x => x.id === patId);
+  document.getElementById('anam-type-label').textContent = 'Anamnese de ' + p.name;
+  swAnamType(type, document.querySelectorAll('#m-anam .tab')[type === 'ADULT' ? 0 : 1]);
+  if (isEdit) {
+    api('GET', '/clinical/anamnesis/' + patId).then(anam => {
+      renderAnamnesisForm(type, anam.data);
+    });
+  } else {
+    renderAnamnesisForm(type);
+  }
+  openM('m-anam');
+}
+
+async function saveAnamnesis() {
+  const patId = document.getElementById('rec-pat-sel').value;
+  const type = document.getElementById('anam-type').value;
+  const btn = document.getElementById('anam-btn');
+  const errEl = document.getElementById('anam-err');
+  const data = {};
+  document.querySelectorAll('.anam-field').forEach(el => {
+    data[el.dataset.name] = el.value;
+  });
+  
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    await api('POST', '/clinical/anamnesis', { patientId: patId, type, data });
+    closeM('m-anam');
+    toast('✅ Anamnese salva!');
+    loadAnamnesis();
+  } catch(e) { errEl.textContent = e.message; errEl.classList.remove('hidden'); }
+  finally { btn.disabled = false; btn.textContent = 'Salvar Anamnese'; }
+}
+
+async function loadAttachments() {
+  const patId = document.getElementById('rec-pat-sel').value;
+  const container = document.getElementById('rec-attachments');
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm)">Carregando anexos...</div>';
+  try {
+    const anam = await api('GET', '/clinical/anamnesis/' + patId).catch(() => null);
+    if (!anam || !anam.id) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Crie uma anamnese ou queixa primeiro para anexar documentos.</div>';
+      return;
+    }
+    STATE._currentAnamnesisId = anam.id;
+    const atts = await api('GET', '/clinical/attachments/' + anam.id);
+    let h = `<div style="margin-bottom:16px">
+      <div class="fr"><label class="lbl">Novo Anexo (Link/Nome)</label>
+      <div style="display:flex;gap:8px"><input class="inp" id="new-att-name" placeholder="Nome do arquivo" style="flex:1"/><input class="inp" id="new-att-url" placeholder="Link do arquivo (S3, Drive, etc)" style="flex:2"/><button class="btn bp" onclick="saveAttachment()">+ Anexar</button></div>
+      </div>
+    </div>`;
+    if (!atts.length) {
+      h += '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Nenhum anexo encontrado</div>';
+    } else {
+      h += atts.map(a => `
+        <div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-weight:700;font-size:13px">${a.fileName}</div><div style="font-size:11px;color:var(--dm)">${new Date(a.uploadedAt).toLocaleDateString('pt-BR')}</div></div>
+          <div style="display:flex;gap:8px"><a href="${a.fileUrl}" target="_blank" class="btn bs" style="font-size:10px;padding:6px 10px">Abrir</a><button class="btn br" style="font-size:10px;padding:6px 10px" onclick="deleteAttachment('${a.id}')">Excluir</button></div>
+        </div>
+      `).join('');
+    }
+    container.innerHTML = h;
+  } catch(e) { container.innerHTML = 'Erro ao carregar anexos'; }
+}
+
+async function saveAttachment() {
+  const patId = document.getElementById('rec-pat-sel').value;
+  const name = document.getElementById('new-att-name').value.trim();
+  const url = document.getElementById('new-att-url').value.trim();
+  if (!name || !url) { toast('⚠️ Preencha nome e link'); return; }
+  try {
+    // Get or create anamnesis first
+    let anamId = STATE._currentAnamnesisId;
+    if (!anamId) {
+      const anam = await api('POST', '/clinical/anamnesis', { patientId: patId, type: 'ADULT', data: {} });
+      anamId = anam.id;
+      STATE._currentAnamnesisId = anamId;
+    }
+    await api('POST', '/clinical/attachments', { anamnesisId: anamId, fileName: name, fileUrl: url, fileType: 'FILE' });
+    toast('✅ Anexo salvo!');
+    document.getElementById('new-att-name').value = '';
+    document.getElementById('new-att-url').value = '';
+    loadAttachments();
+  } catch(e) { toast('Erro ao salvar anexo'); }
+}
+
+async function deleteAttachment(id) {
+  if (!confirm('Deseja excluir este anexo?')) return;
+  try {
+    await api('DELETE', '/clinical/attachments/' + id);
+    toast('✅ Anexo excluído!');
+    loadAttachments();
+  } catch(e) { toast('Erro ao excluir anexo'); }
+}
+
+// ══════════════════════════════════════════════
+// COMPLAINT / OBSERVATIONS
+// ══════════════════════════════════════════════
+async function loadComplaint() {
+  const patId = document.getElementById('rec-pat-sel').value;
+  try {
+    const anam = await api('GET', '/clinical/anamnesis/' + patId).catch(() => null);
+    document.getElementById('clin-complaint').value = (anam && anam.complaint) ? anam.complaint : '';
+    document.getElementById('clin-obs').value = (anam && anam.observations) ? anam.observations : '';
+  } catch(e) {
+    document.getElementById('clin-complaint').value = '';
+    document.getElementById('clin-obs').value = '';
+  }
+}
+
+async function saveClinicalInfo() {
+  const patId = document.getElementById('rec-pat-sel').value;
+  if (!patId) { toast('Selecione um paciente'); return; }
+  try {
+    await api('POST', '/clinical/anamnesis', {
+      patientId: patId,
+      complaint: document.getElementById('clin-complaint').value,
+      observations: document.getElementById('clin-obs').value
+    });
+    toast('✅ Queixa e observações salvas!');
+  } catch(e) { toast('Erro ao salvar: ' + (e.message || '')); }
+}
+
+// ══════════════════════════════════════════════
+// FINANCIAL
+// ══════════════════════════════════════════════
+async function loadFinancial() {
+  var now = new Date();
+  try {
+    var data = await api('GET', '/financial?month=' + (now.getMonth()+1) + '&year=' + now.getFullYear());
+    STATE.financials = data.items;
+    var s = data.summary;
+    document.getElementById('fin-period').textContent = now.toLocaleDateString('pt-BR', {month:'long',year:'numeric'});
+    document.getElementById('fin-summary').innerHTML =
+      '<div class="sc"><div style="font-size:20px;margin-bottom:6px">📈</div><div style="font-size:16px;font-weight:800;color:var(--gn)">R$' + s.income.toFixed(2) + '</div><div style="font-size:10px;color:var(--mt)">Recebido</div></div>' +
+      '<div class="sc"><div style="font-size:20px;margin-bottom:6px">📉</div><div style="font-size:16px;font-weight:800;color:var(--rd)">R$' + s.expense.toFixed(2) + '</div><div style="font-size:10px;color:var(--mt)">Despesas</div></div>' +
+      '<div class="sc"><div style="font-size:20px;margin-bottom:6px">💎</div><div style="font-size:16px;font-weight:800;color:var(--ac)">R$' + s.balance.toFixed(2) + '</div><div style="font-size:10px;color:var(--mt)">Saldo</div></div>';
+    var el = document.getElementById('fin-list');
+    if (!STATE.financials.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Nenhum lançamento este mês</div>'; return; }
+    el.innerHTML = '<div class="card" style="padding:0;overflow:hidden"><table class="tbl"><thead><tr><th>Descrição</th><th>Valor</th><th>Status</th></tr></thead><tbody>' +
+      STATE.financials.map(function(f) {
+        return '<tr><td><div style="font-weight:600;font-size:12px">' + f.description + '</div>' +
+          '<div style="font-size:10px;color:var(--dm)">' + new Date(f.date).toLocaleDateString('pt-BR') + (f.method ? ' · ' + f.method : '') + '</div></td>' +
+          '<td style="color:' + (f.type === 'INCOME' ? 'var(--gn)' : 'var(--rd)') + ';font-weight:700">' + (f.type === 'INCOME' ? '+' : '-') + 'R$' + f.value.toFixed(2) + '</td>' +
+          '<td><span class="bx ' + (f.status === 'PAID' ? 'bgn' : 'byw') + '" ' + (f.status === 'PENDING' ? 'style="cursor:pointer" onclick="markPaid(\'' + f.id + '\')"' : '') + '>' + (f.status === 'PAID' ? 'Pago' : 'Pagar') + '</span></td></tr>';
+      }).join('') + '</tbody></table></div>';
+  } catch(e) { console.error('Load financial:', e); }
+}
+
+async function createFinancial() {
+  var btn = document.getElementById('fin-btn');
+  var errEl = document.getElementById('fin-err');
+  errEl.classList.add('hidden');
+  var desc = document.getElementById('fin-desc').value.trim();
+  var val = parseFloat(document.getElementById('fin-val').value);
+  if (!desc || !val) { errEl.textContent = 'Preencha descrição e valor'; errEl.classList.remove('hidden'); return; }
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    var rawDate = document.getElementById('fin-date').value;
+    var formattedDate = null;
+    if (rawDate) {
+      if (rawDate.includes('/')) {
+        var parts = rawDate.split('/');
+        if (parts.length === 3) formattedDate = parts[2] + '-' + parts[1] + '-' + parts[0];
+      } else {
+        formattedDate = rawDate;
+      }
+      if (formattedDate && formattedDate.length === 10) formattedDate += 'T12:00:00.000Z';
+    }
+    await api('POST', '/financial', {
+      type: document.getElementById('fin-type').value,
+      description: desc,
+      value: val,
+      date: formattedDate || new Date().toISOString(),
+      status: document.getElementById('fin-status').value,
+      method: document.getElementById('fin-method').value,
+      patientId: document.getElementById('fin-pat').value || null,
+    });
+    await loadFinancial();
+    closeM('m-fin');
+    toast('✅ Lançamento salvo!');
+  } catch(e) {
+    errEl.textContent = e.message || 'Erro ao salvar';
+    errEl.classList.remove('hidden');
+  } finally { btn.disabled = false; btn.textContent = 'Salvar lançamento'; }
+}
+
+async function markPaid(id) {
+  try {
+    await api('PUT', '/financial/' + id, { status: 'PAID' });
+    await loadFinancial();
+    toast('✅ Marcado como pago!');
+  } catch(e) { toast('Erro ao atualizar'); }
+}
+
+async function exportPDF(type) {
+  toast('⏳ Gerando PDF...');
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const from = document.getElementById('rep-from').value;
+    const to = document.getElementById('rep-to').value;
+    
+    let title = '';
+    let head = [];
+    let body = [];
+    
+    if (type === 'patients') {
+      title = 'Relatório de Pacientes';
+      head = [['Nome', 'Tipo', 'Telefone', 'E-mail', 'CPF']];
+      const data = await api('GET', '/patients');
+      body = data.map(p => [p.name, p.type === 'ADULT' ? 'Adulto' : 'Infantojuvenil', p.phone || '-', p.email || '-', p.cpf || '-']);
+    } else if (type === 'appointments') {
+      title = 'Relatório de Consultas';
+      head = [['Data', 'Paciente', 'Tipo', 'Valor', 'Status']];
+      let path = '/appointments';
+      if (from && to) path += '?from=' + from + '&to=' + to;
+      const data = await api('GET', path);
+      body = data.map(a => [new Date(a.date).toLocaleString('pt-BR'), a.patient ? a.patient.name : '-', a.type, 'R$ ' + a.value.toFixed(2), a.status]);
+    } else if (type === 'financial') {
+      title = 'Relatório Financeiro';
+      head = [['Data', 'Descrição', 'Tipo', 'Valor', 'Status']];
+      const now = new Date();
+      const data = await api('GET', '/financial?month=' + (now.getMonth()+1) + '&year=' + now.getFullYear());
+      body = data.items.map(f => [new Date(f.date).toLocaleDateString('pt-BR'), f.description, f.type === 'INCOME' ? 'Receita' : 'Despesa', 'R$ ' + f.value.toFixed(2), f.status === 'PAID' ? 'Pago' : 'Pendente']);
+    } else if (type === 'records') {
+      const patId = document.getElementById('rep-pat-sel').value || document.getElementById('rec-pat-sel').value;
+      if (!patId) { toast('⚠️ Selecione um paciente no filtro acima'); return; }
+      const pat = STATE.patients.find(p => p.id === patId);
+      title = 'Prontuário Clínico: ' + (pat ? pat.name : '');
+      head = [['Data', 'Sessão', 'Humor', 'Evolução']];
+      const data = await api('GET', '/records?patientId=' + patId);
+      body = data.map(r => [new Date(r.sessionDate).toLocaleDateString('pt-BR'), 'Sessão ' + r.sessionNum, r.mood + '/10', r.content.substring(0, 100) + '...']);
+    }
+
+    doc.setFontSize(18);
+    doc.text(title, 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text('Gerado por Orbie System em ' + new Date().toLocaleDateString('pt-BR'), 14, 30);
+    
+    doc.autoTable({
+      head: head,
+      body: body,
+      startY: 35,
+      theme: 'striped',
+      headStyles: { fillColor: [91, 94, 244] }
+    });
+    
+    doc.save('Orbie_' + type + '_' + new Date().getTime() + '.pdf');
+    toast('✅ PDF gerado com sucesso!');
+  } catch (e) {
+    console.error(e);
+    toast('❌ Erro ao gerar PDF');
+  }
+}
+
+// ══════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════
+function renderDashboard() {
+  if (!STATE.user) return;
+  var hrs = new Date().getHours();
+  var greeting = hrs < 12 ? 'Bom dia' : hrs < 18 ? 'Boa tarde' : 'Boa noite';
+  var greetEl = document.getElementById('dash-greeting');
+  greetEl.innerHTML = '<span style="font-size:20px">👋</span><div><div style="font-size:13px;font-weight:700;color:#1d4ed8">' + greeting + ', ' + STATE.user.name.split(' ')[0] + '!</div><div style="font-size:11px;color:#3b82f6;margin-top:2px">' + new Date().toLocaleDateString('pt-BR', {weekday:'long',day:'numeric',month:'long',year:'numeric'}) + '</div></div>';
+  var active = STATE.patients.filter(function(p){ return p.status === 'ACTIVE'; }).length;
+  var today = STATE.appointments.length;
+  document.getElementById('dash-stats').innerHTML =
+    '<div class="sc"><div style="font-size:22px;margin-bottom:6px">👥</div><div style="font-size:22px;font-weight:800">' + active + '</div><div style="font-size:11px;color:var(--mt)">Pacientes ativos</div></div>' +
+    '<div class="sc"><div style="font-size:22px;margin-bottom:6px">📅</div><div style="font-size:22px;font-weight:800">' + today + '</div><div style="font-size:11px;color:var(--mt)">Consultas hoje</div></div>' +
+    '<div class="sc"><div style="font-size:22px;margin-bottom:6px">💰</div><div style="font-size:18px;font-weight:800;color:var(--gn)">—</div><div style="font-size:11px;color:var(--mt)">Receita do mês</div></div>' +
+    '<div class="sc"><div style="font-size:22px;margin-bottom:6px">⏳</div><div style="font-size:18px;font-weight:800;color:var(--am)">—</div><div style="font-size:11px;color:var(--mt)">A receber</div></div>';
+  renderDashboardToday();
+  renderDashboardPatients();
+}
+
+function renderDashboardToday() {
+  updateProgressAndNext();
+  var el = document.getElementById('dash-today');
+  if (!STATE.appointments.length) {
+    el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;font-weight:700">📅 Consultas Hoje</div><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go(\'appointments\',null)">Ver agenda →</button></div>' +
+      '<div style="text-align:center;padding:20px;color:var(--dm);font-size:13px">Nenhuma consulta hoje</div>';
+    return;
+  }
+  var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b'];
+  var rows = STATE.appointments.slice(0, 4).map(function(a) {
+    var patName = a.patient ? a.patient.name : 'Paciente';
+    var ini = patName.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+    var color = colors[patName.charCodeAt(0) % colors.length];
+    var timeStr = new Date(a.date).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+    return '<div class="row"><div class="av avs" style="background:' + color + '">' + ini + '</div>' +
+      '<div class="ri"><div class="rn">' + patName + '</div><div class="rs">' + timeStr + ' · ' + (a.type === 'ONLINE' ? 'Online' : 'Presencial') + '</div></div>' +
+      (a.meetLink ? '<button class="btn bp" style="font-size:10px;padding:5px 10px" onclick="openMeet(\'' + patName + '\',\'' + a.meetLink + '\',\'' + timeStr + '\')">🎥</button>' : '<span class="bx bpu">Pres.</span>') +
+      '</div>';
+  }).join('');
+  el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;font-weight:700">📅 Consultas Hoje</div><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go(\'appointments\',null)">Ver agenda →</button></div>' + rows;
+}
+
+function renderDashboardPatients() {
+  var el = document.getElementById('dash-patients');
+  var list = STATE.patients.slice(0, 3);
+  var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6'];
+  var rows = list.map(function(p) {
+    var ini = p.name.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+    var color = colors[p.name.charCodeAt(0) % colors.length];
+    return '<div class="row" onclick="viewPatient(\'' + p.id + '\')" style="cursor:pointer">' +
+      '<div class="av avs" style="background:' + color + '">' + ini + '</div>' +
+      '<div class="ri"><div class="rn">' + p.name + '</div><div class="rs">' + (p.type === 'CHILD' ? 'Infantojuvenil' : 'Adulto') + (p._count ? ' · ' + p._count.appointments + ' sessões' : '') + '</div></div>' +
+      '<span class="bx ' + (p.status === 'ACTIVE' ? 'bgn' : 'bgr') + '">' + (p.status === 'ACTIVE' ? 'Ativo' : 'Inativo') + '</span></div>';
+  }).join('');
+  el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;font-weight:700">👥 Pacientes Recentes</div><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go(\'patients\',null)">Ver todos →</button></div>' + (rows || '<div style="text-align:center;padding:20px;color:var(--dm);font-size:13px">Nenhum paciente cadastrado</div>');
+}
+
+// ══════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════
+async function saveProfile() {
+  try {
+    var data = await api('PUT', '/auth/profile', {
+      name: document.getElementById('st-name').value,
+      crp: document.getElementById('st-crp').value,
+      phone: document.getElementById('st-phone').value,
+      specialty: document.getElementById('st-spec').value,
+      bio: document.getElementById('st-bio').value,
+    });
+    STATE.user = Object.assign(STATE.user, data.user);
+    updateUserUI();
+    toast('✅ Perfil salvo!');
+  } catch(e) { toast('Erro ao salvar perfil'); }
+}
+
+async function savePassword() {
+  var cur = document.getElementById('pw-current').value;
+  var nw = document.getElementById('pw-new').value;
+  var conf = document.getElementById('pw-conf').value;
+  if (!cur || !nw) { toast('Preencha todos os campos'); return; }
+  if (nw !== conf) { toast('Senhas não conferem'); return; }
+  try {
+    await api('PUT', '/auth/password', { currentPassword: cur, newPassword: nw });
+    document.getElementById('pw-current').value = '';
+    document.getElementById('pw-new').value = '';
+    document.getElementById('pw-conf').value = '';
+    toast('✅ Senha alterada!');
+  } catch(e) { toast('Erro: ' + (e.message || 'senha incorreta')); }
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+var _tt = null;
+function toast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  if (_tt) clearTimeout(_tt);
+  _tt = setTimeout(function(){ el.classList.add('hidden'); }, 2800);
+}
+
+// Set date defaults
+(function() {
+  var now = new Date();
+  var dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  var meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var hdrd = document.getElementById('hdr-d');
+  if (hdrd) hdrd.textContent = dias[now.getDay()] + ', ' + now.getDate() + ' ' + meses[now.getMonth()];
+  var apptDate = document.getElementById('appt-date');
+  if (apptDate) apptDate.value = now.toISOString().split('T')[0];
+  var finDate = document.getElementById('fin-date');
+  if (finDate) finDate.value = now.toISOString().split('T')[0];
+  var repFrom = document.getElementById('rep-from');
+  if (repFrom) { repFrom.value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]; }
+  var repTo = document.getElementById('rep-to');
+  if (repTo) repTo.value = now.toISOString().split('T')[0];
+})();
+
+// ══════════════════════════════════════════════
+// CONTADOR FUNCTIONS
+// ══════════════════════════════════════════════
+
+function saveAccountantData() {
+  var name = document.getElementById('acc-name').value.trim();
+  var email = document.getElementById('acc-email').value.trim();
+  if (!name || !email) { toast('Preencha nome e e-mail do contador'); return; }
+  STATE.accountant = { name: name, email: email };
+  localStorage.setItem('orbie_accountant', JSON.stringify(STATE.accountant));
+  toast('✅ Dados do contador salvos!');
+}
+
+function exportAccountantReport() {
+  var from = document.getElementById('acc-from').value;
+  var to = document.getElementById('acc-to').value;
+  if (!from || !to) { toast('Selecione o periodo'); return; }
+  
+  var startDate = new Date(from);
+  var endDate = new Date(to);
+  endDate.setHours(23, 59, 59, 999);
+  
+  var appointments = STATE.appointments.filter(function(a) {
+    var d = new Date(a.date);
+    return d >= startDate && d <= endDate && a.status === 'COMPLETED';
+  });
+  
+  var totalRevenue = appointments.reduce(function(sum, a) { return sum + (a.value || 0); }, 0);
+  
+  var html = '<html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;margin:20px;color:#333}h1{text-align:center;color:#7c3aed;margin-bottom:30px}h2{color:#7c3aed;margin-top:20px;border-bottom:2px solid #7c3aed;padding-bottom:8px}.summary{background:#f3e8ff;padding:15px;border-radius:6px;margin:20px 0}.summary-item{display:flex;justify-content:space-between;margin:8px 0;font-size:14px}table{width:100%;border-collapse:collapse;margin:20px 0}th{background:#7c3aed;color:white;padding:10px;text-align:left;font-weight:bold}td{padding:10px;border-bottom:1px solid #ddd}tr:nth-child(even){background:#f9f9f9}.footer{font-size:11px;color:#999;text-align:center;margin-top:40px;border-top:1px solid #ddd;padding-top:20px}</style></head><body>';
+  html += '<h1>RELATORIO DE FATURAMENTO PARA CONTADOR</h1>';
+  html += '<div class="summary">';
+  html += '<div class="summary-item"><span>Periodo:</span><strong>' + from + ' a ' + to + '</strong></div>';
+  html += '<div class="summary-item"><span>Data de Geracao:</span><strong>' + new Date().toLocaleDateString('pt-BR') + '</strong></div>';
+  if (STATE.accountant) html += '<div class="summary-item"><span>Contador:</span><strong>' + STATE.accountant.name + '</strong></div>';
+  html += '</div>';
+  html += '<h2>RESUMO</h2>';
+  html += '<div class="summary">';
+  html += '<div class="summary-item"><span>Total de Consultas Realizadas:</span><strong>' + appointments.length + '</strong></div>';
+  html += '<div class="summary-item"><span>Faturamento Total:</span><strong style="color:#7c3aed;font-size:16px">R$ ' + totalRevenue.toFixed(2) + '</strong></div>';
+  html += '</div>';
+  html += '<h2>DETALHAMENTO</h2>';
+  html += '<table><thead><tr><th>Data</th><th>Paciente</th><th>Tipo</th><th>Duracao (min)</th><th>Valor</th></tr></thead><tbody>';
+  
+  appointments.forEach(function(a) {
+    var dt = new Date(a.date).toLocaleDateString('pt-BR');
+    var pat = a.patient ? a.patient.name : 'Paciente';
+    var type = a.type === 'ONLINE' ? 'Online' : 'Presencial';
+    html += '<tr><td>' + dt + '</td><td>' + pat + '</td><td>' + type + '</td><td>' + a.duration + '</td><td>R$ ' + a.value.toFixed(2) + '</td></tr>';
+  });
+  
+  html += '</tbody></table>';
+  html += '<div class="footer">Documento gerado automaticamente pelo Orbie System</div>';
+  html += '</body></html>';
+  
+  var blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+  var link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'relatorio_contador_' + from + '_' + to + '.html';
+  link.click();
+  toast('Relatorio em PDF gerado! Abra o arquivo no navegador e imprima como PDF');
+}
+
+function filterInvoicePatients(query) {
+  var dropdown = document.getElementById('inv-pat-dropdown');
+  if (!query.trim()) { dropdown.classList.add('hidden'); return; }
+  var filtered = STATE.patients.filter(function(p) {
+    return p.name.toLowerCase().includes(query.toLowerCase()) || (p.cpf && p.cpf.includes(query));
+  });
+  dropdown.innerHTML = filtered.map(function(p) {
+    return '<div style="padding:8px;border-bottom:1px solid #eee;cursor:pointer" onclick="selectInvoicePatient(\'' + p.id + '\')"><div style="font-weight:600">' + p.name + '</div><div style="font-size:11px;color:#666">' + (p.cpf || 'Sem CPF') + '</div></div>';
+  }).join('');
+  dropdown.classList.toggle('hidden', filtered.length === 0);
+}
+
+async function selectInvoicePatient(patientId) {
+  var patient = STATE.patients.find(function(p) { return p.id === patientId; });
+  if (!patient) return;
+  document.getElementById('inv-pat-search').value = patient.name;
+  document.getElementById('inv-pat-dropdown').classList.add('hidden');
+  
+  var from = document.getElementById('acc-from').value;
+  var to = document.getElementById('acc-to').value;
+  if (!from || !to) { toast('Selecione o periodo primeiro'); return; }
+  
+  var startDate = new Date(from);
+  var endDate = new Date(to);
+  endDate.setHours(23, 59, 59, 999);
+  
+  // Tenta buscar do STATE primeiro, mas se não encontrar, busca da API para o período
+  var appointments = STATE.appointments.filter(function(a) {
+    var d = new Date(a.date);
+    return a.patientId === patientId && d >= startDate && d <= endDate && a.status === 'COMPLETED';
+  });
+  
+  if (appointments.length === 0) {
+    try {
+      var path = '/appointments?patientId=' + patientId + '&startDate=' + from + '&endDate=' + to;
+      var fetched = await api('GET', path);
+      appointments = fetched.filter(function(a) { return a.status === 'COMPLETED'; });
+    } catch(e) { console.error('Fetch appointments for invoice:', e); }
+  }
+  
+  if (appointments.length === 0) { 
+    toast('Nenhuma consulta concluída encontrada para este paciente no período'); 
+    document.getElementById('invoice-form').classList.add('hidden');
+    return; 
+  }
+  
+  // Ordenar por data
+  appointments.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+  
+  var dates = appointments.map(function(a) { return new Date(a.date).toLocaleDateString('pt-BR'); }).join(', ');
+  var total = appointments.reduce(function(sum, a) { return sum + (a.value || 0); }, 0);
+  var desc = 'Datas das sessões:\n';
+  appointments.forEach(function(a) {
+    desc += '- ' + new Date(a.date).toLocaleDateString('pt-BR') + ' - R$ ' + (a.value || 0).toFixed(2) + '\n';
+  });
+  
+  document.getElementById('inv-dates').value = dates;
+  document.getElementById('inv-total').value = 'R$ ' + total.toFixed(2);
+  document.getElementById('inv-name').value = patient.name;
+  document.getElementById('inv-cpf').value = patient.cpf || 'Não informado';
+  document.getElementById('inv-desc').value = desc;
+  document.getElementById('invoice-form').classList.remove('hidden');
+}
+
+function sendInvoiceWhatsApp() {
+  var whatsapp = document.getElementById('acc-whatsapp').value.trim();
+  if (!whatsapp) { toast('Preencha o WhatsApp do contador'); return; }
+  var text = buildInvoiceText();
+  var encoded = encodeURIComponent(text);
+  var url = 'https://wa.me/' + whatsapp.replace(/\D/g, '') + '?text=' + encoded;
+  window.open(url, '_blank');
+}
+
+function copyInvoiceText() {
+  var text = buildInvoiceText();
+  navigator.clipboard.writeText(text).then(function() { toast('Texto copiado!'); });
+}
+
+function generateInvoicePDF() {
+  var name = document.getElementById('inv-name').value;
+  var cpf = document.getElementById('inv-cpf').value;
+  var dates = document.getElementById('inv-dates').value;
+  var total = document.getElementById('inv-total').value;
+  var obs = document.getElementById('inv-obs').value;
+  
+  var html = '<html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;margin:20px;color:#333}h1{text-align:center;color:#7c3aed}table{width:100%;border-collapse:collapse;margin:20px 0}td{padding:8px;border-bottom:1px solid #ddd}label{font-weight:bold;color:#555}.label{width:30%}.value{width:70%}.total{font-weight:bold;font-size:16px;color:#7c3aed}</style></head><body>';
+  html += '<h1>NOTA FISCAL - SERVICOS PSICOLOGICOS</h1>';
+  html += '<table>';
+  var desc = document.getElementById('inv-desc').value;
+  html += '<tr><td class="label">Nome completo:</td><td class="value">' + name + '</td></tr>';
+  html += '<tr><td class="label">CPF:</td><td class="value">' + cpf + '</td></tr>';
+  html += '<tr><td class="label">Data das sessões realizadas e pagas:</td><td class="value">' + dates + '</td></tr>';
+  html += '<tr><td class="label">Valor total:</td><td class="value total">' + total + '</td></tr>';
+  html += '<tr><td class="label">Descrição do serviço:</td><td class="value">' + desc.replace(/\n/g, '<br/>') + '</td></tr>';
+  if (obs.trim()) html += '<tr><td class="label">Observações:</td><td class="value">' + obs.replace(/\n/g, '<br/>') + '</td></tr>';
+  html += '</table>';
+  html += '<p style="font-size:11px;color:#999;text-align:center;margin-top:40px">Documento gerado automaticamente pelo Orbie System</p>';
+  html += '</body></html>';
+  
+  var blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+  var link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'nota_fiscal_' + name.replace(/\s+/g, '_') + '_' + new Date().toISOString().split('T')[0] + '.html';
+  link.click();
+  toast('PDF gerado! Abra o arquivo no navegador e imprima como PDF');
+}
+
+function buildInvoiceText() {
+  var dates = document.getElementById('inv-dates').value;
+  var total = document.getElementById('inv-total').value;
+  var name = document.getElementById('inv-name').value;
+  var cpf = document.getElementById('inv-cpf').value;
+  var desc = document.getElementById('inv-desc').value;
+  var obs = document.getElementById('inv-obs').value;
+  return '*NOTA FISCAL - SERVIÇOS PSICOLÓGICOS*\n\n' +
+    'Nome completo: ' + name + '\n' +
+    'CPF: ' + cpf + '\n' +
+    'Data das sessões realizadas e pagas: ' + dates + '\n' +
+    'Valor total: ' + total + '\n\n' +
+    'Descrição do serviço:\n' + desc + '\n' +
+    (obs.trim() ? 'Observações: ' + obs + '\n' : '');
+}
+
+// Load accountant data on init
+(function() {
+  var saved = localStorage.getItem('orbie_accountant');
+  if (saved) {
+    STATE.accountant = JSON.parse(saved);
+    if (document.getElementById('acc-name')) {
+      document.getElementById('acc-name').value = STATE.accountant.name || '';
+      document.getElementById('acc-whatsapp').value = STATE.accountant.whatsapp || '';
+    }
+  }
+})();
+
+// Enter key support
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    var screen = document.querySelector('[id^="screen-"]:not(.hidden)');
+    if (screen && screen.id === 'screen-login') doLogin();
+    else if (screen && screen.id === 'screen-register') doRegister();
+  }
+});
+
+// Start
+init();
+</script>
+</body>
+</html>
