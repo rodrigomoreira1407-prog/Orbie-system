@@ -492,6 +492,28 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
         </div>
       </div>
       <div id="appt-calendar" style="background:white;border-radius:11px;padding:14px;margin-bottom:12px;border:1px solid var(--bd)"></div>
+
+      <!-- ── Agenda Cards Section ── -->
+      <div id="appt-cards-section">
+        <!-- Type filter pills -->
+        <div style="background:white;border-radius:11px;padding:12px 14px;border:1px solid var(--bd);margin-bottom:10px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+          <span id="apf-online" onclick="setAgendaTypeFilter('ONLINE')" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;padding:4px 10px;border-radius:20px;background:#eff6ff;color:#3b82f6;border:1.5px solid #3b82f6"><span style="width:10px;height:10px;border-radius:50%;background:#3b82f6;display:inline-block;flex-shrink:0"></span>Online</span>
+          <span id="apf-presential" onclick="setAgendaTypeFilter('PRESENTIAL')" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;padding:4px 10px;border-radius:20px;background:#f0fdf4;color:#10b981;border:1.5px solid #10b981"><span style="width:10px;height:10px;border-radius:50%;background:#10b981;display:inline-block;flex-shrink:0"></span>Presencial</span>
+          <span id="apf-evaluation" onclick="setAgendaTypeFilter('EVALUATION')" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;padding:4px 10px;border-radius:20px;background:#f3e8ff;color:#7c3aed;border:1.5px solid #7c3aed"><span style="width:10px;height:10px;border-radius:50%;background:#7c3aed;display:inline-block;flex-shrink:0"></span>Avaliação</span>
+        </div>
+        <!-- Search -->
+        <div style="background:white;border-radius:11px;padding:10px 14px;border:1px solid var(--bd);margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span style="font-size:15px">🔍</span>
+          <input type="text" id="appt-cards-search" placeholder="Buscar por nome ou CPF do paciente..." style="border:none;outline:none;width:100%;font-size:13px;color:#334155;background:transparent" oninput="renderAgendaCards()"/>
+        </div>
+        <!-- Hoje / Semana toggle -->
+        <div style="background:white;border-radius:11px;border:1px solid var(--bd);margin-bottom:10px;display:flex;overflow:hidden">
+          <button id="apv-today" onclick="setAgendaView('today')" style="flex:1;padding:10px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:#f0f4ff;color:#3b82f6;border-right:1px solid var(--bd)">Hoje</button>
+          <button id="apv-week" onclick="setAgendaView('week')" style="flex:1;padding:10px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b">Semana</button>
+        </div>
+        <!-- Cards list -->
+        <div id="appt-cards-list"></div>
+      </div>
     </div>
 
     <!-- RECORDS -->
@@ -1453,6 +1475,189 @@ function renderWeeklyGrid(startDate) {
   // Scroll to 07:00 on initial render
   var body = document.getElementById('wg-body');
   if (body) body.scrollTop = 7 * ROW_H;
+
+  renderAgendaCards();
+}
+
+// ===== AGENDA CARDS =====
+STATE.agendaView        = STATE.agendaView        || 'today';
+STATE.agendaTypeFilter  = STATE.agendaTypeFilter  || null;
+
+function setAgendaView(view) {
+  STATE.agendaView = view;
+  var btnToday = document.getElementById('apv-today');
+  var btnWeek  = document.getElementById('apv-week');
+  if (btnToday) {
+    btnToday.style.background = view === 'today' ? '#f0f4ff' : 'white';
+    btnToday.style.color      = view === 'today' ? '#3b82f6' : '#64748b';
+    btnToday.style.fontWeight = view === 'today' ? '700' : '600';
+  }
+  if (btnWeek) {
+    btnWeek.style.background  = view === 'week' ? '#f0f4ff' : 'white';
+    btnWeek.style.color       = view === 'week' ? '#3b82f6' : '#64748b';
+    btnWeek.style.fontWeight  = view === 'week' ? '700' : '600';
+  }
+  renderAgendaCards();
+}
+
+function setAgendaTypeFilter(type) {
+  STATE.agendaTypeFilter = STATE.agendaTypeFilter === type ? null : type;
+  var ids = { ONLINE: 'apf-online', PRESENTIAL: 'apf-presential', EVALUATION: 'apf-evaluation' };
+  var activeType = STATE.agendaTypeFilter;
+  Object.keys(ids).forEach(function(t) {
+    var el = document.getElementById(ids[t]);
+    if (!el) return;
+    var isActive = t === activeType;
+    var colors = { ONLINE: ['#3b82f6','#eff6ff'], PRESENTIAL: ['#10b981','#f0fdf4'], EVALUATION: ['#7c3aed','#f3e8ff'] };
+    var c = colors[t];
+    el.style.opacity     = (!activeType || isActive) ? '1' : '0.45';
+    el.style.border      = '1.5px solid ' + c[0];
+    el.style.background  = isActive ? c[0] : c[1];
+    el.style.color       = isActive ? '#fff' : c[0];
+  });
+  renderAgendaCards();
+}
+
+function renderAgendaCards() {
+  var el = document.getElementById('appt-cards-list');
+  if (!el) return;
+
+  var search = (document.getElementById('appt-cards-search') || {}).value || '';
+  search = search.toLowerCase();
+
+  var now     = new Date();
+  var todayStr = now.toISOString().split('T')[0];
+
+  var weekStart = new Date(STATE.weekGridDate || now);
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  weekStart.setHours(0, 0, 0, 0);
+  var weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
+
+  var appts = (STATE.appointments || []).filter(function(a) {
+    if (a.status === 'CANCELLED') return false;
+    var d = new Date(a.date);
+    if (STATE.agendaView === 'today') {
+      if (d.toISOString().split('T')[0] !== todayStr) return false;
+    } else {
+      if (d < weekStart || d > weekEnd) return false;
+    }
+    if (STATE.agendaTypeFilter && a.type !== STATE.agendaTypeFilter) return false;
+    if (search) {
+      var name = a.patient ? a.patient.name.toLowerCase() : '';
+      var cpf  = a.patient ? (a.patient.cpf || '').toLowerCase() : '';
+      if (!name.includes(search) && !cpf.includes(search)) return false;
+    }
+    return true;
+  }).sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+
+  if (!appts.length) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8;font-size:13px">' +
+      (STATE.agendaView === 'today' ? 'Nenhuma consulta hoje' : 'Nenhuma consulta esta semana') + '</div>';
+    return;
+  }
+
+  var AVATAR_COLORS = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6','#06b6d4','#ef4444'];
+  var typeColor = function(t) { return t === 'ONLINE' ? '#3b82f6' : t === 'PRESENTIAL' ? '#10b981' : '#7c3aed'; };
+  var typeLabel = function(t) { return t === 'ONLINE' ? 'Online' : t === 'PRESENTIAL' ? 'Presencial' : 'Avalia\u00e7\u00e3o'; };
+
+  var statusLabel = function(s) {
+    return s === 'COMPLETED' ? 'Conclu\u00edda' : s === 'MISSED' ? 'Falta' : 'Agendada';
+  };
+  var statusColor = function(s) {
+    return s === 'COMPLETED' ? '#10b981' : s === 'MISSED' ? '#f59e0b' : '#3b82f6';
+  };
+  var statusBg = function(s) {
+    return s === 'COMPLETED' ? '#f0fdf4' : s === 'MISSED' ? '#fffbeb' : '#eff6ff';
+  };
+
+  // Compute session number per patient (position among all patient appointments sorted by date)
+  var patAppts = {};
+  (STATE.appointments || []).forEach(function(a) {
+    var pid = a.patient ? a.patient.id : null;
+    if (!pid) return;
+    if (!patAppts[pid]) patAppts[pid] = [];
+    patAppts[pid].push(a);
+  });
+  Object.keys(patAppts).forEach(function(pid) {
+    patAppts[pid].sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+  });
+
+  var html = appts.map(function(a) {
+    var patName  = a.patient ? a.patient.name : 'Paciente';
+    var ini      = patName.split(' ').map(function(w){ return w[0]; }).slice(0,2).join('').toUpperCase();
+    var avColor  = AVATAR_COLORS[patName.charCodeAt(0) % AVATAR_COLORS.length];
+    var dt       = new Date(a.date);
+    var timeStr  = dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    var dateStr  = dt.toLocaleDateString('pt-BR');
+    var tc       = typeColor(a.type);
+    var tl       = typeLabel(a.type);
+    var sc       = statusColor(a.status);
+    var sb_      = statusBg(a.status);
+    var sl       = statusLabel(a.status);
+
+    // Session number
+    var pid      = a.patient ? a.patient.id : null;
+    var sessNum  = 1;
+    if (pid && patAppts[pid]) {
+      var idx = patAppts[pid].findIndex(function(x){ return x.id === a.id; });
+      if (idx >= 0) sessNum = idx + 1;
+    }
+
+    var phone    = a.patient ? (a.patient.phone || '') : '';
+    var wa       = phone ? 'https://wa.me/' + phone.replace(/\D/g,'') : null;
+    var isActionable = a.status !== 'COMPLETED' && a.status !== 'MISSED';
+
+    var card = '<div style="background:white;border-radius:14px;padding:16px;border:1px solid #e2e8f0;border-left:4px solid ' + tc + ';margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.04)">';
+
+    // Row 1: avatar + info + whatsapp
+    card += '<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">';
+    // Avatar
+    card += '<div style="width:46px;height:46px;border-radius:12px;background:' + avColor + ';flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:15px">' + ini + '</div>';
+    // Info
+    card += '<div style="flex:1;min-width:0">';
+    card += '<div style="font-weight:800;font-size:14px;letter-spacing:.3px;margin-bottom:6px">' + patName.toUpperCase() + '</div>';
+    // Badges row
+    card += '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px">';
+    card += '<span style="background:' + sb_ + ';color:' + sc + ';border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700">' + sl + '</span>';
+    card += '<span style="border:1.5px solid ' + tc + ';color:' + tc + ';border-radius:6px;padding:2px 9px;font-size:11px;font-weight:600">' + tl + '</span>';
+    card += '<span style="background:#f1f5f9;color:#475569;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:600">Sess\u00e3o ' + sessNum + '</span>';
+    card += '</div>';
+    // Time info
+    card += '<div style="font-size:12px;color:#64748b">' + timeStr + ' \u00b7 ' + dateStr + ' \u00b7 ' + (a.duration || 50) + 'min \u00b7 R$ ' + a.value.toFixed(2) + '</div>';
+    card += '</div>'; // end info
+    // WhatsApp button
+    if (wa) {
+      card += '<a href="' + wa + '" target="_blank" title="WhatsApp" style="width:38px;height:38px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-decoration:none;font-size:18px">🟢</a>';
+    }
+    card += '</div>'; // end row 1
+
+    // Row 2: Google Meet link (ONLINE only)
+    if (a.type === 'ONLINE' && a.meetLink) {
+      var fullLink = a.meetLink.startsWith('http') ? a.meetLink : 'https://' + a.meetLink;
+      var shortLink = a.meetLink.length > 28 ? a.meetLink.substring(0, 25) + '...' : a.meetLink;
+      card += '<div style="background:#f8fafc;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:12px;border:1px solid #e2e8f0">';
+      card += '<span style="font-size:16px">🎥</span>';
+      card += '<span style="flex:1;font-size:12px;color:#475569;font-family:monospace;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + shortLink + '</span>';
+      card += '<a href="' + fullLink + '" target="_blank" style="background:#7c3aed;color:white;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap">Entrar</a>';
+      card += '</div>';
+    }
+
+    // Row 3: Action buttons
+    if (isActionable) {
+      card += '<div style="display:flex;gap:8px">';
+      card += '<button onclick="confirmAppointment(' + a.id + ');renderAgendaCards()" style="flex:1;background:#dcfce7;color:#15803d;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u2713 Concluir</button>';
+      card += '<button onclick="openMissedDialog(' + a.id + ')" style="flex:1;background:#fef9c3;color:#92400e;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u26a0 Falta</button>';
+      card += '<button onclick="cancelAppointment(' + a.id + ');renderAgendaCards()" style="flex:1;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u00d7 Cancelar</button>';
+      card += '</div>';
+    }
+
+    card += '</div>'; // end card
+    return card;
+  }).join('');
+
+  el.innerHTML = html;
 }
 
 // ===== SESSIONS MANAGEMENT =====
