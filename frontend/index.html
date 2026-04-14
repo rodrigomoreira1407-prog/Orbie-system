@@ -715,11 +715,8 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
 
       <!-- Status tabs -->
       <div style="background:white;border-radius:11px;border:1px solid var(--bd);margin-bottom:12px;display:flex;overflow:hidden">
-        <button id="sessions-tab-all" onclick="switchSessionTab('all')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:#f0f4ff;color:#3b82f6;border-right:1px solid var(--bd)">Todos</button>
-        <button id="sessions-tab-completed" onclick="switchSessionTab('completed')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">✓ Concluídas</button>
-        <button id="sessions-tab-missed" onclick="switchSessionTab('missed')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">⚠ Falta</button>
-        <button id="sessions-tab-cancelled" onclick="switchSessionTab('cancelled')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">✕ Canceladas</button>
-        <button id="sessions-tab-scheduled" onclick="switchSessionTab('scheduled')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b">📅 Agendadas</button>
+        <button id="sessions-tab-scheduled" onclick="switchSessionTab('scheduled')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:#f0f4ff;color:#3b82f6;border-right:1px solid var(--bd)">📅 Agendadas</button>
+        <button id="sessions-tab-all" onclick="switchSessionTab('all')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b">Todos</button>
       </div>
 
       <!-- List -->
@@ -1816,18 +1813,18 @@ function renderAgendaCards() {
 }
 
 // ===== SESSIONS MANAGEMENT =====
-var currentSessionFilter = 'all';
+var currentSessionFilter = 'scheduled';
 
 function switchSessionTab(tab) {
   currentSessionFilter = tab;
-  var tabs   = { all: 'sessions-tab-all', completed: 'sessions-tab-completed', missed: 'sessions-tab-missed', cancelled: 'sessions-tab-cancelled', scheduled: 'sessions-tab-scheduled' };
-  var colors = { all: '#3b82f6', completed: '#10b981', missed: '#f59e0b', cancelled: '#ef4444', scheduled: '#3b82f6' };
+  var tabs   = { scheduled: 'sessions-tab-scheduled', all: 'sessions-tab-all' };
+  var colors = { scheduled: '#3b82f6', all: '#3b82f6' };
   Object.keys(tabs).forEach(function(t) {
     var el = document.getElementById(tabs[t]);
     if (!el) return;
     var isActive = t === tab;
-    el.style.background = isActive ? colors[t] : 'white';
-    el.style.color      = isActive ? '#fff'     : '#64748b';
+    el.style.background = isActive ? '#f0f4ff' : 'white';
+    el.style.color      = isActive ? colors[t] : '#64748b';
     el.style.fontWeight = isActive ? '700'      : '600';
   });
   renderSessions();
@@ -1840,8 +1837,8 @@ function clearSessionFilters() {
   if (s) s.value = '';
   if (f) f.value = '';
   if (t) t.value = '';
-  currentSessionFilter = 'all';
-  switchSessionTab('all');
+  currentSessionFilter = 'scheduled';
+  switchSessionTab('scheduled');
 }
 
 function filterSessions() { renderSessions(); }
@@ -1860,14 +1857,14 @@ function renderSessions() {
 
   var now = new Date();
 
-  // "Agendadas" tab = future-only SCHEDULED sessions (date >= now)
+  // "Agendadas" tab = all SCHEDULED sessions (future + overdue/Pendente de Baixa)
   var isScheduledTab = currentSessionFilter === 'scheduled';
 
   // Pool of appointments for each tab
   var pool;
   if (isScheduledTab) {
     pool = (STATE.appointments || []).filter(function(a) {
-      return (a.status === 'SCHEDULED' || a.status === 'PENDING') && new Date(a.date) >= now;
+      return a.status === 'SCHEDULED' || a.status === 'PENDING';
     });
   } else if (currentSessionFilter === 'all') {
     pool = STATE.appointments || [];
@@ -1913,11 +1910,11 @@ function renderSessions() {
     return true;
   }).sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
 
-  var hasActiveFilter = search || dateFrom || dateTo || currentSessionFilter !== 'all';
+  var hasActiveFilter = search || dateFrom || dateTo;
   if (!sessions.length) {
     var msg = hasActiveFilter
       ? 'Nenhum registro encontrado para os filtros selecionados.'
-      : 'Nenhuma sess\u00e3o encontrada';
+      : isScheduledTab ? 'Nenhuma sess\u00e3o agendada encontrada' : 'Nenhuma sess\u00e3o encontrada';
     el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:28px;font-size:13px">' + msg + '</div>';
     return;
   }
