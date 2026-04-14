@@ -1470,7 +1470,7 @@ function renderWeeklyGrid(startDate) {
         'height:' + heightPx + 'px;background:' + bg + ';border-radius:5px;' +
         'padding:4px 6px;cursor:pointer;overflow:hidden;z-index:2;' +
         'box-shadow:0 2px 6px rgba(0,0,0,.15)" ' +
-        'onclick="openAppointmentConfirmation(' + a.id + ')">' +
+        'onclick="openAppointmentConfirmation(\'' + a.id + '\')">' +
         '<div style="font-size:9px;color:rgba(255,255,255,.85);line-height:1.4;font-weight:500">' +
         timeStr + '</div>' +
         (heightPx >= 32
@@ -1686,9 +1686,9 @@ function renderAgendaCards() {
     // Row 3: Action buttons
     if (isActionable) {
       card += '<div style="display:flex;gap:8px">';
-      card += '<button onclick="confirmAppointment(' + a.id + ');renderAgendaCards()" style="flex:1;background:#dcfce7;color:#15803d;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u2713 Concluir</button>';
-      card += '<button onclick="openMissedDialog(' + a.id + ')" style="flex:1;background:#fef9c3;color:#92400e;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u26a0 Falta</button>';
-      card += '<button onclick="cancelAppointment(' + a.id + ');renderAgendaCards()" style="flex:1;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u00d7 Cancelar</button>';
+      card += '<button onclick="confirmAppointment(\'' + a.id + '\');renderAgendaCards()" style="flex:1;background:#dcfce7;color:#15803d;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u2713 Concluir</button>';
+      card += '<button onclick="openMissedDialog(\'' + a.id + '\')" style="flex:1;background:#fef9c3;color:#92400e;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u26a0 Falta</button>';
+      card += '<button onclick="cancelAppointment(\'' + a.id + '\');renderAgendaCards()" style="flex:1;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u00d7 Cancelar</button>';
       card += '</div>';
     }
 
@@ -1811,9 +1811,9 @@ function openAppointmentConfirmation(appointmentId) {
   modal.innerHTML += '<h2 style="margin:0 0 12px 0;font-size:18px">' + patName + '</h2>';
   modal.innerHTML += '<p style="margin:0 0 16px 0;color:#666;font-size:14px">' + timeStr + ' · R$ ' + appt.value.toFixed(2) + '</p>';
   modal.innerHTML += '<div style="display:flex;gap:8px;flex-direction:column">';
-  modal.innerHTML += '<button class="btn bg2" style="width:100%" onclick="confirmAppointment(' + appointmentId + ');this.parentElement.parentElement.parentElement.remove()">✓ Confirmar</button>';
-  modal.innerHTML += '<button class="btn br" style="width:100%" onclick="cancelAppointment(' + appointmentId + ');this.parentElement.parentElement.parentElement.remove()">✕ Cancelar</button>';
-  modal.innerHTML += '<button class="btn" style="width:100%;background:#f59e0b;color:white;border:none" onclick="openMissedDialog(' + appointmentId + ');this.parentElement.parentElement.parentElement.remove()">⚠ Falta</button>';
+  modal.innerHTML += '<button class="btn bg2" style="width:100%" onclick="confirmAppointment(\'' + appointmentId + '\');this.parentElement.parentElement.parentElement.remove()">✓ Confirmar</button>';
+  modal.innerHTML += '<button class="btn br" style="width:100%" onclick="cancelAppointment(\'' + appointmentId + '\');this.parentElement.parentElement.parentElement.remove()">✕ Cancelar</button>';
+  modal.innerHTML += '<button class="btn" style="width:100%;background:#f59e0b;color:white;border:none" onclick="openMissedDialog(\'' + appointmentId + '\');this.parentElement.parentElement.parentElement.remove()">⚠ Falta</button>';
   modal.innerHTML += '</div>';
   modal.innerHTML += '</div>';
   
@@ -1842,8 +1842,8 @@ function openMissedDialog(appointmentId) {
   modal.innerHTML += '<h2 style="margin:0 0 12px 0;font-size:18px">Marcar como Falta</h2>';
   modal.innerHTML += '<p style="margin:0 0 16px 0;color:#666;font-size:14px">Valor da sessão: R$ ' + appt.value.toFixed(2) + '</p>';
   modal.innerHTML += '<div style="display:flex;gap:8px;flex-direction:column">';
-  modal.innerHTML += '<button class="btn bg2" style="width:100%" onclick="updateAppointmentStatus(' + appointmentId + ', \"MISSED\", ' + appt.value + ');this.parentElement.parentElement.parentElement.remove();toast(\"⚠ Marcado como falta com valor integral\")">Manter Valor Integral</button>';
-  modal.innerHTML += '<button class="btn" style="width:100%;background:#f59e0b;color:white;border:none" onclick="openAdjustValueDialog(' + appointmentId + ');this.parentElement.parentElement.parentElement.remove()">Ajustar Valor</button>';
+  modal.innerHTML += '<button class="btn bg2" style="width:100%" onclick="updateAppointmentStatus(\'' + appointmentId + '\', \"MISSED\", ' + appt.value + ');this.parentElement.parentElement.parentElement.remove();toast(\"⚠ Marcado como falta com valor integral\")">Manter Valor Integral</button>';
+  modal.innerHTML += '<button class="btn" style="width:100%;background:#f59e0b;color:white;border:none" onclick="openAdjustValueDialog(\'' + appointmentId + '\');this.parentElement.parentElement.parentElement.remove()">Ajustar Valor</button>';
   modal.innerHTML += '</div>';
   modal.innerHTML += '</div>';
   
@@ -1872,7 +1872,7 @@ function openAdjustValueDialog(appointmentId) {
     '<input type="number" id="adjusted-value" value="' + appt.value + '" min="0" step="0.01" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-bottom:8px;box-sizing:border-box">' +
     '<div id="adjust-val-err" style="color:#ef4444;font-size:12px;margin-bottom:8px;display:none">O valor não pode ser negativo.</div>' +
     '<div style="display:flex;gap:8px">' +
-    '<button class="btn bg2" style="flex:1" onclick="confirmAdjustedValue(' + appointmentId + ')">Confirmar</button>' +
+    '<button class="btn bg2" style="flex:1" onclick="confirmAdjustedValue(\'' + appointmentId + '\')">Confirmar</button>' +
     '<button class="btn br" style="flex:1" onclick="document.getElementById(\'modal-adjust-value\').remove()">Cancelar</button>' +
     '</div></div>';
 
@@ -3236,8 +3236,8 @@ function renderDashboardSessions() {
       '<div style="font-size:11px;color:#64748b;margin-bottom:8px">' + (a.duration || 50) + 'min · <strong style="color:#10b981">R$&nbsp;' + a.value.toFixed(2) + '</strong></div>' +
       '<div style="display:flex;justify-content:center;gap:6px">' +
       '<button title="Chat" style="border:none;background:#f1f5f9;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:13px" onclick="toast(\'📞 Chat em breve!\')">💬</button>' +
-      '<button title="Editar" style="border:none;background:#fef9c3;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:13px" onclick="openAppointmentConfirmation(' + a.id + ')">✎</button>' +
-      '<button title="Deletar" style="border:none;background:#fee2e2;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:13px" onclick="deleteDashSession(' + a.id + ')">🗑</button>' +
+      '<button title="Editar" style="border:none;background:#fef9c3;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:13px" onclick="openAppointmentConfirmation(\'' + a.id + '\')">✎</button>' +
+      '<button title="Deletar" style="border:none;background:#fee2e2;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:13px" onclick="deleteDashSession(\'' + a.id + '\')">🗑</button>' +
       '</div></div>';
   }).join('');
 
