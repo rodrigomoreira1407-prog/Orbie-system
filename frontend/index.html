@@ -687,8 +687,8 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
           <div style="font-size:11px;color:#64748b;margin-top:2px">Canceladas</div>
         </div>
         <div style="background:white;border-radius:11px;padding:12px;border:1px solid var(--bd);text-align:center">
-          <div style="font-size:20px;font-weight:800;color:#f97316" id="sess-count-pending">0</div>
-          <div style="font-size:11px;color:#64748b;margin-top:2px">Pendentes</div>
+          <div style="font-size:20px;font-weight:800;color:#3b82f6" id="sess-count-scheduled">0</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">Agendadas</div>
         </div>
       </div>
 
@@ -717,7 +717,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
         <button id="sessions-tab-completed" onclick="switchSessionTab('completed')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">✓ Concluídas</button>
         <button id="sessions-tab-missed" onclick="switchSessionTab('missed')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">⚠ Falta</button>
         <button id="sessions-tab-cancelled" onclick="switchSessionTab('cancelled')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">✕ Canceladas</button>
-        <button id="sessions-tab-pending" onclick="switchSessionTab('pending')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b">⏳ Pendentes</button>
+        <button id="sessions-tab-scheduled" onclick="switchSessionTab('scheduled')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b">📅 Agendadas</button>
       </div>
 
       <!-- List -->
@@ -1818,8 +1818,8 @@ var currentSessionFilter = 'all';
 
 function switchSessionTab(tab) {
   currentSessionFilter = tab;
-  var tabs   = { all: 'sessions-tab-all', completed: 'sessions-tab-completed', missed: 'sessions-tab-missed', cancelled: 'sessions-tab-cancelled', pending: 'sessions-tab-pending' };
-  var colors = { all: '#3b82f6', completed: '#10b981', missed: '#f59e0b', cancelled: '#ef4444', pending: '#f97316' };
+  var tabs   = { all: 'sessions-tab-all', completed: 'sessions-tab-completed', missed: 'sessions-tab-missed', cancelled: 'sessions-tab-cancelled', scheduled: 'sessions-tab-scheduled' };
+  var colors = { all: '#3b82f6', completed: '#10b981', missed: '#f59e0b', cancelled: '#ef4444', scheduled: '#3b82f6' };
   Object.keys(tabs).forEach(function(t) {
     var el = document.getElementById(tabs[t]);
     if (!el) return;
@@ -1858,25 +1858,30 @@ function renderSessions() {
 
   var now = new Date();
 
-  // "Pendentes de Baixa" = SCHEDULED but their scheduled time has already passed
-  var isPendingTab = currentSessionFilter === 'pending';
+  // "Agendadas" tab = ALL SCHEDULED sessions (future + past without desfecho)
+  var isScheduledTab = currentSessionFilter === 'scheduled';
 
   // Pool of appointments for each tab
-  var pool = isPendingTab
-    ? (STATE.appointments || []).filter(function(a) {
-        return (a.status === 'SCHEDULED' || a.status === 'PENDING') && new Date(a.date) < now;
-      })
-    : (STATE.appointments || []).filter(function(a) {
-        return a.status === 'COMPLETED' || a.status === 'CANCELLED' || a.status === 'MISSED';
-      });
+  var pool;
+  if (isScheduledTab) {
+    pool = (STATE.appointments || []).filter(function(a) {
+      return a.status === 'SCHEDULED' || a.status === 'PENDING';
+    });
+  } else if (currentSessionFilter === 'all') {
+    pool = STATE.appointments || [];
+  } else {
+    pool = (STATE.appointments || []).filter(function(a) {
+      return a.status === 'COMPLETED' || a.status === 'CANCELLED' || a.status === 'MISSED';
+    });
+  }
 
   // Update stats counters (always over full pool, ignoring current filter)
   var all = STATE.appointments || [];
-  var cCompleted = all.filter(function(a){ return a.status === 'COMPLETED'; }).length;
-  var cMissed    = all.filter(function(a){ return a.status === 'MISSED'; }).length;
-  var cCancelled = all.filter(function(a){ return a.status === 'CANCELLED'; }).length;
-  var cPending   = all.filter(function(a){ return (a.status === 'SCHEDULED' || a.status === 'PENDING') && new Date(a.date) < now; }).length;
-  var counters   = { completed: cCompleted, missed: cMissed, cancelled: cCancelled, pending: cPending };
+  var cCompleted  = all.filter(function(a){ return a.status === 'COMPLETED'; }).length;
+  var cMissed     = all.filter(function(a){ return a.status === 'MISSED'; }).length;
+  var cCancelled  = all.filter(function(a){ return a.status === 'CANCELLED'; }).length;
+  var cScheduled  = all.filter(function(a){ return a.status === 'SCHEDULED' || a.status === 'PENDING'; }).length;
+  var counters    = { completed: cCompleted, missed: cMissed, cancelled: cCancelled, scheduled: cScheduled };
   Object.keys(counters).forEach(function(k) {
     var cnt = document.getElementById('sess-count-' + k);
     if (cnt) cnt.textContent = counters[k];
@@ -1889,8 +1894,8 @@ function renderSessions() {
   var statusMap = { completed: 'COMPLETED', cancelled: 'CANCELLED', missed: 'MISSED' };
 
   var sessions = pool.filter(function(a) {
-    // Status filter (only for non-pending tabs)
-    if (!isPendingTab && currentSessionFilter !== 'all' && a.status !== statusMap[currentSessionFilter]) return false;
+    // Status filter (only for non-scheduled, non-all tabs)
+    if (!isScheduledTab && currentSessionFilter !== 'all' && a.status !== statusMap[currentSessionFilter]) return false;
     // Name / CPF search
     if (search) {
       var name = a.patient ? a.patient.name.toLowerCase() : '';
@@ -1915,16 +1920,19 @@ function renderSessions() {
     return;
   }
 
-  var statusText  = function(s, pending) {
-    if (pending) return 'Pendente de Baixa';
+  var statusText  = function(s, overdue, futureScheduled) {
+    if (overdue) return 'Pendente de Baixa';
+    if (futureScheduled) return 'Agendada';
     return s === 'COMPLETED' ? 'Conclu\u00edda' : s === 'CANCELLED' ? 'Cancelada' : 'Falta';
   };
-  var statusColor = function(s, pending) {
-    if (pending) return '#f97316';
+  var statusColor = function(s, overdue, futureScheduled) {
+    if (overdue) return '#f97316';
+    if (futureScheduled) return '#3b82f6';
     return s === 'COMPLETED' ? '#10b981' : s === 'CANCELLED' ? '#ef4444' : '#f59e0b';
   };
-  var statusBg = function(s, pending) {
-    if (pending) return '#fff7ed';
+  var statusBg = function(s, overdue, futureScheduled) {
+    if (overdue) return '#fff7ed';
+    if (futureScheduled) return '#eff6ff';
     return s === 'COMPLETED' ? '#f0fdf4' : s === 'CANCELLED' ? '#fee2e2' : '#fffbeb';
   };
 
@@ -1935,15 +1943,18 @@ function renderSessions() {
     var dt       = new Date(a.date);
     var timeStr  = dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
     var dateStr  = dt.toLocaleDateString('pt-BR');
-    var sc       = statusColor(a.status, isPendingTab);
-    var sb_      = statusBg(a.status, isPendingTab);
-    var sl       = statusText(a.status, isPendingTab);
+    var isScheduledStatus = a.status === 'SCHEDULED' || a.status === 'PENDING';
+    var isOverdue         = isScheduledStatus && dt < now;
+    var isFutureScheduled = isScheduledStatus && dt >= now;
+    var sc       = statusColor(a.status, isOverdue, isFutureScheduled);
+    var sb_      = statusBg(a.status, isOverdue, isFutureScheduled);
+    var sl       = statusText(a.status, isOverdue, isFutureScheduled);
     var tc       = typeColor(a.type);
     var tl       = typeLabel(a.type);
 
     var card = '<div style="background:white;border-radius:12px;padding:14px;border:1px solid #e2e8f0;border-left:4px solid ' + sc + ';margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04)">';
 
-    if (isPendingTab) {
+    if (isOverdue) {
       card += '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:5px 10px;margin-bottom:8px;font-size:11px;font-weight:700;color:#c2410c;display:flex;align-items:center;gap:6px">' +
               '<span>⏳</span> Sess\u00e3o n\u00e3o registrada — aguardando baixa</div>';
     }
@@ -1959,8 +1970,8 @@ function renderSessions() {
     card += '<div style="font-size:11px;color:#64748b">' + timeStr + ' \u00b7 ' + dateStr + ' \u00b7 ' + (a.duration || 50) + 'min \u00b7 <strong style="color:#10b981">R$ ' + a.value.toFixed(2) + '</strong></div>';
     card += '</div></div>';
 
-    // Action buttons inside Pendentes tab in Sessions page
-    if (isPendingTab) {
+    // Action buttons for scheduled sessions (both overdue and future)
+    if (isOverdue || isFutureScheduled) {
       card += '<div style="display:flex;gap:8px;margin-top:10px">';
       card += '<button onclick="confirmAppointment(\'' + a.id + '\');renderSessions();renderAgendaCards()" style="flex:1;background:#dcfce7;color:#15803d;border:none;border-radius:8px;padding:9px 6px;font-size:12px;font-weight:700;cursor:pointer">\u2713 Concluir</button>';
       card += '<button onclick="openMissedDialog(\'' + a.id + '\')" style="flex:1;background:#fef9c3;color:#92400e;border:none;border-radius:8px;padding:9px 6px;font-size:12px;font-weight:700;cursor:pointer">\u26a0 Falta</button>';
