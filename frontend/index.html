@@ -384,6 +384,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
       <div class="ni" onclick="go('appointments',this)"><span class="ni-ico">📅</span><span>Agenda</span></div>
       <div class="ni" onclick="go('records',this)"><span class="ni-ico">📋</span><span>Prontuários</span></div>
       <div class="ni" onclick="go('financial',this)"><span class="ni-ico">💰</span><span>Financeiro</span></div>
+      <div class="ni" onclick="go('sessions',this)"><span class="ni-ico">🗂️</span><span>Sessões</span></div>
       <div class="ni" onclick="go('reports',this)"><span class="ni-ico">📊</span><span>Relatórios</span></div>
       <div class="ni" onclick="go('settings',this)"><span class="ni-ico">⚙️</span><span>Config</span></div>
     </div>
@@ -434,6 +435,13 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
           <button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go('patients',null)">Ver todos →</button>
         </div>
         <div style="text-align:center;padding:20px;color:var(--dm);font-size:13px">Carregando pacientes...</div>
+      </div>
+      <div class="card" id="dash-sessions">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:13px;font-weight:700">🗂️ Minhas Sessões</div>
+          <button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go('sessions',null)">Ver todas →</button>
+        </div>
+        <div style="text-align:center;padding:20px;color:var(--dm);font-size:13px">Carregando sessões...</div>
       </div>
     </div>
 
@@ -598,6 +606,18 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
           <button class="btn bg2 fw" style="font-size:11px" onclick="exportAccountantReport()">Exportar para Contador</button>
         </div>
       </div>
+    </div>
+
+    <!-- SESSIONS -->
+    <div id="pg-sessions" class="page">
+      <div class="ph"><div><div class="ptt">Sessões</div><div class="pst2">Histórico de atendimentos</div></div></div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+        <button id="sessions-tab-completed" style="background:#10b981;color:white;border:none;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer" onclick="switchSessionTab('completed',this)">✓ Concluídas</button>
+        <button id="sessions-tab-cancelled" style="background:#d1d5db;color:white;border:none;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer" onclick="switchSessionTab('cancelled',this)">✕ Canceladas</button>
+        <button id="sessions-tab-missed" style="background:#d1d5db;color:white;border:none;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer" onclick="switchSessionTab('missed',this)">⚠ Faltas</button>
+      </div>
+      <input class="inp" id="sessions-search" placeholder="🔍  Buscar por nome ou CPF..." style="margin-bottom:12px" oninput="filterSessions()"/>
+      <div id="sessions-list"><div style="text-align:center;padding:40px;color:var(--dm)">Carregando sessões...</div></div>
     </div>
 
     <!-- SETTINGS -->
@@ -1204,49 +1224,53 @@ async function init() {
 function renderWeeklyGrid(startDate) {
   var cal = document.getElementById('appt-calendar');
   if (!cal) return;
-  
+
   var sunday = new Date(startDate);
   sunday.setDate(sunday.getDate() - sunday.getDay());
-  
-  var dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+  var dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
   var hours = [];
-  for (var h = 0; h < 24; h++) {
+  for (var h = 6; h < 23; h++) {
     hours.push(h.toString().padStart(2, '0') + ':00');
   }
-  
-  var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">';
-  html += '<thead><tr><th style="width:60px;padding:8px;border:1px solid #ddd">Hora</th>';
-  
+
+  var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;min-width:480px">';
+  html += '<thead><tr><th style="width:44px;padding:6px 4px;border:1px solid #e2e8f0;background:#f8fafc;font-weight:700;color:#64748b">Hora</th>';
+
   for (var d = 0; d < 7; d++) {
     var date = new Date(sunday);
     date.setDate(date.getDate() + d);
     var dateStr = date.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
     var isToday = date.toDateString() === new Date().toDateString();
-    html += '<th style="padding:8px;border:1px solid #ddd;background:' + (isToday ? '#3b82f6' : '#f8fafc') + ';color:' + (isToday ? 'white' : 'black') + '">' + dayNames[d] + '<br>' + dateStr + '</th>';
+    html += '<th style="padding:6px 4px;border:1px solid #e2e8f0;background:' + (isToday ? '#3b82f6' : '#f8fafc') + ';color:' + (isToday ? 'white' : '#1e293b') + ';font-weight:700;text-align:center">' + dayNames[d] + '<br><span style="font-weight:400;font-size:10px">' + dateStr + '</span></th>';
   }
   html += '</tr></thead><tbody>';
-  
+
   hours.forEach(function(hour) {
-    html += '<tr><td style="padding:8px;border:1px solid #ddd;font-weight:700;background:#f8fafc">' + hour + '</td>';
-    for (var d = 0; d < 7; d++) {
-      var date = new Date(sunday);
-      date.setDate(date.getDate() + d);
-      var dateKey = date.toISOString().split('T')[0];
+    html += '<tr><td style="padding:6px 4px;border:1px solid #e2e8f0;font-weight:700;background:#f8fafc;color:#64748b;text-align:center;font-size:10px">' + hour + '</td>';
+    for (var d2 = 0; d2 < 7; d2++) {
+      var cellDate = new Date(sunday);
+      cellDate.setDate(cellDate.getDate() + d2);
+      var dateKey = cellDate.toISOString().split('T')[0];
       var cellAppts = STATE.appointments.filter(function(a) {
         var aDate = new Date(a.date).toISOString().split('T')[0];
         var aHour = new Date(a.date).getHours().toString().padStart(2, '0') + ':00';
-        return aDate === dateKey && aHour === hour && a.status === 'PENDING';
+        return aDate === dateKey && aHour === hour;
       });
-      html += '<td style="padding:4px;border:1px solid #ddd;height:60px;vertical-align:top;background:#fafafa">';
+      html += '<td style="padding:3px;border:1px solid #e2e8f0;min-height:50px;vertical-align:top;background:#fafafa">';
       cellAppts.forEach(function(a) {
         var patName = a.patient ? a.patient.name.split(' ')[0] : 'Paciente';
-        html += '<div style="background:#5b5ef4;color:white;padding:4px;border-radius:4px;font-size:10px;margin-bottom:2px;cursor:pointer" onclick="openAppointmentConfirmation(' + a.id + ')">' + patName + '</div>';
+        var title = (a.title || '').toLowerCase();
+        var typeColor = a.type === 'ONLINE' ? '#3b82f6' : (title.indexOf('avalia') > -1 ? '#8b5cf6' : '#10b981');
+        var statusIcon = a.status === 'COMPLETED' ? '✓' : a.status === 'MISSED' ? '✗' : '⏳';
+        var opacity = a.status === 'COMPLETED' ? '0.7' : a.status === 'MISSED' ? '0.6' : '1';
+        html += '<div style="background:' + typeColor + ';opacity:' + opacity + ';color:white;padding:3px 4px;border-radius:3px;font-size:9px;margin-bottom:2px;cursor:pointer;line-height:1.3" onclick="openAppointmentConfirmation(' + a.id + ')">' + statusIcon + ' ' + patName + '</div>';
       });
       html += '</td>';
     }
     html += '</tr>';
   });
-  
+
   html += '</tbody></table></div>';
   cal.innerHTML = html;
 }
@@ -1268,38 +1292,64 @@ function filterSessions() {
 
 function renderSessions() {
   var el = document.getElementById('sessions-list');
-  var search = document.getElementById('sessions-search').value.toLowerCase();
-  
+  if (!el) return;
+  var searchEl = document.getElementById('sessions-search');
+  var search = searchEl ? searchEl.value.toLowerCase() : '';
+
   var statusMap = {
     'completed': 'COMPLETED',
     'cancelled': 'CANCELLED',
     'missed': 'MISSED'
   };
-  
+
   var sessions = STATE.appointments.filter(function(a) {
     var status = a.status === 'COMPLETED' ? 'COMPLETED' : a.status === 'CANCELLED' ? 'CANCELLED' : 'MISSED';
     var matchStatus = status === statusMap[currentSessionFilter];
-    var matchSearch = !search || (a.patient && (a.patient.name.toLowerCase().includes(search) || (a.patient.cpf && a.patient.cpf.includes(search))));
+    var matchSearch = !search || (a.patient && (a.patient.name.toLowerCase().indexOf(search) > -1 || (a.patient.cpf && a.patient.cpf.indexOf(search) > -1)));
     return matchStatus && matchSearch;
   });
-  
+
   var html = '';
+  var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6'];
   sessions.forEach(function(a) {
     var patName = a.patient ? a.patient.name : 'Paciente';
+    var ini = patName.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+    var color = colors[patName.charCodeAt(0) % colors.length];
     var dt = new Date(a.date);
     var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + ' · ' + dt.toLocaleDateString('pt-BR');
+    var typeLabel = a.type === 'ONLINE' ? 'Online' : 'Presencial';
     var statusColor = a.status === 'COMPLETED' ? '#10b981' : a.status === 'CANCELLED' ? '#ef4444' : '#f59e0b';
     var statusText = a.status === 'COMPLETED' ? 'Concluída' : a.status === 'CANCELLED' ? 'Cancelada' : 'Falta';
-    
-    html += '<div style="background:white;border-left:3px solid ' + statusColor + ';border-radius:6px;padding:12px;display:flex;justify-content:space-between;align-items:center">';
-    html += '<div><div style="font-weight:700;font-size:14px">' + patName + '</div>';
-    html += '<div style="font-size:12px;color:#666;margin-top:4px">' + timeStr + ' · R$ ' + a.value.toFixed(2) + '</div>';
-    html += '<div style="font-size:11px;color:' + statusColor + ';margin-top:4px;font-weight:700">' + statusText + '</div></div>';
-    html += '</div>';
+    var waLink = a.patient && a.patient.phone ? 'https://wa.me/55' + a.patient.phone.replace(/\D/g,'') : '';
+
+    html += '<div style="background:white;border-left:3px solid ' + statusColor + ';border-radius:6px;padding:12px;margin-bottom:8px">';
+    html += '<div style="display:flex;align-items:center;gap:10px">';
+    html += '<div class="av avs" style="background:' + color + ';flex-shrink:0">' + ini + '</div>';
+    html += '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px">' + patName + '</div>';
+    html += '<div style="font-size:11px;color:#666;margin-top:2px">' + timeStr + ' · ' + typeLabel + ' · ' + a.duration + 'min</div>';
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:11px;color:' + statusColor + ';font-weight:700">' + statusText + '</span><span style="font-size:11px;color:#666">· R$ ' + a.value.toFixed(2) + '</span></div></div>';
+    html += '<div style="display:flex;gap:4px;flex-shrink:0">';
+    if (waLink) html += '<a href="' + waLink + '" target="_blank" style="text-decoration:none"><button class="btn" style="background:#25D366;color:white;border:none;padding:5px 8px;font-size:11px;border-radius:5px">📞</button></a>';
+    html += '<button class="btn bs" style="padding:5px 8px;font-size:11px" onclick="openAppointmentConfirmation(' + a.id + ')">✎</button>';
+    html += '<button class="btn br" style="padding:5px 8px;font-size:11px" onclick="deleteAppointment(' + a.id + ')">🗑️</button>';
+    html += '</div></div></div>';
   });
-  
+
   if (html === '') html = '<div style="text-align:center;color:#999;padding:20px">Nenhuma sessão encontrada</div>';
   el.innerHTML = html;
+}
+
+function deleteAppointment(id) {
+  if (!confirm('Tem certeza que deseja excluir esta sessão?')) return;
+  api('DELETE', '/appointments/' + id).then(function() {
+    STATE.appointments = STATE.appointments.filter(function(a){ return a.id !== id; });
+    renderSessions();
+    renderDashboardSessions();
+    toast('🗑️ Sessão excluída!');
+  }).catch(function(err) {
+    console.error('Erro ao excluir sessão:', err);
+    toast('✗ Erro ao excluir sessão');
+  });
 }
 
 // ===== APPOINTMENT CONFIRMATION FLOW =====
@@ -1374,7 +1424,7 @@ function openAdjustValueDialog(appointmentId) {
   modal.innerHTML += '<p style="margin:0 0 16px 0;color:#666;font-size:14px">Valor original: R$ ' + appt.value.toFixed(2) + '</p>';
   modal.innerHTML += '<input type="number" id="adjusted-value" value="' + appt.value + '" step="0.01" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-bottom:16px;box-sizing:border-box">';
   modal.innerHTML += '<div style="display:flex;gap:8px">';
-  modal.innerHTML += '<button class="btn bg2" style="flex:1" onclick="updateAppointmentStatus(' + appointmentId + ', \"MISSED\", parseFloat(document.getElementById(\"adjusted-value\").value));this.parentElement.parentElement.parentElement.remove();toast(\"⚠ Marcado como falta com valor ajustado\")">Confirmar</button>';
+  modal.innerHTML += '<button class="btn bg2" style="flex:1" onclick="var v=parseFloat(document.getElementById(\'adjusted-value\').value);if(isNaN(v)||v<0){toast(\'✗ Valor inválido\');return;}updateAppointmentStatus(' + appointmentId + ', \'MISSED\', v);this.parentElement.parentElement.parentElement.remove();toast(\'⚠ Marcado como falta com valor ajustado\')">Confirmar</button>';
   modal.innerHTML += '<button class="btn br" style="flex:1" onclick="this.parentElement.parentElement.parentElement.remove()">Cancelar</button>';
   modal.innerHTML += '</div>';
   modal.innerHTML += '</div>';
@@ -1598,7 +1648,7 @@ async function openPortal() {
 // NAVIGATION
 // ══════════════════════════════════════════════
 var sbOpen = false;
-var TITLES = {dashboard:'Dashboard',patients:'Pacientes',appointments:'Agenda',records:'Prontuários',financial:'Financeiro',reports:'Relatórios',settings:'Configurações'};
+var TITLES = {dashboard:'Dashboard',patients:'Pacientes',appointments:'Agenda',records:'Prontuários',financial:'Financeiro',reports:'Relatórios',sessions:'Sessões',settings:'Configurações'};
 function toggleSB() { sbOpen = !sbOpen; document.getElementById('sb').classList.toggle('open', sbOpen); }
 function swPTab(id, el) {
   document.querySelectorAll('.ptab').forEach(function(t){ t.classList.add('hidden'); });
@@ -1618,6 +1668,7 @@ function go(pg, el) {
   document.getElementById('content').scrollTop = 0;
   if (pg === 'records') populateRecordSelect();
   if (pg === 'settings') updateUserUI();
+  if (pg === 'sessions') renderSessions();
 }
 function setTab(el) { el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); }); el.classList.add('on'); }
 
@@ -1906,16 +1957,72 @@ async function viewPatient(id) {
     '<div class="ir"><div class="il">Parentesco</div><div class="iv">' + (p.emergRelation || '—') + '</div></div></div>' : '') +
     '<div style="display:flex;gap:8px;margin-top:14px">' +
     '<button class="btn bp" style="flex:1;font-size:11px" onclick="closeM(\'m-pat\');openM(\'m-appt\')">+ Agendar</button>' +
-    '<button class="btn bs" style="flex:1;font-size:11px" onclick="closeM(\'m-pat\');go(\'records\',null)">📋 Prontuário</button>' +
+    '<button class="btn bs" style="flex:1;font-size:11px" onclick="editPatient(\'' + p.id + '\')">✎ Editar</button>' +
     '</div>' +
+    '<button class="btn bs fw" style="margin-top:8px;font-size:11px" onclick="closeM(\'m-pat\');go(\'records\',null)">📋 Prontuário</button>' +
     '<button class="btn bs fw" style="margin-top:8px" onclick="closeM(\'m-pat\')">Fechar</button>';
   document.getElementById('m-pat-ct').innerHTML = h;
   openM('m-pat');
 }
 
-// ══════════════════════════════════════════════
-// APPOINTMENTS
-// ══════════════════════════════════════════════
+function editPatient(id) {
+  var p = STATE.patients.find(function(x){ return x.id === id; });
+  if (!p) return;
+  closeM('m-pat');
+  var modal = document.createElement('div');
+  modal.id = 'm-epat-dyn';
+  modal.className = 'ov';
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;z-index:9999';
+  var birthVal = p.birthDate ? new Date(p.birthDate).toISOString().split('T')[0] : '';
+  modal.innerHTML = '<div class="modal" onclick="event.stopPropagation()" style="max-height:93vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;background:white">' +
+    '<div class="mbar"></div>' +
+    '<div style="font-size:17px;font-weight:800;margin-bottom:4px">✎ Editar Paciente</div>' +
+    '<div style="font-size:12px;color:var(--mt);margin-bottom:14px">Atualize os dados do paciente</div>' +
+    '<div class="fr"><label class="lbl">Nome completo *</label><input class="inp" id="epat-name" value="' + (p.name||'').replace(/"/g,'&quot;') + '"/></div>' +
+    '<div style="display:flex;gap:8px"><div style="flex:1"><label class="lbl">CPF</label><input class="inp" id="epat-cpf" value="' + (p.cpf||'') + '"/></div><div style="flex:1"><label class="lbl">Telefone</label><input class="inp" id="epat-phone" value="' + (p.phone||'') + '"/></div></div>' +
+    '<div class="fr"><label class="lbl">E-mail</label><input class="inp" id="epat-email" value="' + (p.email||'') + '"/></div>' +
+    '<div style="display:flex;gap:8px"><div style="flex:1"><label class="lbl">Data de nascimento</label><input type="date" class="inp" id="epat-birth" value="' + birthVal + '"/></div><div style="flex:1"><label class="lbl">Status</label><select class="sel" id="epat-status"><option value="ACTIVE"' + (p.status==='ACTIVE'?' selected':'') + '>Ativo</option><option value="INACTIVE"' + (p.status==='INACTIVE'?' selected':'') + '>Inativo</option></select></div></div>' +
+    '<div style="display:flex;gap:8px;margin-top:4px"><div style="flex:2"><label class="lbl">Endereço</label><input class="inp" id="epat-address" value="' + (p.address||'').replace(/"/g,'&quot;') + '"/></div><div style="flex:1"><label class="lbl">Número</label><input class="inp" id="epat-address-num" value="' + (p.addressNum||'') + '"/></div></div>' +
+    '<div style="display:flex;gap:8px"><div style="flex:1"><label class="lbl">Complemento</label><input class="inp" id="epat-address-comp" value="' + (p.addressComp||'') + '"/></div><div style="flex:1"><label class="lbl">CEP</label><input class="inp" id="epat-address-cep" value="' + (p.addressCep||'') + '"/></div></div>' +
+    '<div id="epat-err" class="auth-err hidden" style="margin-top:8px"></div>' +
+    '<div style="display:flex;gap:8px;margin-top:16px">' +
+    '<button class="btn bs" style="flex:1" onclick="document.getElementById(\'m-epat-dyn\').remove()">Cancelar</button>' +
+    '<button class="btn bp" style="flex:1" id="epat-btn" onclick="saveEditPatient(\'' + id + '\')">Salvar</button>' +
+    '</div></div>';
+  document.body.appendChild(modal);
+  modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+}
+
+async function saveEditPatient(id) {
+  var btn = document.getElementById('epat-btn');
+  var errEl = document.getElementById('epat-err');
+  var name = document.getElementById('epat-name').value.trim();
+  if (!name) { errEl.textContent = 'Nome é obrigatório'; errEl.classList.remove('hidden'); return; }
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    var body = {
+      name: name,
+      cpf: document.getElementById('epat-cpf').value.trim(),
+      phone: document.getElementById('epat-phone').value.trim(),
+      email: document.getElementById('epat-email').value.trim(),
+      status: document.getElementById('epat-status').value,
+      address: document.getElementById('epat-address').value.trim(),
+      addressNum: document.getElementById('epat-address-num').value.trim(),
+      addressComp: document.getElementById('epat-address-comp').value.trim(),
+      addressCep: document.getElementById('epat-address-cep').value.trim(),
+    };
+    var birthVal = document.getElementById('epat-birth').value;
+    if (birthVal) body.birthDate = birthVal;
+    await api('PUT', '/patients/' + id, body);
+    await loadPatients();
+    var modal = document.getElementById('m-epat-dyn');
+    if (modal) modal.remove();
+    toast('✅ Paciente atualizado!');
+  } catch(e) {
+    errEl.textContent = e.message || 'Erro ao atualizar';
+    errEl.classList.remove('hidden');
+  } finally { btn.disabled = false; btn.textContent = 'Salvar'; }
+}
 async function loadAppointments(filter, el, specificDate) {
   if (el) setTab(el);
   try {
@@ -2713,6 +2820,7 @@ function renderDashboard() {
     '<div class="sc"><div style="font-size:22px;margin-bottom:6px">⏳</div><div style="font-size:18px;font-weight:800;color:var(--am)">—</div><div style="font-size:11px;color:var(--mt)">A receber</div></div>';
   renderDashboardToday();
   renderDashboardPatients();
+  renderDashboardSessions();
 }
 
 function renderDashboardToday() {
@@ -2752,9 +2860,44 @@ function renderDashboardPatients() {
   el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;font-weight:700">👥 Pacientes Recentes</div><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go(\'patients\',null)">Ver todos →</button></div>' + (rows || '<div style="text-align:center;padding:20px;color:var(--dm);font-size:13px">Nenhum paciente cadastrado</div>');
 }
 
-// ══════════════════════════════════════════════
-// SETTINGS
-// ══════════════════════════════════════════════
+function renderDashboardSessions() {
+  var el = document.getElementById('dash-sessions');
+  if (!el) return;
+  var completed = STATE.appointments.filter(function(a){ return a.status === 'COMPLETED' || a.status === 'CANCELLED' || a.status === 'MISSED'; });
+  var list = completed.slice(0, 9);
+  var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b','#8b5cf6'];
+  if (!list.length) {
+    el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;font-weight:700">🗂️ Minhas Sessões</div><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go(\'sessions\',null)">Ver todas →</button></div>' +
+      '<div style="text-align:center;padding:20px;color:var(--dm);font-size:13px">Nenhuma sessão encontrada</div>';
+    return;
+  }
+  var grid = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">';
+  list.forEach(function(a) {
+    var patName = a.patient ? a.patient.name : 'Paciente';
+    var ini = patName.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+    var color = colors[patName.charCodeAt(0) % colors.length];
+    var dt = new Date(a.date);
+    var timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+    var dateStr = dt.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'});
+    var typeLabel = a.type === 'ONLINE' ? 'Online' : 'Pres.';
+    var statusColor = a.status === 'COMPLETED' ? '#10b981' : a.status === 'CANCELLED' ? '#ef4444' : '#f59e0b';
+    var statusIcon = a.status === 'COMPLETED' ? '✓' : a.status === 'CANCELLED' ? '✕' : '⚠';
+    grid += '<div style="background:white;border:1px solid #e2e8f0;border-top:3px solid ' + statusColor + ';border-radius:8px;padding:10px;text-align:center">';
+    grid += '<div class="av" style="background:' + color + ';width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:12px;margin:0 auto 6px auto">' + ini + '</div>';
+    grid += '<div style="font-size:11px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + patName.split(' ')[0] + '</div>';
+    grid += '<div style="font-size:9px;color:#666;margin-top:2px">' + dateStr + ' ' + timeStr + '</div>';
+    grid += '<div style="font-size:9px;color:#666">' + typeLabel + ' · ' + a.duration + 'min</div>';
+    grid += '<div style="font-size:10px;font-weight:700;color:' + statusColor + ';margin-top:2px">' + statusIcon + ' R$ ' + a.value.toFixed(2) + '</div>';
+    grid += '<div style="display:flex;gap:3px;margin-top:6px;justify-content:center">';
+    var waLink = a.patient && a.patient.phone ? 'https://wa.me/55' + a.patient.phone.replace(/\D/g,'') : '';
+    if (waLink) grid += '<a href="' + waLink + '" target="_blank" style="text-decoration:none"><button class="btn" style="background:#25D366;color:white;border:none;padding:2px 5px;font-size:9px;border-radius:4px">📞</button></a>';
+    grid += '<button class="btn bs" style="padding:2px 5px;font-size:9px" onclick="openAppointmentConfirmation(' + a.id + ')">✎</button>';
+    grid += '<button class="btn br" style="padding:2px 5px;font-size:9px" onclick="deleteAppointment(' + a.id + ')">🗑️</button>';
+    grid += '</div></div>';
+  });
+  grid += '</div>';
+  el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;font-weight:700">🗂️ Minhas Sessões</div><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go(\'sessions\',null)">Ver todas →</button></div>' + grid;
+}
 async function saveProfile() {
   try {
     var data = await api('PUT', '/auth/profile', {
