@@ -191,6 +191,8 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
 #loading-screen{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000}
 .loading-logo{margin-bottom:20px;animation:pulse 1.5s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes mic-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.25)}}
+.voice-recording{animation:mic-pulse .8s ease-in-out infinite;display:inline-block}
 @media(min-width:768px){
   .sb{width:220px}.sb.open{width:220px}
   .hdr{padding:14px 24px}.content{padding:20px 24px}
@@ -3568,6 +3570,89 @@ async function savePassword() {
 // HELPERS
 // ══════════════════════════════════════════════
 var _tt = null;
+// ══════════════════════════════════════════════
+// VOICE INPUT (Ditar)
+// ══════════════════════════════════════════════
+var _voiceRec = null;
+var _voiceField = null;
+
+function toggleVoiceInput(fieldId) {
+  // Stop any active recognition first
+  if (_voiceRec && _voiceField) {
+    _voiceRec.stop();
+    return;
+  }
+
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    toast('❌ Seu navegador não suporta transcrição de voz');
+    return;
+  }
+
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1' && location.hostname !== '::1') {
+    toast('❌ Transcrição requer HTTPS');
+    return;
+  }
+
+  var textarea = document.getElementById(fieldId);
+  if (!textarea) return;
+
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+    stream.getTracks().forEach(function(t) { t.stop(); }); // permission obtained; SpeechRecognition manages its own stream
+
+    var rec = new SpeechRecognition();
+    rec.lang = 'pt-BR';
+    rec.continuous = true;
+    rec.interimResults = false;
+
+    _voiceRec   = rec;
+    _voiceField = fieldId;
+
+    var iconEl = document.getElementById(fieldId + '-voice-icon');
+    var textEl = document.getElementById(fieldId + '-voice-text');
+    if (iconEl) { iconEl.textContent = '🔴'; iconEl.classList.add('voice-recording'); }
+    if (textEl) textEl.textContent = 'Parar';
+
+    rec.onresult = function(e) {
+      var transcript = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        transcript += e.results[i][0].transcript;
+      }
+      var sep = textarea.value && !/^[.,!?;:]/.test(transcript) && !textarea.value.endsWith(' ') ? ' ' : '';
+      textarea.value += sep + transcript;
+    };
+
+    rec.onerror = function(e) {
+      var msgs = {
+        'not-allowed'    : '❌ Permissão de microfone negada',
+        'no-speech'      : '⚠️ Nenhum áudio detectado',
+        'network'        : '❌ Erro de rede na transcrição',
+        'audio-capture'  : '❌ Microfone não encontrado'
+      };
+      toast(msgs[e.error] || '❌ Erro na transcrição: ' + e.error);
+      stopVoiceUI(fieldId);
+    };
+
+    rec.onend = function() { stopVoiceUI(fieldId); };
+
+    rec.start();
+  }).catch(function(err) {
+    var msg = err.name === 'NotAllowedError'
+      ? '❌ Permissão de microfone negada. Verifique as configurações do navegador.'
+      : '❌ Não foi possível acessar o microfone: ' + err.message;
+    toast(msg);
+  });
+}
+
+function stopVoiceUI(fieldId) {
+  _voiceRec   = null;
+  _voiceField = null;
+  var iconEl = document.getElementById(fieldId + '-voice-icon');
+  var textEl = document.getElementById(fieldId + '-voice-text');
+  if (iconEl) { iconEl.textContent = '🎙️'; iconEl.classList.remove('voice-recording'); }
+  if (textEl) textEl.textContent = 'Ditar';
+}
+
 function toast(msg) {
   var el = document.getElementById('toast');
   el.textContent = msg;
