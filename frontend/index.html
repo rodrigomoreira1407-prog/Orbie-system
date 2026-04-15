@@ -2184,9 +2184,7 @@ async function loadApp() {
     
     STATE.user = await api('GET', '/auth/me');
     updateUserUI();
-    var planIsNone = STATE.user.plan === 'NONE';
-    var planExpired = STATE.user.planExpiresAt && new Date(STATE.user.planExpiresAt) < Date.now();
-    if (planIsNone || planExpired) {
+    if (STATE.user.plan === 'NONE') {
       showScreen('plans');
       return;
     }
