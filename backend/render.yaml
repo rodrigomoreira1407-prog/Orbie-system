@@ -2,12 +2,8 @@ services:
   - type: web
     name: orbie-api
     env: node
-    rootDir: backend
-    plan: starter
-    nodeVersion: 20
-    buildCommand: npm install && npx prisma generate
-    startCommand: npx prisma db push && npm start
-    healthCheckPath: /api/health
+    buildCommand: npm install && npx prisma generate && npx prisma db push
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production

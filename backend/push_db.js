@@ -1,9 +1,8 @@
 const { exec } = require('child_process');
-const path = require('path');
 
 console.log("Iniciando Prisma db push...");
 const child = exec('npx prisma db push', {
-  cwd: __dirname,
+  cwd: '/home/ubuntu/Orbie-system/backend',
   env: { ...process.env, DEBUG: 'prisma:*' }
 });
 

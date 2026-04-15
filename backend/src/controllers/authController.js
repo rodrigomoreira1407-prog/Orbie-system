@@ -1,8 +1,10 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuid } = require('uuid');
-const prisma = require('../lib/prisma');
+const { PrismaClient } = require('@prisma/client');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
+
+const prisma = new PrismaClient();
 
 function generateToken(userId) {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
@@ -155,11 +157,7 @@ async function forgotPassword(req, res) {
       where: { id: user.id },
       data: { resetPasswordToken: token, resetPasswordExpires: expires },
     });
-    try {
-      await sendPasswordResetEmail(user.email, user.name, token);
-    } catch (emailErr) {
-      console.error('Erro ao enviar email de recuperacao:', emailErr.message);
-    }
+    await sendPasswordResetEmail(user.email, user.name, token);
     res.json({ message: 'Email de recuperacao enviado!' });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao enviar email de recuperacao' });
