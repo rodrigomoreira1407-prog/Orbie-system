@@ -1,0 +1,8 @@
+{
+  "name": "orbie-system",
+  "version": "1.0.0",
+  "description": "Orbie - Sistema de Gestão Clínica",
+  "engines": {
+    "node": ">=18"
+  }
+}
