@@ -2755,7 +2755,7 @@ async function loadAppointments(filter, el, specificDate) {
     renderWeeklyGrid(STATE.weekGridDate || new Date());
     renderDashboardToday();
     updateProgressAndNext();
-  } catch(e) { toast('Erro ao carregar consultas'); }
+  } catch(e) { toast((e.data && e.data.detail) ? 'Erro ao carregar consultas: ' + e.data.detail : 'Erro ao carregar consultas'); }
 }
 
 function updateProgressAndNext() {
@@ -2895,7 +2895,7 @@ async function createAppointment() {
     renderDashboardSessions();
     toast('✅ Consulta agendada!');
   } catch(e) {
-    errEl.textContent = e.message || 'Erro ao agendar';
+    errEl.textContent = (e.data && e.data.detail) ? e.data.detail : (e.message || 'Erro ao agendar');
     errEl.classList.remove('hidden');
   } finally { btn.disabled = false; btn.textContent = 'Agendar'; }
 }

@@ -34,22 +34,39 @@ async function list(req, res) {
             id: true, 
             name: true, 
             type: true, 
-            phone: true,
-            _count: { select: { records: true } } 
+            phone: true
           } 
         } 
       },
     });
     res.json(appointments);
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao listar consultas' });
+    console.error('Erro ao listar consultas:', err);
+    res.status(500).json({ error: 'Erro ao listar consultas', detail: err.message });
   }
 }
 
 async function create(req, res) {
   try {
-    const { id: _id, userId: _uid, createdAt: _ca, updatedAt: _ua, ...safeBody } = req.body;
-    const data = { ...safeBody, userId: req.user.id };
+    const body = req.body || {};
+    if (!body.patientId || !body.date) {
+      return res.status(400).json({ error: 'patientId e date são obrigatórios' });
+    }
+    const parsedDate = new Date(body.date);
+    if (isNaN(parsedDate.getTime())) {
+      return res.status(400).json({ error: 'Data inválida' });
+    }
+    const data = {
+      patientId: body.patientId,
+      date: parsedDate,
+      duration: parseInt(body.duration) || 50,
+      value: parseFloat(body.value) || 0,
+      type: body.type || 'ONLINE',
+      title: body.title || 'Consulta',
+      notes: body.notes ?? null,
+      status: 'SCHEDULED',
+      userId: req.user.id,
+    };
     if (data.type === 'ONLINE' && !data.meetLink) {
       data.meetLink = generateMeetLink();
     }
