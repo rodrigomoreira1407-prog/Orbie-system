@@ -43,49 +43,19 @@ async function list(req, res) {
     });
     res.json(appointments);
   } catch (err) {
-    console.error('Erro ao listar consultas:', err);
     res.status(500).json({ error: 'Erro ao listar consultas' });
   }
 }
 
 async function create(req, res) {
   try {
-    const {
-      patientId, date, duration, value, type, title,
-      paymentType, insurancePlanId, insuranceValue, meetLink, notes, status,
-    } = req.body;
-
-    if (!patientId || !date) {
-      return res.status(400).json({ error: 'Paciente e data são obrigatórios' });
+    const data = { ...req.body, userId: req.user.id };
+    if (data.type === 'ONLINE' && !data.meetLink) {
+      data.meetLink = generateMeetLink();
     }
-
-    const isConvenio = paymentType === 'CONVENIO';
-
-    const data = {
-      userId: req.user.id,
-      patientId,
-      date: new Date(date),
-      duration: parseInt(duration) || 50,
-      value: parseFloat(value) || 0,
-      type: type || 'ONLINE',
-      title: title || 'Consulta',
-      status: status || 'SCHEDULED',
-      paymentType: paymentType || 'PARTICULAR',
-      insurancePlanId: isConvenio ? (insurancePlanId ?? null) : null,
-      insuranceValue: isConvenio ? (isNaN(parseFloat(insuranceValue)) ? 0 : parseFloat(insuranceValue)) : null,
-      notes: notes || null,
-    };
-
-    if (data.type === 'ONLINE') {
-      data.meetLink = meetLink || generateMeetLink();
-    } else if (meetLink) {
-      data.meetLink = meetLink;
-    }
-
     const appt = await prisma.appointment.create({ data, include: { patient: { select: { id: true, name: true } } } });
     res.status(201).json(appt);
   } catch (err) {
-    console.error('Erro ao criar consulta:', err);
     res.status(500).json({ error: 'Erro ao criar consulta' });
   }
 }
@@ -94,88 +64,33 @@ async function update(req, res) {
   try {
     const exists = await prisma.appointment.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!exists) return res.status(404).json({ error: 'Consulta nao encontrada' });
-
-    const updateData = { ...req.body };
-    if ('insurancePlanId' in updateData && !updateData.insurancePlanId) updateData.insurancePlanId = null;
-    const appt = await prisma.appointment.update({ where: { id: req.params.id }, data: updateData });
-
-    const isConvenio = appt.paymentType === 'CONVENIO';
+    
+    const appt = await prisma.appointment.update({ where: { id: req.params.id }, data: req.body });
+    
     const finalizingStatus = ['COMPLETED', 'MISSED'];
     const isNewFinalStatus = finalizingStatus.includes(req.body.status) && exists.status !== req.body.status;
-
     if (isNewFinalStatus && appt.value > 0) {
       try {
         const isMissed = req.body.status === 'MISSED';
-        let financialStatus;
-        if (isMissed) {
-          financialStatus = 'PENDING';
-        } else if (isConvenio) {
-          financialStatus = 'PENDING'; // awaiting insurance transfer
-        } else {
-          financialStatus = 'PAID';
-        }
-        const method = isConvenio ? 'Convênio' : 'Consulta';
-        const financialValue = isConvenio && appt.insuranceValue != null ? appt.insuranceValue : appt.value;
-        const prefix = isMissed ? 'Falta' : 'Consulta';
         await prisma.financial.create({
           data: {
             userId: req.user.id,
             patientId: appt.patientId,
             type: 'INCOME',
-            description: `${prefix} - ${appt.title || 'Sessao'}`,
-            value: financialValue,
+            description: `${isMissed ? 'Falta' : 'Consulta'} - ${appt.title || 'Sessao'}`,
+            value: appt.value,
             date: new Date(),
-            status: financialStatus,
-            method,
-            appointmentId: appt.id,
+            status: isMissed ? 'PENDING' : 'PAID',
+            method: 'Consulta'
           }
         });
       } catch (finErr) {
         console.error('Erro ao criar lancamento financeiro:', finErr);
       }
     }
-
-    // When a CONVENIO appointment is marked as RECEIVED, set the linked PENDING financial to PAID
-    if (req.body.status === 'RECEIVED' && exists.status !== 'RECEIVED') {
-      try {
-        const pendingEntry = await prisma.financial.findFirst({
-          where: {
-            userId: req.user.id,
-            appointmentId: appt.id,
-            status: 'PENDING',
-            method: 'Convênio',
-          }
-        });
-        if (pendingEntry) {
-          await prisma.financial.update({
-            where: { id: pendingEntry.id },
-            data: { status: 'PAID' }
-          });
-        } else {
-          // Create a new entry if none found (edge case)
-          const financialValue = appt.insuranceValue != null ? appt.insuranceValue : appt.value;
-          await prisma.financial.create({
-            data: {
-              userId: req.user.id,
-              patientId: appt.patientId,
-              type: 'INCOME',
-              description: `Repasse recebido - ${appt.title || 'Sessao'}`,
-              value: financialValue,
-              date: new Date(),
-              status: 'PAID',
-              method: 'Convênio',
-              appointmentId: appt.id,
-            }
-          });
-        }
-      } catch (finErr) {
-        console.error('Erro ao registrar recebimento do convênio:', finErr);
-      }
-    }
-
+    
     res.json(appt);
   } catch (err) {
-    console.error('Erro ao atualizar consulta:', err);
     res.status(500).json({ error: 'Erro ao atualizar consulta' });
   }
 }
@@ -187,7 +102,6 @@ async function remove(req, res) {
     await prisma.appointment.delete({ where: { id: req.params.id } });
     res.json({ message: 'Consulta removida' });
   } catch (err) {
-    console.error('Erro ao remover consulta:', err);
     res.status(500).json({ error: 'Erro ao remover consulta' });
   }
 }
