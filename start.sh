@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+cd backend
+npm install
+npx prisma generate
+npx prisma db push
+node src/server.js
