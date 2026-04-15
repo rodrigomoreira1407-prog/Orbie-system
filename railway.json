@@ -1,10 +1,10 @@
 {
   "$schema": "https://schema.railway.app/railway-schema.json",
   "build": {
-    "buildCommand": "cd backend && npm install && npx prisma generate && npx prisma db push"
+    "buildCommand": "cd backend && npm install && npx prisma generate"
   },
   "deploy": {
-    "startCommand": "cd backend && node src/server.js",
+    "startCommand": "cd backend && npx prisma db push && node src/server.js",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
