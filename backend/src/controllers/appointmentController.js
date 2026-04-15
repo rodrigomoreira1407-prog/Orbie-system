@@ -56,7 +56,8 @@ async function create(req, res) {
     const appt = await prisma.appointment.create({ data, include: { patient: { select: { id: true, name: true } } } });
     res.status(201).json(appt);
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao criar consulta' });
+    console.error('Erro ao criar consulta:', err);
+    res.status(500).json({ error: 'Erro ao criar consulta', detail: err.message });
   }
 }
 

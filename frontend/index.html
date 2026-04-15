@@ -1213,7 +1213,7 @@ async function api(method, path, body) {
   if (body) opts.body = JSON.stringify(body);
   var res = await fetch(API + path, opts);
   var data = await res.json().catch(function() { return {}; });
-  if (!res.ok) throw { status: res.status, message: data.error || 'Erro desconhecido', data: data };
+  if (!res.ok) throw { status: res.status, message: (data.error || 'Erro desconhecido') + (data.detail ? ': ' + data.detail : ''), data: data };
   return data;
 }
 
