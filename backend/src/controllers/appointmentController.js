@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 function generateMeetLink() {
   const chars = 'abcdefghijklmnopqrstuvwxyz';
@@ -49,14 +48,16 @@ async function list(req, res) {
 
 async function create(req, res) {
   try {
-    const data = { ...req.body, userId: req.user.id };
+    const { id: _id, userId: _uid, createdAt: _ca, updatedAt: _ua, ...safeBody } = req.body;
+    const data = { ...safeBody, userId: req.user.id };
     if (data.type === 'ONLINE' && !data.meetLink) {
       data.meetLink = generateMeetLink();
     }
     const appt = await prisma.appointment.create({ data, include: { patient: { select: { id: true, name: true } } } });
     res.status(201).json(appt);
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao criar consulta' });
+    console.error('Erro ao criar consulta:', err);
+    res.status(500).json({ error: 'Erro ao criar consulta', detail: err.message });
   }
 }
 
@@ -65,19 +66,23 @@ async function update(req, res) {
     const exists = await prisma.appointment.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!exists) return res.status(404).json({ error: 'Consulta nao encontrada' });
     
-    const appt = await prisma.appointment.update({ where: { id: req.params.id }, data: req.body });
+    const { id: _id, userId: _uid, patientId: _pid, createdAt: _ca, updatedAt: _ua, ...safeData } = req.body;
+    const appt = await prisma.appointment.update({ where: { id: req.params.id }, data: safeData });
     
-    if (req.body.status === 'COMPLETED' && exists.status !== 'COMPLETED' && appt.value > 0) {
+    const finalizingStatus = ['COMPLETED', 'MISSED'];
+    const isNewFinalStatus = finalizingStatus.includes(safeData.status) && exists.status !== safeData.status;
+    if (isNewFinalStatus && appt.value > 0) {
       try {
+        const isMissed = safeData.status === 'MISSED';
         await prisma.financial.create({
           data: {
             userId: req.user.id,
             patientId: appt.patientId,
             type: 'INCOME',
-            description: `Consulta - ${appt.title || 'Sessao'}`,
+            description: `${isMissed ? 'Falta' : 'Consulta'} - ${appt.title || 'Sessao'}`,
             value: appt.value,
             date: new Date(),
-            status: 'PAID',
+            status: isMissed ? 'PENDING' : 'PAID',
             method: 'Consulta'
           }
         });
@@ -88,6 +93,7 @@ async function update(req, res) {
     
     res.json(appt);
   } catch (err) {
+    console.error('Erro ao atualizar consulta:', err);
     res.status(500).json({ error: 'Erro ao atualizar consulta' });
   }
 }
