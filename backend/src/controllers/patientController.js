@@ -1,15 +1,5 @@
-const prisma = require('../lib/prisma');
-
-function normalizeBirthDate(data) {
-  if (data.birthDate && typeof data.birthDate === 'string') {
-    const d = new Date(data.birthDate);
-    if (!isNaN(d.getTime())) {
-      data.birthDate = d.toISOString();
-    } else {
-      delete data.birthDate;
-    }
-  }
-}
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 async function list(req, res) {
   try {
@@ -59,10 +49,17 @@ async function get(req, res) {
 
 async function create(req, res) {
   try {
-    const { id: _id, userId: _uid, createdAt: _ca, updatedAt: _ua, ...safeBody } = req.body;
-    const data = { ...safeBody, userId: req.user.id };
+    const data = { ...req.body, userId: req.user.id };
     
-    normalizeBirthDate(data);
+    // Garantir que birthDate seja um objeto Date válido se for enviado
+    if (data.birthDate && typeof data.birthDate === 'string') {
+      const d = new Date(data.birthDate);
+      if (!isNaN(d.getTime())) {
+        data.birthDate = d.toISOString();
+      } else {
+        delete data.birthDate; // Se a data for inválida, remove para evitar erro do Prisma
+      }
+    }
 
     const patient = await prisma.patient.create({ data });
     res.status(201).json(patient);
@@ -76,14 +73,9 @@ async function update(req, res) {
   try {
     const exists = await prisma.patient.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!exists) return res.status(404).json({ error: 'Paciente nao encontrado' });
-
-    const { id: _id, userId: _uid, createdAt: _ca, updatedAt: _ua, ...safeData } = req.body;
-
-    normalizeBirthDate(safeData);
-
     const patient = await prisma.patient.update({
       where: { id: req.params.id },
-      data: safeData,
+      data: req.body,
     });
     res.json(patient);
   } catch (err) {
