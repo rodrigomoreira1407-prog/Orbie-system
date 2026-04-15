@@ -388,7 +388,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
       <div class="ni" onclick="go('records',this)"><span class="ni-ico">📋</span><span>Prontuários</span></div>
       <div class="ni" onclick="go('financial',this)"><span class="ni-ico">💰</span><span>Financeiro</span></div>
       <div class="ni" onclick="go('reports',this)"><span class="ni-ico">📊</span><span>Relatórios</span></div>
-      <div class="ni" onclick="go('convenios',this)"><span class="ni-ico">🏥</span><span>Convênios</span></div>
+
       <div class="ni" onclick="go('settings',this)"><span class="ni-ico">⚙️</span><span>Config</span></div>
     </div>
     <div class="sb-foot">
@@ -816,10 +816,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <div class="fg"><div><label class="lbl">Duração (min)</label><input type="number" class="inp" id="appt-dur" value="50" min="15" step="5"/></div><div><label class="lbl">Valor (R$)</label><input type="number" class="inp" id="appt-val" value="150" min="0" step="10"/></div></div>
     <div class="fr"><label class="lbl">Tipo</label><select class="sel" id="appt-type" onchange="updateMeetHintVisibility()"><option value="ONLINE">🎥 Online — Meet automático</option><option value="PRESENTIAL">🏢 Presencial</option><option value="EVALUATION">🟣 Avaliação</option></select></div>
     <div class="fr"><label class="lbl">Tipo de sessão</label><input class="inp" id="appt-title" value="Consulta" placeholder="TCC, Avaliação..."/></div>
-    <div class="fr"><label class="lbl">Tipo de Pagamento</label><select class="sel" id="appt-payment-type" onchange="toggleInsuranceFields()"><option value="PARTICULAR">💳 Particular</option><option value="CONVENIO">🏥 Convênio</option></select></div>
-    <div id="appt-insurance-fields" style="display:none">
-      <div class="fg"><div style="flex:2"><label class="lbl">Plano de Convênio</label><select class="sel" id="appt-insurance-plan" onchange="fillInsuranceValue()"><option value="">Selecione o plano...</option></select></div><div style="flex:1"><label class="lbl">Repasse (R$)</label><input type="number" class="inp" id="appt-insurance-value" value="0" min="0" step="0.01"/></div></div>
-    </div>
+
     <div id="meet-hint" class="al ali" style="margin:4px 0 14px"><span>🎥</span><span style="font-size:11px;color:#1d4ed8">Link Meet gerado automaticamente para consultas online</span></div>
     <div id="appt-err" class="auth-err hidden"></div>
     <div style="display:flex;gap:8px">
@@ -2457,10 +2454,6 @@ function setFinTab(tab, el) {
 function openM(id) {
   document.getElementById(id).classList.remove('hidden');
   if (id === 'm-appt') {
-    // Reset payment type to PARTICULAR and hide insurance fields
-    var pt = document.getElementById('appt-payment-type');
-    if (pt) { pt.value = 'PARTICULAR'; toggleInsuranceFields(); }
-    populateInsurancePlanSelect();
   }
 }
 function closeM(id) { document.getElementById(id).classList.add('hidden'); }
@@ -2967,9 +2960,6 @@ async function createAppointment() {
   btn.disabled = true; btn.textContent = 'Agendando...';
   try {
     var dt = new Date(date + 'T' + time + ':00');
-    var paymentType = document.getElementById('appt-payment-type').value || 'PARTICULAR';
-    var insurancePlanId = paymentType === 'CONVENIO' ? (document.getElementById('appt-insurance-plan').value || null) : null;
-    var insuranceValue = paymentType === 'CONVENIO' ? (parseFloat(document.getElementById('appt-insurance-value').value) || 0) : null;
     await api('POST', '/appointments', {
       patientId: patId,
       date: dt.toISOString(),
@@ -2977,9 +2967,6 @@ async function createAppointment() {
       value: parseFloat(document.getElementById('appt-val').value) || 0,
       type: document.getElementById('appt-type').value,
       title: document.getElementById('appt-title').value || 'Consulta',
-      paymentType: paymentType,
-      insurancePlanId: insurancePlanId,
-      insuranceValue: insuranceValue,
     });
 
     // Reload appointments and jump the grid to the week of the new appointment
