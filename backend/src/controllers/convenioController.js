@@ -36,8 +36,10 @@ async function get(req, res) {
 
 async function create(req, res) {
   try {
-    const { id: _id, userId: _uid, createdAt: _ca, updatedAt: _ua, ...safeBody } = req.body;
-    const data = { ...safeBody, userId: req.user.id };
+    const { name, cnpj, phone, email, contactName, address, notes, active } = req.body;
+    if (!name) return res.status(400).json({ error: 'Nome é obrigatório' });
+    const data = { name, cnpj, phone, email, contactName, address, notes, userId: req.user.id };
+    if (active !== undefined) data.active = active;
     const convenio = await prisma.convenio.create({ data });
     res.status(201).json(convenio);
   } catch (err) {
@@ -51,10 +53,19 @@ async function update(req, res) {
       where: { id: req.params.id, userId: req.user.id },
     });
     if (!existing) return res.status(404).json({ error: 'Convênio não encontrado' });
-    const { id: _id, userId: _uid, createdAt: _ca, updatedAt: _ua, ...safeBody } = req.body;
+    const { name, cnpj, phone, email, contactName, address, notes, active } = req.body;
+    const data = {};
+    if (name !== undefined) data.name = name;
+    if (cnpj !== undefined) data.cnpj = cnpj;
+    if (phone !== undefined) data.phone = phone;
+    if (email !== undefined) data.email = email;
+    if (contactName !== undefined) data.contactName = contactName;
+    if (address !== undefined) data.address = address;
+    if (notes !== undefined) data.notes = notes;
+    if (active !== undefined) data.active = active;
     const convenio = await prisma.convenio.update({
       where: { id: req.params.id },
-      data: safeBody,
+      data,
     });
     res.json(convenio);
   } catch (err) {
