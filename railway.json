@@ -4,8 +4,8 @@
     "buildCommand": "cd backend && npm install && DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder npx prisma generate"
   },
   "deploy": {
-    "startCommand": "cd backend && npx prisma db push && node src/server.js",
+    "startCommand": "cd backend && sh scripts/start.sh",
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
+    "restartPolicyMaxRetries": 3
   }
 }
