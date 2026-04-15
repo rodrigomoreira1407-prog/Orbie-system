@@ -48,34 +48,7 @@ async function list(req, res) {
 
 async function create(req, res) {
   try {
-    const body = req.body || {};
-    if (!body.patientId || !body.date) {
-      return res.status(400).json({ error: 'patientId e date são obrigatórios' });
-    }
-    const parsedDate = new Date(body.date);
-    if (isNaN(parsedDate.getTime())) {
-      return res.status(400).json({ error: 'Data inválida' });
-    }
-
-    // Verify the patient belongs to the authenticated user
-    const patient = await prisma.patient.findFirst({
-      where: { id: body.patientId, userId: req.user.id },
-    });
-    if (!patient) {
-      return res.status(404).json({ error: 'Paciente não encontrado' });
-    }
-
-    const data = {
-      patientId: body.patientId,
-      date: parsedDate,
-      duration: parseInt(body.duration) || 50,
-      value: parseFloat(body.value) || 0,
-      type: body.type || 'ONLINE',
-      title: body.title || 'Consulta',
-      notes: body.notes ?? null,
-      status: 'SCHEDULED',
-      userId: req.user.id,
-    };
+    const data = { ...req.body, userId: req.user.id };
     if (data.type === 'ONLINE' && !data.meetLink) {
       data.meetLink = generateMeetLink();
     }
