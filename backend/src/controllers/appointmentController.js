@@ -67,17 +67,20 @@ async function update(req, res) {
     
     const appt = await prisma.appointment.update({ where: { id: req.params.id }, data: req.body });
     
-    if (req.body.status === 'COMPLETED' && exists.status !== 'COMPLETED' && appt.value > 0) {
+    const finalizingStatus = ['COMPLETED', 'MISSED'];
+    const isNewFinalStatus = finalizingStatus.includes(req.body.status) && exists.status !== req.body.status;
+    if (isNewFinalStatus && appt.value > 0) {
       try {
+        const isMissed = req.body.status === 'MISSED';
         await prisma.financial.create({
           data: {
             userId: req.user.id,
             patientId: appt.patientId,
             type: 'INCOME',
-            description: `Consulta - ${appt.title || 'Sessao'}`,
+            description: `${isMissed ? 'Falta' : 'Consulta'} - ${appt.title || 'Sessao'}`,
             value: appt.value,
             date: new Date(),
-            status: 'PAID',
+            status: isMissed ? 'PENDING' : 'PAID',
             method: 'Consulta'
           }
         });
