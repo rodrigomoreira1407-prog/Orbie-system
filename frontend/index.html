@@ -715,8 +715,11 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
 
       <!-- Status tabs -->
       <div style="background:white;border-radius:11px;border:1px solid var(--bd);margin-bottom:12px;display:flex;overflow:hidden">
-        <button id="sessions-tab-scheduled" onclick="switchSessionTab('scheduled')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:#f0f4ff;color:#3b82f6;border-right:1px solid var(--bd)">📅 Agendadas</button>
-        <button id="sessions-tab-all" onclick="switchSessionTab('all')" style="flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b">Todos</button>
+        <button id="sessions-tab-all" onclick="switchSessionTab('all')" style="flex:1;padding:10px 4px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">Todos</button>
+        <button id="sessions-tab-completed" onclick="switchSessionTab('completed')" style="flex:1;padding:10px 4px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">✅ Concluídas</button>
+        <button id="sessions-tab-missed" onclick="switchSessionTab('missed')" style="flex:1;padding:10px 4px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">⚠️ Faltas</button>
+        <button id="sessions-tab-cancelled" onclick="switchSessionTab('cancelled')" style="flex:1;padding:10px 4px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:white;color:#64748b;border-right:1px solid var(--bd)">❌ Canceladas</button>
+        <button id="sessions-tab-scheduled" onclick="switchSessionTab('scheduled')" style="flex:1;padding:10px 4px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:#f0f4ff;color:#3b82f6">📅 Agendadas</button>
       </div>
 
       <!-- List -->
@@ -1817,15 +1820,28 @@ var currentSessionFilter = 'scheduled';
 
 function switchSessionTab(tab) {
   currentSessionFilter = tab;
-  var tabs   = { scheduled: 'sessions-tab-scheduled', all: 'sessions-tab-all' };
-  var colors = { scheduled: '#3b82f6', all: '#3b82f6' };
+  var tabs = {
+    all:       'sessions-tab-all',
+    completed: 'sessions-tab-completed',
+    missed:    'sessions-tab-missed',
+    cancelled: 'sessions-tab-cancelled',
+    scheduled: 'sessions-tab-scheduled'
+  };
+  var activeBg = {
+    all:       '#f8fafc', completed: '#f0fdf4', missed: '#fffbeb',
+    cancelled: '#fee2e2', scheduled: '#f0f4ff'
+  };
+  var activeColor = {
+    all:       '#475569', completed: '#10b981', missed: '#f59e0b',
+    cancelled: '#ef4444', scheduled: '#3b82f6'
+  };
   Object.keys(tabs).forEach(function(t) {
     var el = document.getElementById(tabs[t]);
     if (!el) return;
     var isActive = t === tab;
-    el.style.background = isActive ? '#f0f4ff' : 'white';
-    el.style.color      = isActive ? colors[t] : '#64748b';
-    el.style.fontWeight = isActive ? '700'      : '600';
+    el.style.background = isActive ? activeBg[t]    : 'white';
+    el.style.color      = isActive ? activeColor[t] : '#64748b';
+    el.style.fontWeight = isActive ? '700'           : '600';
   });
   renderSessions();
 }
@@ -1912,9 +1928,16 @@ function renderSessions() {
 
   var hasActiveFilter = search || dateFrom || dateTo;
   if (!sessions.length) {
+    var emptyMsgs = {
+      all:       'Nenhuma sess\u00e3o encontrada',
+      completed: 'Nenhuma sess\u00e3o conclu\u00edda encontrada',
+      missed:    'Nenhuma falta registrada',
+      cancelled: 'Nenhuma sess\u00e3o cancelada encontrada',
+      scheduled: 'Nenhuma sess\u00e3o agendada encontrada'
+    };
     var msg = hasActiveFilter
       ? 'Nenhum registro encontrado para os filtros selecionados.'
-      : isScheduledTab ? 'Nenhuma sess\u00e3o agendada encontrada' : 'Nenhuma sess\u00e3o encontrada';
+      : (emptyMsgs[currentSessionFilter] || 'Nenhuma sess\u00e3o encontrada');
     el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:28px;font-size:13px">' + msg + '</div>';
     return;
   }
