@@ -19,14 +19,19 @@ const auth = async (req, res, next) => {
 };
 
 const requirePlan = (plans) => async (req, res, next) => {
-  const user = req.user;
-  if (!plans.includes(user.plan)) {
-    return res.status(403).json({ error: 'Plano insuficiente', upgrade: true });
+  try {
+    const user = req.user;
+    if (!user || !plans.includes(user.plan)) {
+      return res.status(403).json({ error: 'Plano insuficiente', upgrade: true });
+    }
+    if (user.planExpiresAt && new Date(user.planExpiresAt) < new Date()) {
+      return res.status(403).json({ error: 'Assinatura expirada', expired: true });
+    }
+    next();
+  } catch (err) {
+    console.error('requirePlan error:', err);
+    return res.status(500).json({ error: 'Erro interno ao verificar plano', detail: err?.message || String(err) });
   }
-  if (user.planExpiresAt && new Date(user.planExpiresAt) < new Date()) {
-    return res.status(403).json({ error: 'Assinatura expirada', expired: true });
-  }
-  next();
 };
 
 module.exports = { auth, requirePlan };
