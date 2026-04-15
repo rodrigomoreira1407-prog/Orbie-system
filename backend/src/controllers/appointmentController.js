@@ -42,7 +42,7 @@ async function list(req, res) {
     res.json(appointments);
   } catch (err) {
     console.error('Erro ao listar consultas:', err);
-    res.status(500).json({ error: 'Erro ao listar consultas', detail: err.message });
+    res.status(500).json({ error: 'Erro ao listar consultas', detail: err?.message || String(err) });
   }
 }
 
@@ -56,6 +56,15 @@ async function create(req, res) {
     if (isNaN(parsedDate.getTime())) {
       return res.status(400).json({ error: 'Data inválida' });
     }
+
+    // Verify the patient belongs to the authenticated user
+    const patient = await prisma.patient.findFirst({
+      where: { id: body.patientId, userId: req.user.id },
+    });
+    if (!patient) {
+      return res.status(404).json({ error: 'Paciente não encontrado' });
+    }
+
     const data = {
       patientId: body.patientId,
       date: parsedDate,
@@ -67,14 +76,14 @@ async function create(req, res) {
       status: 'SCHEDULED',
       userId: req.user.id,
     };
-    if (data.type === 'ONLINE' && !data.meetLink) {
+    if (data.type === 'ONLINE') {
       data.meetLink = generateMeetLink();
     }
     const appt = await prisma.appointment.create({ data, include: { patient: { select: { id: true, name: true } } } });
     res.status(201).json(appt);
   } catch (err) {
     console.error('Erro ao criar consulta:', err);
-    res.status(500).json({ error: 'Erro ao criar consulta', detail: err.message });
+    res.status(500).json({ error: 'Erro ao criar consulta', detail: err?.message || String(err) });
   }
 }
 

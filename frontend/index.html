@@ -2184,7 +2184,9 @@ async function loadApp() {
     
     STATE.user = await api('GET', '/auth/me');
     updateUserUI();
-    if (STATE.user.plan === 'NONE') {
+    var planIsNone = STATE.user.plan === 'NONE';
+    var planExpired = STATE.user.planExpiresAt && new Date(STATE.user.planExpiresAt) < new Date();
+    if (planIsNone || planExpired) {
       showScreen('plans');
       return;
     }
@@ -2901,12 +2903,18 @@ async function createAppointment() {
       title: document.getElementById('appt-title').value || 'Consulta',
     });
 
-    // Reload appointments and jump the grid to the week of the new appointment
-    STATE.appointments = await api('GET', '/appointments');
+    closeM('m-appt');
+    toast('✅ Consulta agendada!');
+
+    // Reload appointments in the background and update the grid
+    try {
+      STATE.appointments = await api('GET', '/appointments');
+    } catch(loadErr) {
+      console.warn('Aviso: não foi possível recarregar consultas:', loadErr);
+    }
 
     // Navigate to the Agenda page so the user sees the grid
     go('appointments', null);
-    closeM('m-appt');
 
     // Point the weekly grid at the week containing the new appointment
     STATE.weekGridDate = dt;
@@ -2923,9 +2931,9 @@ async function createAppointment() {
 
     renderDashboardToday();
     renderDashboardSessions();
-    toast('✅ Consulta agendada!');
   } catch(e) {
-    errEl.textContent = (e.data && e.data.detail) ? e.data.detail : (e.message || 'Erro ao agendar');
+    var msg = (e.data && (e.data.detail || e.data.error)) ? (e.data.detail || e.data.error) : (e.message || 'Erro ao agendar');
+    errEl.textContent = msg;
     errEl.classList.remove('hidden');
   } finally { btn.disabled = false; btn.textContent = 'Agendar'; }
 }
