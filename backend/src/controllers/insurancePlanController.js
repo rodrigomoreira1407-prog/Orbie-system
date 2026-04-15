@@ -9,6 +9,7 @@ async function list(req, res) {
     });
     res.json(plans);
   } catch (err) {
+    console.error('Erro ao listar planos de convênio:', err);
     res.status(500).json({ error: 'Erro ao listar planos de convênio' });
   }
 }
@@ -16,17 +17,19 @@ async function list(req, res) {
 async function create(req, res) {
   try {
     const { name, repasse, notes } = req.body;
-    if (!name) return res.status(400).json({ error: 'Nome é obrigatório' });
+    if (!name || typeof name !== 'string') return res.status(400).json({ error: 'Nome é obrigatório' });
+    const repasseValue = repasse !== undefined && repasse !== null && repasse !== '' ? parseFloat(repasse) : 0;
     const plan = await prisma.insurancePlan.create({
       data: {
         userId: req.user.id,
-        name,
-        repasse: parseFloat(repasse) || 0,
+        name: String(name).trim(),
+        repasse: isNaN(repasseValue) ? 0 : repasseValue,
         notes: notes || null,
       },
     });
     res.status(201).json(plan);
   } catch (err) {
+    console.error('Erro ao criar plano de convênio:', err);
     res.status(500).json({ error: 'Erro ao criar plano de convênio' });
   }
 }
@@ -48,6 +51,7 @@ async function update(req, res) {
     });
     res.json(plan);
   } catch (err) {
+    console.error('Erro ao atualizar plano de convênio:', err);
     res.status(500).json({ error: 'Erro ao atualizar plano de convênio' });
   }
 }
@@ -61,6 +65,7 @@ async function remove(req, res) {
     await prisma.insurancePlan.delete({ where: { id: req.params.id } });
     res.json({ message: 'Plano removido' });
   } catch (err) {
+    console.error('Erro ao remover plano de convênio:', err);
     res.status(500).json({ error: 'Erro ao remover plano de convênio' });
   }
 }

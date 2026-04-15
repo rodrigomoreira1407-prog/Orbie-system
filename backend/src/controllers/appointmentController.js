@@ -43,21 +43,49 @@ async function list(req, res) {
     });
     res.json(appointments);
   } catch (err) {
+    console.error('Erro ao listar consultas:', err);
     res.status(500).json({ error: 'Erro ao listar consultas' });
   }
 }
 
 async function create(req, res) {
   try {
-    const data = { ...req.body, userId: req.user.id };
-    if (!data.insurancePlanId) data.insurancePlanId = null;
-    if (data.paymentType !== 'CONVENIO') data.insuranceValue = null;
-    if (data.type === 'ONLINE' && !data.meetLink) {
-      data.meetLink = generateMeetLink();
+    const {
+      patientId, date, duration, value, type, title,
+      paymentType, insurancePlanId, insuranceValue, meetLink, notes, status,
+    } = req.body;
+
+    if (!patientId || !date) {
+      return res.status(400).json({ error: 'Paciente e data são obrigatórios' });
     }
+
+    const isConvenio = paymentType === 'CONVENIO';
+
+    const data = {
+      userId: req.user.id,
+      patientId,
+      date: new Date(date),
+      duration: parseInt(duration) || 50,
+      value: parseFloat(value) || 0,
+      type: type || 'ONLINE',
+      title: title || 'Consulta',
+      status: status || 'SCHEDULED',
+      paymentType: paymentType || 'PARTICULAR',
+      insurancePlanId: isConvenio ? (insurancePlanId ?? null) : null,
+      insuranceValue: isConvenio ? (isNaN(parseFloat(insuranceValue)) ? 0 : parseFloat(insuranceValue)) : null,
+      notes: notes || null,
+    };
+
+    if (data.type === 'ONLINE') {
+      data.meetLink = meetLink || generateMeetLink();
+    } else if (meetLink) {
+      data.meetLink = meetLink;
+    }
+
     const appt = await prisma.appointment.create({ data, include: { patient: { select: { id: true, name: true } } } });
     res.status(201).json(appt);
   } catch (err) {
+    console.error('Erro ao criar consulta:', err);
     res.status(500).json({ error: 'Erro ao criar consulta' });
   }
 }
@@ -147,6 +175,7 @@ async function update(req, res) {
 
     res.json(appt);
   } catch (err) {
+    console.error('Erro ao atualizar consulta:', err);
     res.status(500).json({ error: 'Erro ao atualizar consulta' });
   }
 }
@@ -158,6 +187,7 @@ async function remove(req, res) {
     await prisma.appointment.delete({ where: { id: req.params.id } });
     res.json({ message: 'Consulta removida' });
   } catch (err) {
+    console.error('Erro ao remover consulta:', err);
     res.status(500).json({ error: 'Erro ao remover consulta' });
   }
 }
