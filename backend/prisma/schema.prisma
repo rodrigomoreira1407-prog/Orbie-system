@@ -8,29 +8,30 @@ datasource db {
 }
 
 model User {
-  id                   String        @id @default(cuid())
+  id                   String          @id @default(cuid())
   name                 String
-  email                String        @unique
+  email                String          @unique
   password             String
   crp                  String?
   phone                String?
   specialty            String?
   bio                  String?
-  plan                 String        @default("NONE")
+  plan                 String          @default("NONE")
   planExpiresAt        DateTime?
-  emailVerified        Boolean       @default(false)
+  emailVerified        Boolean         @default(false)
   emailVerifyToken     String?
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
   stripeCustomerId     String?
   stripeSubId          String?
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
   patients             Patient[]
   appointments         Appointment[]
   records              Record[]
   financials           Financial[]
   anamneses            Anamnesis[]
+  insurancePlans       InsurancePlan[]
 }
 
 model Patient {
@@ -73,21 +74,37 @@ model Patient {
 }
 
 model Appointment {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  patientId String
-  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  title     String   @default("Consulta")
-  date      DateTime
-  duration  Int      @default(50)
-  type      String   @default("ONLINE")
-  status    String   @default("SCHEDULED")
-  value     Float    @default(0)
-  meetLink  String?
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String         @id @default(cuid())
+  userId           String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patientId        String
+  patient          Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  title            String         @default("Consulta")
+  date             DateTime
+  duration         Int            @default(50)
+  type             String         @default("ONLINE")
+  status           String         @default("SCHEDULED")
+  value            Float          @default(0)
+  meetLink         String?
+  notes            String?
+  paymentType      String         @default("PARTICULAR")
+  insurancePlanId  String?
+  insurancePlan    InsurancePlan? @relation(fields: [insurancePlanId], references: [id], onDelete: SetNull)
+  insuranceValue   Float?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model InsurancePlan {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  repasse      Float         @default(0)
+  notes        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
 }
 
 model Anamnesis {
@@ -136,18 +153,19 @@ model Record {
 }
 
 model Financial {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  patientId   String?
-  patient     Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
-  type        String   @default("INCOME")
-  description String
-  value       Float
-  date        DateTime @default(now())
-  status      String   @default("PENDING")
-  method      String?
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patientId     String?
+  patient       Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  type          String   @default("INCOME")
+  description   String
+  value         Float
+  date          DateTime @default(now())
+  status        String   @default("PENDING")
+  method        String?
+  notes         String?
+  appointmentId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
