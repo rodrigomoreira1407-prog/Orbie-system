@@ -50,6 +50,8 @@ async function list(req, res) {
 async function create(req, res) {
   try {
     const data = { ...req.body, userId: req.user.id };
+    if (!data.insurancePlanId) data.insurancePlanId = null;
+    if (data.paymentType !== 'CONVENIO') data.insuranceValue = null;
     if (data.type === 'ONLINE' && !data.meetLink) {
       data.meetLink = generateMeetLink();
     }
@@ -65,7 +67,9 @@ async function update(req, res) {
     const exists = await prisma.appointment.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!exists) return res.status(404).json({ error: 'Consulta nao encontrada' });
 
-    const appt = await prisma.appointment.update({ where: { id: req.params.id }, data: req.body });
+    const updateData = { ...req.body };
+    if ('insurancePlanId' in updateData && !updateData.insurancePlanId) updateData.insurancePlanId = null;
+    const appt = await prisma.appointment.update({ where: { id: req.params.id }, data: updateData });
 
     const isConvenio = appt.paymentType === 'CONVENIO';
     const finalizingStatus = ['COMPLETED', 'MISSED'];
