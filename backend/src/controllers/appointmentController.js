@@ -85,7 +85,6 @@ async function update(req, res) {
         const method = isConvenio ? 'Convênio' : 'Consulta';
         const financialValue = isConvenio && appt.insuranceValue != null ? appt.insuranceValue : appt.value;
         const prefix = isMissed ? 'Falta' : 'Consulta';
-        const suffix = isConvenio && appt.insurancePlanId ? '' : '';
         await prisma.financial.create({
           data: {
             userId: req.user.id,
