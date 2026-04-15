@@ -387,6 +387,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
       <div class="ni" onclick="go('sessions',this)"><span class="ni-ico">🗂️</span><span>Sessões</span></div>
       <div class="ni" onclick="go('records',this)"><span class="ni-ico">📋</span><span>Prontuários</span></div>
       <div class="ni" onclick="go('financial',this)"><span class="ni-ico">💰</span><span>Financeiro</span></div>
+      <div class="ni" onclick="go('convenios',this)"><span class="ni-ico">🏥</span><span>Convênios</span></div>
       <div class="ni" onclick="go('reports',this)"><span class="ni-ico">📊</span><span>Relatórios</span></div>
       <div class="ni" onclick="go('settings',this)"><span class="ni-ico">⚙️</span><span>Config</span></div>
     </div>
@@ -723,6 +724,15 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
       <div id="sessions-list"></div>
     </div>
 
+    <!-- CONVÊNIOS -->
+    <div id="pg-convenios" class="page">
+      <div class="ph"><div><div class="ptt">Convênios</div><div class="pst2">Empresas conveniadas</div></div><button class="abtn" onclick="openNewConvenio()">+ Novo</button></div>
+      <div style="background:white;border-radius:11px;padding:10px 14px;border:1px solid var(--bd);margin-bottom:12px">
+        <input type="text" class="inp" id="conv-search" placeholder="Buscar por nome, CNPJ ou contato..." style="border:none;outline:none;width:100%;font-size:13px" oninput="renderConvenios()"/>
+      </div>
+      <div id="conv-list"><div style="text-align:center;padding:40px;color:var(--dm)">Carregando convênios...</div></div>
+    </div>
+
     </div>
   </div>
 </div>
@@ -839,6 +849,25 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <div style="display:flex;gap:8px">
       <button class="btn bs" style="flex:1" onclick="closeM('m-fin')">Cancelar</button>
       <button class="btn bp" style="flex:1" id="fin-btn" onclick="createFinancial()">Salvar lançamento</button>
+    </div>
+  </div>
+</div>
+
+<div id="m-convenio" class="ov hidden" onclick="closeM('m-convenio')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mbar"></div>
+    <input type="hidden" id="conv-edit-id"/>
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px" id="conv-modal-title">Novo Convênio</div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:14px">Cadastre a empresa de convênio</div>
+    <div class="fr"><label class="lbl">Nome da empresa *</label><input class="inp" id="conv-name" placeholder="Ex: Unimed, Amil..."/></div>
+    <div class="fg"><div><label class="lbl">CNPJ</label><input class="inp" id="conv-cnpj" placeholder="00.000.000/0001-00"/></div><div><label class="lbl">Telefone</label><input class="inp" id="conv-phone" placeholder="(11) 99999-9999"/></div></div>
+    <div class="fg"><div><label class="lbl">E-mail</label><input class="inp" id="conv-email" placeholder="contato@empresa.com"/></div><div><label class="lbl">Nome do contato</label><input class="inp" id="conv-contact" placeholder="Responsável"/></div></div>
+    <div class="fr"><label class="lbl">Endereço</label><input class="inp" id="conv-address" placeholder="Rua, número, cidade..."/></div>
+    <div class="fr"><label class="lbl">Observações</label><textarea class="inp" id="conv-notes" style="resize:none;height:60px" placeholder="Informações adicionais..."></textarea></div>
+    <div id="conv-err" class="auth-err hidden"></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn bs" style="flex:1" onclick="closeM('m-convenio')">Cancelar</button>
+      <button class="btn bp" style="flex:1" id="conv-btn" onclick="saveConvenio()">Salvar</button>
     </div>
   </div>
 </div>
@@ -2335,7 +2364,7 @@ async function openPortal() {
 // NAVIGATION
 // ══════════════════════════════════════════════
 var sbOpen = false;
-var TITLES = {dashboard:'Dashboard',patients:'Pacientes',appointments:'Agenda',sessions:'Sessões',records:'Prontuários',financial:'Financeiro',reports:'Relatórios',settings:'Configurações'};
+var TITLES = {dashboard:'Dashboard',patients:'Pacientes',appointments:'Agenda',sessions:'Sessões',records:'Prontuários',financial:'Financeiro',convenios:'Convênios',reports:'Relatórios',settings:'Configurações'};
 function toggleSB() { sbOpen = !sbOpen; document.getElementById('sb').classList.toggle('open', sbOpen); }
 function swPTab(id, el) {
   document.querySelectorAll('.ptab').forEach(function(t){ t.classList.add('hidden'); });
@@ -2357,6 +2386,7 @@ function go(pg, el) {
   if (pg === 'settings') updateUserUI();
   if (pg === 'appointments') renderWeeklyGrid(STATE.weekGridDate || new Date());
   if (pg === 'sessions') renderSessions();
+  if (pg === 'convenios') loadConvenios();
 }
 function setTab(el) { el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); }); el.classList.add('on'); }
 
@@ -3567,6 +3597,132 @@ async function savePassword() {
 // HELPERS
 // ══════════════════════════════════════════════
 var _tt = null;
+
+// ══════════════════════════════════════════════
+// CONVÊNIOS
+// ══════════════════════════════════════════════
+var _convenios = [];
+
+async function loadConvenios() {
+  try {
+    _convenios = await api('GET', '/convenios');
+    renderConvenios();
+  } catch(e) {
+    document.getElementById('conv-list').innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm)">Erro ao carregar convênios</div>';
+  }
+}
+
+function renderConvenios() {
+  var q = (document.getElementById('conv-search').value || '').toLowerCase();
+  var list = _convenios.filter(function(c) {
+    return !q ||
+      (c.name && c.name.toLowerCase().indexOf(q) > -1) ||
+      (c.cnpj && c.cnpj.indexOf(q) > -1) ||
+      (c.contactName && c.contactName.toLowerCase().indexOf(q) > -1) ||
+      (c.email && c.email.toLowerCase().indexOf(q) > -1);
+  });
+  var el = document.getElementById('conv-list');
+  if (!list.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm)">Nenhum convênio cadastrado</div>';
+    return;
+  }
+  el.innerHTML = list.map(function(c) {
+    return '<div class="card" style="margin-bottom:10px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
+        '<div>' +
+          '<div style="font-size:14px;font-weight:700">' + esc(c.name) + (c.active ? '' : ' <span style="font-size:11px;color:#ef4444;font-weight:600">(Inativo)</span>') + '</div>' +
+          (c.cnpj ? '<div style="font-size:12px;color:var(--mt);margin-top:2px">CNPJ: ' + esc(c.cnpj) + '</div>' : '') +
+          (c.contactName ? '<div style="font-size:12px;color:var(--mt)">Contato: ' + esc(c.contactName) + '</div>' : '') +
+          (c.phone ? '<div style="font-size:12px;color:var(--mt)">Tel: ' + esc(c.phone) + '</div>' : '') +
+          (c.email ? '<div style="font-size:12px;color:var(--mt)">Email: ' + esc(c.email) + '</div>' : '') +
+          (c.address ? '<div style="font-size:12px;color:var(--mt)">End: ' + esc(c.address) + '</div>' : '') +
+          (c.notes ? '<div style="font-size:12px;color:var(--mt);margin-top:4px;font-style:italic">' + esc(c.notes) + '</div>' : '') +
+        '</div>' +
+        '<div style="display:flex;gap:6px;flex-shrink:0;margin-left:8px">' +
+          '<button class="btn bs" style="font-size:11px;padding:5px 10px" onclick="editConvenio(\'' + c.id + '\')">✏️ Editar</button>' +
+          '<button class="btn br" style="font-size:11px;padding:5px 10px" onclick="deleteConvenio(\'' + c.id + '\')">🗑️</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function openNewConvenio() {
+  document.getElementById('conv-edit-id').value = '';
+  document.getElementById('conv-modal-title').textContent = 'Novo Convênio';
+  document.getElementById('conv-name').value = '';
+  document.getElementById('conv-cnpj').value = '';
+  document.getElementById('conv-phone').value = '';
+  document.getElementById('conv-email').value = '';
+  document.getElementById('conv-contact').value = '';
+  document.getElementById('conv-address').value = '';
+  document.getElementById('conv-notes').value = '';
+  document.getElementById('conv-err').classList.add('hidden');
+  openM('m-convenio');
+}
+
+function editConvenio(id) {
+  var c = _convenios.find(function(x){ return x.id === id; });
+  if (!c) return;
+  document.getElementById('conv-edit-id').value = c.id;
+  document.getElementById('conv-modal-title').textContent = 'Editar Convênio';
+  document.getElementById('conv-name').value = c.name || '';
+  document.getElementById('conv-cnpj').value = c.cnpj || '';
+  document.getElementById('conv-phone').value = c.phone || '';
+  document.getElementById('conv-email').value = c.email || '';
+  document.getElementById('conv-contact').value = c.contactName || '';
+  document.getElementById('conv-address').value = c.address || '';
+  document.getElementById('conv-notes').value = c.notes || '';
+  document.getElementById('conv-err').classList.add('hidden');
+  openM('m-convenio');
+}
+
+async function saveConvenio() {
+  var name = document.getElementById('conv-name').value.trim();
+  if (!name) { document.getElementById('conv-err').textContent = 'Informe o nome da empresa'; document.getElementById('conv-err').classList.remove('hidden'); return; }
+  var btn = document.getElementById('conv-btn');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  var payload = {
+    name: name,
+    cnpj: document.getElementById('conv-cnpj').value.trim() || null,
+    phone: document.getElementById('conv-phone').value.trim() || null,
+    email: document.getElementById('conv-email').value.trim() || null,
+    contactName: document.getElementById('conv-contact').value.trim() || null,
+    address: document.getElementById('conv-address').value.trim() || null,
+    notes: document.getElementById('conv-notes').value.trim() || null,
+  };
+  try {
+    var editId = document.getElementById('conv-edit-id').value;
+    if (editId) {
+      await api('PUT', '/convenios/' + editId, payload);
+      toast('✅ Convênio atualizado!');
+    } else {
+      await api('POST', '/convenios', payload);
+      toast('✅ Convênio cadastrado!');
+    }
+    closeM('m-convenio');
+    loadConvenios();
+  } catch(e) {
+    document.getElementById('conv-err').textContent = e.message || 'Erro ao salvar';
+    document.getElementById('conv-err').classList.remove('hidden');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar';
+  }
+}
+
+async function deleteConvenio(id) {
+  if (!confirm('Remover este convênio?')) return;
+  try {
+    await api('DELETE', '/convenios/' + id);
+    toast('Convênio removido');
+    loadConvenios();
+  } catch(e) { toast('Erro ao remover convênio'); }
+}
 // ══════════════════════════════════════════════
 // VOICE INPUT (Ditar)
 // ══════════════════════════════════════════════
