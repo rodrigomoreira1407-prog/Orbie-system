@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 function generateMeetLink() {
   const chars = 'abcdefghijklmnopqrstuvwxyz';
@@ -49,7 +48,8 @@ async function list(req, res) {
 
 async function create(req, res) {
   try {
-    const data = { ...req.body, userId: req.user.id };
+    const { id: _id, userId: _uid, createdAt: _ca, updatedAt: _ua, ...safeBody } = req.body;
+    const data = { ...safeBody, userId: req.user.id };
     if (data.type === 'ONLINE' && !data.meetLink) {
       data.meetLink = generateMeetLink();
     }
@@ -65,13 +65,14 @@ async function update(req, res) {
     const exists = await prisma.appointment.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!exists) return res.status(404).json({ error: 'Consulta nao encontrada' });
     
-    const appt = await prisma.appointment.update({ where: { id: req.params.id }, data: req.body });
+    const { id: _id, userId: _uid, patientId: _pid, createdAt: _ca, updatedAt: _ua, ...safeData } = req.body;
+    const appt = await prisma.appointment.update({ where: { id: req.params.id }, data: safeData });
     
     const finalizingStatus = ['COMPLETED', 'MISSED'];
-    const isNewFinalStatus = finalizingStatus.includes(req.body.status) && exists.status !== req.body.status;
+    const isNewFinalStatus = finalizingStatus.includes(safeData.status) && exists.status !== safeData.status;
     if (isNewFinalStatus && appt.value > 0) {
       try {
-        const isMissed = req.body.status === 'MISSED';
+        const isMissed = safeData.status === 'MISSED';
         await prisma.financial.create({
           data: {
             userId: req.user.id,
