@@ -628,7 +628,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <!-- SETTINGS -->
     <div id="pg-settings" class="page">
       <div class="ph"><div class="ptt">Configurações</div></div>
-      <div class="tabs"><div class="tab on" onclick="showST('perfil',this)">Perfil</div><div class="tab" onclick="showST('senha',this)">Senha</div><div class="tab" onclick="showST('plano',this)">Plano</div></div>
+      <div class="tabs"><div class="tab on" onclick="showST('perfil',this)">Perfil</div><div class="tab" onclick="showST('senha',this)">Senha</div><div class="tab" onclick="showST('plano',this)">Plano</div><div class="tab" onclick="showST('convenios',this)">Convênios</div></div>
       <div id="st-perfil">
         <div class="card">
           <div class="fr"><label class="lbl">Nome completo</label><input class="inp" id="st-name"/></div>
@@ -667,6 +667,22 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
         </div>
         <button class="btn bp fw" style="margin-top:8px" onclick="showScreen('plans')">Trocar de plano</button>
         <button class="btn br fw" style="margin-top:8px" onclick="doLogout()">Sair da conta</button>
+      </div>
+      <div id="st-convenios" class="hidden">
+        <div class="card">
+          <div style="font-size:14px;font-weight:700;margin-bottom:12px">🏥 Planos de Convênio</div>
+          <div class="fg">
+            <div style="flex:2"><label class="lbl">Nome do convênio *</label><input class="inp" id="ins-name" placeholder="Ex: Unimed, Amil..."/></div>
+            <div style="flex:1"><label class="lbl">Valor repasse (R$)</label><input type="number" class="inp" id="ins-repasse" value="0" min="0" step="0.01"/></div>
+          </div>
+          <div class="fr"><label class="lbl">Observações</label><input class="inp" id="ins-notes" placeholder="Observações (opcional)"/></div>
+          <div id="ins-edit-id" style="display:none"></div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn bs" style="flex:1" id="ins-cancel-btn" onclick="cancelInsurancePlanEdit()">Cancelar</button>
+            <button class="btn bp" style="flex:1" id="ins-save-btn" onclick="saveInsurancePlan()">+ Adicionar Plano</button>
+          </div>
+        </div>
+        <div id="ins-list" style="margin-top:4px"></div>
       </div>
     </div>
 
@@ -796,6 +812,10 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-sy
     <div class="fg"><div><label class="lbl">Duração (min)</label><input type="number" class="inp" id="appt-dur" value="50" min="15" step="5"/></div><div><label class="lbl">Valor (R$)</label><input type="number" class="inp" id="appt-val" value="150" min="0" step="10"/></div></div>
     <div class="fr"><label class="lbl">Tipo</label><select class="sel" id="appt-type" onchange="updateMeetHintVisibility()"><option value="ONLINE">🎥 Online — Meet automático</option><option value="PRESENTIAL">🏢 Presencial</option><option value="EVALUATION">🟣 Avaliação</option></select></div>
     <div class="fr"><label class="lbl">Tipo de sessão</label><input class="inp" id="appt-title" value="Consulta" placeholder="TCC, Avaliação..."/></div>
+    <div class="fr"><label class="lbl">Tipo de Pagamento</label><select class="sel" id="appt-payment-type" onchange="toggleInsuranceFields()"><option value="PARTICULAR">💳 Particular</option><option value="CONVENIO">🏥 Convênio</option></select></div>
+    <div id="appt-insurance-fields" style="display:none">
+      <div class="fg"><div style="flex:2"><label class="lbl">Plano de Convênio</label><select class="sel" id="appt-insurance-plan" onchange="fillInsuranceValue()"><option value="">Selecione o plano...</option></select></div><div style="flex:1"><label class="lbl">Repasse (R$)</label><input type="number" class="inp" id="appt-insurance-value" value="0" min="0" step="0.01"/></div></div>
+    </div>
     <div id="meet-hint" class="al ali" style="margin:4px 0 14px"><span>🎥</span><span style="font-size:11px;color:#1d4ed8">Link Meet gerado automaticamente para consultas online</span></div>
     <div id="appt-err" class="auth-err hidden"></div>
     <div style="display:flex;gap:8px">
@@ -931,6 +951,7 @@ var STATE = {
   financials: [],
   finTab: 'all',
   plans: [],
+  insurancePlans: [],
   resetToken: null,
   verifyEmail: null
 };
@@ -1340,6 +1361,7 @@ function layoutAppointments(appts) {
 function apptBlockColor(type, status) {
   if (status === 'MISSED')     return '#ef4444';
   if (status === 'COMPLETED')  return '#059669';
+  if (status === 'RECEIVED')   return '#15803d';
   if (type === 'ONLINE')       return '#3b82f6';
   if (type === 'PRESENTIAL')   return '#10b981';
   return '#7c3aed'; // Avaliação / other
@@ -1673,11 +1695,11 @@ function renderAgendaCards() {
     var d = new Date(a.date);
     // "Pendentes": past SCHEDULED appointments (date already passed, no final status)
     if (isPending) {
-      if (a.status === 'CANCELLED' || a.status === 'COMPLETED' || a.status === 'MISSED') return false;
+      if (a.status === 'CANCELLED' || a.status === 'COMPLETED' || a.status === 'MISSED' || a.status === 'RECEIVED') return false;
       return d < now; // anything scheduled whose time has already passed
     }
     // "Hoje" and "Semana": only present/future, not finalized
-    if (a.status === 'CANCELLED' || a.status === 'COMPLETED' || a.status === 'MISSED') return false;
+    if (a.status === 'CANCELLED' || a.status === 'COMPLETED' || a.status === 'MISSED' || a.status === 'RECEIVED') return false;
     if (STATE.agendaView === 'today') {
       var localDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
       if (localDate !== todayStr) return false;
@@ -1781,6 +1803,15 @@ function renderAgendaCards() {
     card += '<span style="background:' + sb_ + ';color:' + sc + ';border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700">' + sl + '</span>';
     card += '<span style="border:1.5px solid ' + tc + ';color:' + tc + ';border-radius:6px;padding:2px 9px;font-size:11px;font-weight:600">' + tl + '</span>';
     card += '<span style="background:#f1f5f9;color:#475569;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:600">Sess\u00e3o ' + sessNum + '</span>';
+    if (a.paymentType === 'CONVENIO') {
+      if (a.status === 'COMPLETED') {
+        card += '<span style="background:#eff6ff;color:#2563eb;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700">🏥 Aguardando Repasse</span>';
+      } else if (a.status === 'RECEIVED') {
+        card += '<span style="background:#f0fdf4;color:#15803d;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700">🏥 Repasse Recebido</span>';
+      } else {
+        card += '<span style="background:#eff6ff;color:#2563eb;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:600">🏥 Conv\u00eanio</span>';
+      }
+    }
     card += '</div>';
     card += '<div style="font-size:12px;color:#64748b">' + timeStr + ' \u00b7 ' + dateStr + ' \u00b7 ' + (a.duration || 50) + 'min \u00b7 R$ ' + a.value.toFixed(2) + '</div>';
     card += '</div>';
@@ -1801,12 +1832,19 @@ function renderAgendaCards() {
     }
 
     // Row 3: Action buttons — always shown for pending; for others only if actionable
-    var showActions = isPending || (a.status !== 'COMPLETED' && a.status !== 'MISSED');
+    var showActions = isPending || (a.status !== 'COMPLETED' && a.status !== 'MISSED' && a.status !== 'RECEIVED');
     if (showActions) {
       card += '<div style="display:flex;gap:8px">';
       card += '<button onclick="confirmAppointment(\'' + a.id + '\');renderAgendaCards();renderSessions()" style="flex:1;background:#dcfce7;color:#15803d;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u2713 Concluir</button>';
       card += '<button onclick="openMissedDialog(\'' + a.id + '\')" style="flex:1;background:#fef9c3;color:#92400e;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u26a0 Falta</button>';
       card += '<button onclick="cancelAppointment(\'' + a.id + '\');renderAgendaCards();renderSessions()" style="flex:1;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">\u00d7 Cancelar</button>';
+      card += '</div>';
+    }
+
+    // CONVENIO: show "Marcar Recebido" when status is COMPLETED
+    if (a.paymentType === 'CONVENIO' && a.status === 'COMPLETED') {
+      card += '<div style="margin-top:8px">';
+      card += '<button onclick="markInsuranceReceived(\'' + a.id + '\')" style="width:100%;background:#2563eb;color:white;border:none;border-radius:8px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer">💳 Marcar Repasse Recebido</button>';
       card += '</div>';
     }
 
@@ -1888,13 +1926,13 @@ function renderSessions() {
     pool = STATE.appointments || [];
   } else {
     pool = (STATE.appointments || []).filter(function(a) {
-      return a.status === 'COMPLETED' || a.status === 'CANCELLED' || a.status === 'MISSED';
+      return a.status === 'COMPLETED' || a.status === 'CANCELLED' || a.status === 'MISSED' || a.status === 'RECEIVED';
     });
   }
 
   // Update stats counters (always over full pool, ignoring current filter)
   var all = STATE.appointments || [];
-  var cCompleted  = all.filter(function(a){ return a.status === 'COMPLETED'; }).length;
+  var cCompleted  = all.filter(function(a){ return a.status === 'COMPLETED' || a.status === 'RECEIVED'; }).length;
   var cMissed     = all.filter(function(a){ return a.status === 'MISSED'; }).length;
   var cCancelled  = all.filter(function(a){ return a.status === 'CANCELLED'; }).length;
   var cScheduled  = all.filter(function(a){ return (a.status === 'SCHEDULED' || a.status === 'PENDING') && new Date(a.date) >= now; }).length;
@@ -1912,7 +1950,10 @@ function renderSessions() {
 
   var sessions = pool.filter(function(a) {
     // Status filter (only for non-scheduled, non-all tabs)
-    if (!isScheduledTab && currentSessionFilter !== 'all' && a.status !== statusMap[currentSessionFilter]) return false;
+    if (!isScheduledTab && currentSessionFilter !== 'all') {
+      var expected = statusMap[currentSessionFilter];
+      if (expected && a.status !== expected && !(expected === 'COMPLETED' && a.status === 'RECEIVED')) return false;
+    }
     // Name / CPF search
     if (search) {
       var name = a.patient ? a.patient.name.toLowerCase() : '';
@@ -1947,16 +1988,19 @@ function renderSessions() {
   var statusText  = function(s, overdue, futureScheduled) {
     if (overdue) return 'Pendente de Baixa';
     if (futureScheduled) return 'Agendada';
+    if (s === 'RECEIVED') return 'Repasse Recebido';
     return s === 'COMPLETED' ? 'Conclu\u00edda' : s === 'CANCELLED' ? 'Cancelada' : 'Falta';
   };
   var statusColor = function(s, overdue, futureScheduled) {
     if (overdue) return '#f97316';
     if (futureScheduled) return '#3b82f6';
+    if (s === 'RECEIVED') return '#15803d';
     return s === 'COMPLETED' ? '#10b981' : s === 'CANCELLED' ? '#ef4444' : '#f59e0b';
   };
   var statusBg = function(s, overdue, futureScheduled) {
     if (overdue) return '#fff7ed';
     if (futureScheduled) return '#eff6ff';
+    if (s === 'RECEIVED') return '#f0fdf4';
     return s === 'COMPLETED' ? '#f0fdf4' : s === 'CANCELLED' ? '#fee2e2' : '#fffbeb';
   };
 
@@ -1985,9 +2029,20 @@ function renderSessions() {
     card += '<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:5px">';
     card += '<span style="background:' + sb_ + ';color:' + sc + ';border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">' + sl + '</span>';
     card += '<span style="border:1.5px solid ' + tc + ';color:' + tc + ';border-radius:5px;padding:2px 8px;font-size:10px;font-weight:600">' + tl + '</span>';
+    if (a.paymentType === 'CONVENIO') {
+      card += '<span style="background:#eff6ff;color:#2563eb;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">🏥 Conv\u00eanio</span>';
+    }
     card += '</div>';
-    card += '<div style="font-size:11px;color:#64748b">' + timeStr + ' \u00b7 ' + dateStr + ' \u00b7 ' + (a.duration || 50) + 'min \u00b7 <strong style="color:#10b981">R$ ' + a.value.toFixed(2) + '</strong></div>';
+    card += '<div style="font-size:11px;color:#64748b">' + timeStr + ' \u00b7 ' + dateStr + ' \u00b7 ' + (a.duration || 50) + 'min \u00b7 <strong style="color:#10b981">R$ ' + a.value.toFixed(2) + '</strong>' +
+      (a.paymentType === 'CONVENIO' && a.insuranceValue != null ? ' \u00b7 Repasse: <strong style="color:#2563eb">R$ ' + a.insuranceValue.toFixed(2) + '</strong>' : '') + '</div>';
     card += '</div></div>';
+
+    // Marcar Recebido button for CONVENIO awaiting repasse
+    if (a.paymentType === 'CONVENIO' && a.status === 'COMPLETED') {
+      card += '<div style="margin-top:10px">';
+      card += '<button onclick="markInsuranceReceived(\'' + a.id + '\')" style="width:100%;background:#2563eb;color:white;border:none;border-radius:8px;padding:9px 6px;font-size:12px;font-weight:700;cursor:pointer">💳 Marcar Repasse Recebido</button>';
+      card += '</div>';
+    }
 
     card += '</div>';
     return card;
@@ -2185,7 +2240,7 @@ async function loadApp() {
       return;
     }
     showScreen('app');
-    await Promise.all([loadPatients(), loadAppointments('today', null), loadFinancial()]);
+    await Promise.all([loadPatients(), loadAppointments('today', null), loadFinancial(), loadInsurancePlans()]);
     renderDashboard();
     if (window.innerWidth >= 768) {
       document.getElementById('sb').classList.add('open');
@@ -2394,12 +2449,21 @@ function setFinTab(tab, el) {
 // ══════════════════════════════════════════════
 // MODALS
 // ══════════════════════════════════════════════
-function openM(id) { document.getElementById(id).classList.remove('hidden'); }
+function openM(id) {
+  document.getElementById(id).classList.remove('hidden');
+  if (id === 'm-appt') {
+    // Reset payment type to PARTICULAR and hide insurance fields
+    var pt = document.getElementById('appt-payment-type');
+    if (pt) { pt.value = 'PARTICULAR'; toggleInsuranceFields(); }
+    populateInsurancePlanSelect();
+  }
+}
 function closeM(id) { document.getElementById(id).classList.add('hidden'); }
 function showST(tab, el) {
-  ['perfil','senha','plano'].forEach(function(t){ var e = document.getElementById('st-'+t); if(e) e.classList.toggle('hidden', t!==tab); });
+  ['perfil','senha','plano','convenios'].forEach(function(t){ var e = document.getElementById('st-'+t); if(e) e.classList.toggle('hidden', t!==tab); });
   el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); }); el.classList.add('on');
   if (tab === 'plano') updateUserUI();
+  if (tab === 'convenios') renderInsurancePlans();
 }
 function swPT(type, el) {
   el.parentElement.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); }); el.classList.add('on');
@@ -2795,9 +2859,9 @@ function updateProgressAndNext() {
     return a.date.split('T')[0] === today && a.status !== 'CANCELLED';
   });
   
-  var completed = todayAppointments.filter(function(a) { return a.status === 'COMPLETED'; }).length;
+  var completed = todayAppointments.filter(function(a) { return a.status === 'COMPLETED' || a.status === 'RECEIVED'; }).length;
   var total = todayAppointments.length;
-  var revenue = todayAppointments.filter(function(a) { return a.status === 'COMPLETED'; }).reduce(function(sum, a) { return sum + (a.value || 0); }, 0);
+  var revenue = todayAppointments.filter(function(a) { return a.status === 'COMPLETED' || a.status === 'RECEIVED'; }).reduce(function(sum, a) { return sum + (a.value || 0); }, 0);
   
   var progressEl = document.getElementById('appt-progress');
   var nextCardEl = document.getElementById('appt-next-card');
@@ -2814,7 +2878,7 @@ function updateProgressAndNext() {
   
   var now = new Date();
   var nextAppt = todayAppointments.sort(function(a, b) { return new Date(a.date) - new Date(b.date); }).find(function(a) {
-    return new Date(a.date) > now && a.status !== 'COMPLETED';
+    return new Date(a.date) > now && a.status !== 'COMPLETED' && a.status !== 'RECEIVED';
   });
   
   if (nextAppt) {
@@ -2899,6 +2963,9 @@ async function createAppointment() {
   btn.disabled = true; btn.textContent = 'Agendando...';
   try {
     var dt = new Date(date + 'T' + time + ':00');
+    var paymentType = document.getElementById('appt-payment-type').value || 'PARTICULAR';
+    var insurancePlanId = paymentType === 'CONVENIO' ? (document.getElementById('appt-insurance-plan').value || null) : null;
+    var insuranceValue = paymentType === 'CONVENIO' ? (parseFloat(document.getElementById('appt-insurance-value').value) || 0) : null;
     await api('POST', '/appointments', {
       patientId: patId,
       date: dt.toISOString(),
@@ -2906,6 +2973,9 @@ async function createAppointment() {
       value: parseFloat(document.getElementById('appt-val').value) || 0,
       type: document.getElementById('appt-type').value,
       title: document.getElementById('appt-title').value || 'Consulta',
+      paymentType: paymentType,
+      insurancePlanId: insurancePlanId,
+      insuranceValue: insuranceValue,
     });
 
     // Reload appointments and jump the grid to the week of the new appointment
@@ -3306,11 +3376,16 @@ async function loadFinancial() {
     var data = await api('GET', '/financial?month=' + (now.getMonth()+1) + '&year=' + now.getFullYear());
     STATE.financials = data.items;
     var s = data.summary;
+    // Calculate pending insurance repasse (Convênio PENDING entries)
+    var repassePendente = (data.items || []).filter(function(f) {
+      return f.method === 'Convênio' && f.status === 'PENDING' && f.type === 'INCOME';
+    }).reduce(function(acc, f) { return acc + f.value; }, 0);
     document.getElementById('fin-period').textContent = now.toLocaleDateString('pt-BR', {month:'long',year:'numeric'});
     document.getElementById('fin-summary').innerHTML =
       '<div class="sc"><div style="font-size:20px;margin-bottom:6px">📈</div><div style="font-size:16px;font-weight:800;color:var(--gn)">R$' + s.income.toFixed(2) + '</div><div style="font-size:10px;color:var(--mt)">Recebido</div></div>' +
       '<div class="sc"><div style="font-size:20px;margin-bottom:6px">📉</div><div style="font-size:16px;font-weight:800;color:var(--rd)">R$' + s.expense.toFixed(2) + '</div><div style="font-size:10px;color:var(--mt)">Despesas</div></div>' +
-      '<div class="sc"><div style="font-size:20px;margin-bottom:6px">💎</div><div style="font-size:16px;font-weight:800;color:var(--ac)">R$' + s.balance.toFixed(2) + '</div><div style="font-size:10px;color:var(--mt)">Saldo</div></div>';
+      '<div class="sc"><div style="font-size:20px;margin-bottom:6px">💎</div><div style="font-size:16px;font-weight:800;color:var(--ac)">R$' + s.balance.toFixed(2) + '</div><div style="font-size:10px;color:var(--mt)">Saldo</div></div>' +
+      (repassePendente > 0 ? '<div class="sc"><div style="font-size:20px;margin-bottom:6px">🏥</div><div style="font-size:16px;font-weight:800;color:#2563eb">R$' + repassePendente.toFixed(2) + '</div><div style="font-size:10px;color:var(--mt)">Repasse Pendente</div></div>' : '');
     renderFinancialList();
   } catch(e) { console.error('Load financial:', e); }
 }
@@ -3322,17 +3397,23 @@ function renderFinancialList() {
 
   if (tab === 'balance') {
     var SESSION_METHOD = 'Consulta';
-    // Session-originated entries (method='Consulta'): PAID = Concluída, PENDING = Falta
+    var CONVENIO_METHOD = 'Convênio';
+    // Particular session entries (method='Consulta'): PAID = Concluída, PENDING = Falta
     var sessionItems = items.filter(function(f) { return f.method === SESSION_METHOD; });
+    var convenioItems = items.filter(function(f) { return f.method === CONVENIO_METHOD; });
     var completed = sessionItems.filter(function(f) { return f.status === 'PAID'; });
     var missed    = sessionItems.filter(function(f) { return f.status === 'PENDING'; });
-    var otherInc  = items.filter(function(f) { return f.type === 'INCOME' && f.method !== SESSION_METHOD; });
+    var convenioReceived = convenioItems.filter(function(f) { return f.status === 'PAID'; });
+    var convenioPending  = convenioItems.filter(function(f) { return f.status === 'PENDING'; });
+    var otherInc  = items.filter(function(f) { return f.type === 'INCOME' && f.method !== SESSION_METHOD && f.method !== CONVENIO_METHOD; });
     var expenses  = items.filter(function(f) { return f.type === 'EXPENSE'; });
-    var totalCompleted = completed.reduce(function(s, f) { return s + f.value; }, 0);
-    var totalMissed    = missed.reduce(function(s, f) { return s + f.value; }, 0);
-    var totalOtherInc  = otherInc.reduce(function(s, f) { return s + f.value; }, 0);
-    var totalExpense   = expenses.reduce(function(s, f) { return s + f.value; }, 0);
-    var netBalance = totalCompleted + totalMissed + totalOtherInc - totalExpense;
+    var totalCompleted       = completed.reduce(function(s, f) { return s + f.value; }, 0);
+    var totalMissed          = missed.reduce(function(s, f) { return s + f.value; }, 0);
+    var totalConvenioRec     = convenioReceived.reduce(function(s, f) { return s + f.value; }, 0);
+    var totalConvenioPending = convenioPending.reduce(function(s, f) { return s + f.value; }, 0);
+    var totalOtherInc        = otherInc.reduce(function(s, f) { return s + f.value; }, 0);
+    var totalExpense         = expenses.reduce(function(s, f) { return s + f.value; }, 0);
+    var netBalance = totalCompleted + totalMissed + totalConvenioRec + totalOtherInc - totalExpense;
     var balColor = netBalance >= 0 ? 'var(--gn)' : 'var(--rd)';
     el.innerHTML =
       '<div class="card" style="margin-bottom:12px">' +
@@ -3340,12 +3421,14 @@ function renderFinancialList() {
         '<div style="display:flex;flex-direction:column;gap:8px">' +
           '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--dm)">✅ Sessões Concluídas</span><span style="font-weight:700;color:var(--gn)">+R$' + totalCompleted.toFixed(2) + '</span></div>' +
           '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--dm)">⚠ Faltas Cobradas</span><span style="font-weight:700;color:var(--gn)">+R$' + totalMissed.toFixed(2) + '</span></div>' +
+          '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--dm)">🏥 Repasses Recebidos (Convênio)</span><span style="font-weight:700;color:var(--gn)">+R$' + totalConvenioRec.toFixed(2) + '</span></div>' +
+          (totalConvenioPending > 0 ? '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#2563eb">🏥 Repasses Pendentes (Convênio)</span><span style="font-weight:700;color:#2563eb">R$' + totalConvenioPending.toFixed(2) + '</span></div>' : '') +
           '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--dm)">💰 Outras Receitas</span><span style="font-weight:700;color:var(--gn)">+R$' + totalOtherInc.toFixed(2) + '</span></div>' +
           '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--dm)">📉 Despesas</span><span style="font-weight:700;color:var(--rd)">-R$' + totalExpense.toFixed(2) + '</span></div>' +
           '<div style="border-top:2px solid var(--bd);margin-top:4px;padding-top:10px;display:flex;justify-content:space-between;font-size:15px;font-weight:800"><span>Saldo Líquido</span><span style="color:' + balColor + '">R$' + netBalance.toFixed(2) + '</span></div>' +
         '</div>' +
       '</div>' +
-      '<div style="font-size:11px;color:var(--mt);text-align:center;padding:8px">Apenas sessões marcadas como Concluída ou Falta são contabilizadas no Saldo</div>';
+      '<div style="font-size:11px;color:var(--mt);text-align:center;padding:8px">Apenas sessões marcadas como Concluída, Falta ou Repasse Recebido são contabilizadas no Saldo</div>';
     return;
   }
 
@@ -3355,10 +3438,13 @@ function renderFinancialList() {
   if (!items.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm);font-size:13px">Nenhum lançamento encontrado</div>'; return; }
   el.innerHTML = '<div class="card" style="padding:0;overflow:hidden"><table class="tbl"><thead><tr><th>Descrição</th><th>Valor</th><th>Status</th></tr></thead><tbody>' +
     items.map(function(f) {
-      return '<tr><td><div style="font-weight:600;font-size:12px">' + f.description + '</div>' +
+      var isConvenio = f.method === 'Convênio';
+      var methodTag = isConvenio ? ' <span style="background:#eff6ff;color:#2563eb;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">🏥</span>' : '';
+      var statusLabel = f.status === 'PAID' ? 'Pago' : (isConvenio ? 'Repasse Pendente' : 'Pagar');
+      return '<tr><td><div style="font-weight:600;font-size:12px">' + f.description + methodTag + '</div>' +
         '<div style="font-size:10px;color:var(--dm)">' + new Date(f.date).toLocaleDateString('pt-BR') + (f.method ? ' · ' + f.method : '') + '</div></td>' +
         '<td style="color:' + (f.type === 'INCOME' ? 'var(--gn)' : 'var(--rd)') + ';font-weight:700">' + (f.type === 'INCOME' ? '+' : '-') + 'R$' + f.value.toFixed(2) + '</td>' +
-        '<td><span class="bx ' + (f.status === 'PAID' ? 'bgn' : 'byw') + '" ' + (f.status === 'PENDING' ? 'style="cursor:pointer" onclick="markPaid(\'' + f.id + '\')"' : '') + '>' + (f.status === 'PAID' ? 'Pago' : 'Pagar') + '</span></td></tr>';
+        '<td><span class="bx ' + (f.status === 'PAID' ? 'bgn' : 'byw') + '" ' + (f.status === 'PENDING' && !isConvenio ? 'style="cursor:pointer" onclick="markPaid(\'' + f.id + '\')"' : '') + '>' + statusLabel + '</span></td></tr>';
     }).join('') + '</tbody></table></div>';
 }
 
@@ -3640,7 +3726,135 @@ async function savePassword() {
 }
 
 // ══════════════════════════════════════════════
-// HELPERS
+// INSURANCE PLANS (CONVÊNIO)
+// ══════════════════════════════════════════════
+async function loadInsurancePlans() {
+  try {
+    STATE.insurancePlans = await api('GET', '/insurance-plans');
+    populateInsurancePlanSelect();
+  } catch(e) { console.error('Erro ao carregar planos de convênio:', e); }
+}
+
+function populateInsurancePlanSelect() {
+  var sel = document.getElementById('appt-insurance-plan');
+  if (!sel) return;
+  var current = sel.value;
+  sel.innerHTML = '<option value="">Selecione o plano...</option>';
+  (STATE.insurancePlans || []).forEach(function(p) {
+    var opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name + (p.repasse > 0 ? ' (R$ ' + p.repasse.toFixed(2) + ')' : '');
+    opt.dataset.repasse = p.repasse;
+    sel.appendChild(opt);
+  });
+  if (current) sel.value = current;
+}
+
+function toggleInsuranceFields() {
+  var type = document.getElementById('appt-payment-type').value;
+  var fields = document.getElementById('appt-insurance-fields');
+  if (fields) fields.style.display = type === 'CONVENIO' ? 'block' : 'none';
+}
+
+function fillInsuranceValue() {
+  var sel = document.getElementById('appt-insurance-plan');
+  var input = document.getElementById('appt-insurance-value');
+  if (!sel || !input) return;
+  var opt = sel.options[sel.selectedIndex];
+  if (opt && opt.dataset.repasse) {
+    input.value = opt.dataset.repasse;
+  }
+}
+
+function renderInsurancePlans() {
+  var el = document.getElementById('ins-list');
+  if (!el) return;
+  var plans = STATE.insurancePlans || [];
+  if (!plans.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--dm);font-size:13px">Nenhum plano cadastrado</div>';
+    return;
+  }
+  el.innerHTML = plans.map(function(p) {
+    return '<div style="background:white;border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">' +
+      '<div style="flex:1">' +
+        '<div style="font-weight:700;font-size:13px">' + p.name + '</div>' +
+        '<div style="font-size:11px;color:var(--mt);margin-top:3px">Repasse: <strong style="color:var(--gn)">R$ ' + p.repasse.toFixed(2) + '</strong>' +
+          (p.notes ? ' · ' + p.notes : '') + '</div>' +
+      '</div>' +
+      '<button onclick="editInsurancePlan(\'' + p.id + '\')" style="border:none;background:#fef9c3;border-radius:8px;padding:7px 10px;cursor:pointer;font-size:13px">✎</button>' +
+      '<button onclick="deleteInsurancePlan(\'' + p.id + '\')" style="border:none;background:#fee2e2;border-radius:8px;padding:7px 10px;cursor:pointer;font-size:13px">🗑</button>' +
+      '</div>';
+  }).join('');
+}
+
+async function saveInsurancePlan() {
+  var name = (document.getElementById('ins-name') || {}).value || '';
+  var repasse = (document.getElementById('ins-repasse') || {}).value || '0';
+  var notes = (document.getElementById('ins-notes') || {}).value || '';
+  var editId = (document.getElementById('ins-edit-id') || {}).textContent || '';
+  name = name.trim();
+  if (!name) { toast('Informe o nome do convênio'); return; }
+  try {
+    if (editId) {
+      await api('PUT', '/insurance-plans/' + editId, { name: name, repasse: parseFloat(repasse), notes: notes || null });
+      toast('✅ Plano atualizado!');
+    } else {
+      await api('POST', '/insurance-plans', { name: name, repasse: parseFloat(repasse), notes: notes || null });
+      toast('✅ Plano adicionado!');
+    }
+    await loadInsurancePlans();
+    cancelInsurancePlanEdit();
+    renderInsurancePlans();
+  } catch(e) { toast('Erro ao salvar plano: ' + (e.message || '')); }
+}
+
+function editInsurancePlan(id) {
+  var plan = (STATE.insurancePlans || []).find(function(p) { return p.id === id; });
+  if (!plan) return;
+  document.getElementById('ins-name').value = plan.name;
+  document.getElementById('ins-repasse').value = plan.repasse;
+  document.getElementById('ins-notes').value = plan.notes || '';
+  document.getElementById('ins-edit-id').textContent = id;
+  document.getElementById('ins-save-btn').textContent = 'Salvar Alterações';
+  var cancelBtn = document.getElementById('ins-cancel-btn');
+  if (cancelBtn) cancelBtn.style.display = '';
+}
+
+function cancelInsurancePlanEdit() {
+  document.getElementById('ins-name').value = '';
+  document.getElementById('ins-repasse').value = '0';
+  document.getElementById('ins-notes').value = '';
+  document.getElementById('ins-edit-id').textContent = '';
+  document.getElementById('ins-save-btn').textContent = '+ Adicionar Plano';
+  var cancelBtn = document.getElementById('ins-cancel-btn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+}
+
+async function deleteInsurancePlan(id) {
+  if (!confirm('Remover este plano de convênio?')) return;
+  try {
+    await api('DELETE', '/insurance-plans/' + id);
+    await loadInsurancePlans();
+    renderInsurancePlans();
+    toast('✅ Plano removido!');
+  } catch(e) { toast('Erro ao remover plano: ' + (e.message || '')); }
+}
+
+async function markInsuranceReceived(appointmentId) {
+  var appt = STATE.appointments.find(function(a) { return a.id === appointmentId; });
+  if (!appt) return;
+  if (!confirm('Confirmar recebimento do repasse do convênio para ' + (appt.patient ? appt.patient.name : 'este paciente') + '?')) return;
+  try {
+    await api('PUT', '/appointments/' + appointmentId, { status: 'RECEIVED' });
+    appt.status = 'RECEIVED';
+    await loadFinancial();
+    renderAgendaCards();
+    renderSessions();
+    renderDashboardSessions();
+    toast('✅ Repasse recebido registrado!');
+  } catch(e) { toast('Erro ao registrar recebimento: ' + (e.message || '')); }
+}
+
 // ══════════════════════════════════════════════
 var _tt = null;
 // ══════════════════════════════════════════════
@@ -3947,6 +4161,9 @@ function buildInvoiceText() {
       document.getElementById('acc-whatsapp').value = STATE.accountant.whatsapp || '';
     }
   }
+  // Hide insurance plan cancel button initially
+  var cancelBtn = document.getElementById('ins-cancel-btn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
 })();
 
 // Enter key support

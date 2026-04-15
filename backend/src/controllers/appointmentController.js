@@ -64,31 +64,83 @@ async function update(req, res) {
   try {
     const exists = await prisma.appointment.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!exists) return res.status(404).json({ error: 'Consulta nao encontrada' });
-    
+
     const appt = await prisma.appointment.update({ where: { id: req.params.id }, data: req.body });
-    
+
+    const isConvenio = appt.paymentType === 'CONVENIO';
     const finalizingStatus = ['COMPLETED', 'MISSED'];
     const isNewFinalStatus = finalizingStatus.includes(req.body.status) && exists.status !== req.body.status;
+
     if (isNewFinalStatus && appt.value > 0) {
       try {
         const isMissed = req.body.status === 'MISSED';
+        let financialStatus;
+        if (isMissed) {
+          financialStatus = 'PENDING';
+        } else if (isConvenio) {
+          financialStatus = 'PENDING'; // awaiting insurance transfer
+        } else {
+          financialStatus = 'PAID';
+        }
+        const method = isConvenio ? 'Convênio' : 'Consulta';
+        const financialValue = isConvenio && appt.insuranceValue != null ? appt.insuranceValue : appt.value;
+        const prefix = isMissed ? 'Falta' : 'Consulta';
         await prisma.financial.create({
           data: {
             userId: req.user.id,
             patientId: appt.patientId,
             type: 'INCOME',
-            description: `${isMissed ? 'Falta' : 'Consulta'} - ${appt.title || 'Sessao'}`,
-            value: appt.value,
+            description: `${prefix} - ${appt.title || 'Sessao'}`,
+            value: financialValue,
             date: new Date(),
-            status: isMissed ? 'PENDING' : 'PAID',
-            method: 'Consulta'
+            status: financialStatus,
+            method,
+            appointmentId: appt.id,
           }
         });
       } catch (finErr) {
         console.error('Erro ao criar lancamento financeiro:', finErr);
       }
     }
-    
+
+    // When a CONVENIO appointment is marked as RECEIVED, set the linked PENDING financial to PAID
+    if (req.body.status === 'RECEIVED' && exists.status !== 'RECEIVED') {
+      try {
+        const pendingEntry = await prisma.financial.findFirst({
+          where: {
+            userId: req.user.id,
+            appointmentId: appt.id,
+            status: 'PENDING',
+            method: 'Convênio',
+          }
+        });
+        if (pendingEntry) {
+          await prisma.financial.update({
+            where: { id: pendingEntry.id },
+            data: { status: 'PAID' }
+          });
+        } else {
+          // Create a new entry if none found (edge case)
+          const financialValue = appt.insuranceValue != null ? appt.insuranceValue : appt.value;
+          await prisma.financial.create({
+            data: {
+              userId: req.user.id,
+              patientId: appt.patientId,
+              type: 'INCOME',
+              description: `Repasse recebido - ${appt.title || 'Sessao'}`,
+              value: financialValue,
+              date: new Date(),
+              status: 'PAID',
+              method: 'Convênio',
+              appointmentId: appt.id,
+            }
+          });
+        }
+      } catch (finErr) {
+        console.error('Erro ao registrar recebimento do convênio:', finErr);
+      }
+    }
+
     res.json(appt);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao atualizar consulta' });
