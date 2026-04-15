@@ -12,7 +12,6 @@ const financialRoutes = require('./routes/financial');
 const subscriptionRoutes = require('./routes/subscriptions');
 const aiRoutes = require('./routes/ai');
 const clinicalRoutes = require('./routes/clinical');
-const insurancePlanRoutes = require('./routes/insurancePlans');
 
 const app = express();
 
@@ -56,7 +55,6 @@ app.use('/api/financial', financialRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/clinical', clinicalRoutes);
-app.use('/api/insurance-plans', insurancePlanRoutes);
 
 // ── Health check
 app.get('/api/health', (req, res) => {
