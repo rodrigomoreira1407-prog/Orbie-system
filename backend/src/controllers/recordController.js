@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 async function list(req, res) {
   try {
@@ -18,8 +17,9 @@ async function list(req, res) {
 
 async function create(req, res) {
   try {
+    const { id: _id, userId: _uid, createdAt: _ca, updatedAt: _ua, ...safeBody } = req.body;
     const record = await prisma.record.create({
-      data: { ...req.body, userId: req.user.id },
+      data: { ...safeBody, userId: req.user.id },
       include: { patient: { select: { id: true, name: true } } },
     });
     res.status(201).json(record);
@@ -32,7 +32,8 @@ async function update(req, res) {
   try {
     const exists = await prisma.record.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!exists) return res.status(404).json({ error: 'Registro nao encontrado' });
-    const record = await prisma.record.update({ where: { id: req.params.id }, data: req.body });
+    const { id: _id, userId: _uid, patientId: _pid, createdAt: _ca, updatedAt: _ua, ...safeData } = req.body;
+    const record = await prisma.record.update({ where: { id: req.params.id }, data: safeData });
     res.json(record);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao atualizar prontuario' });
