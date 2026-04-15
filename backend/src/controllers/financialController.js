@@ -1,5 +1,11 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
+
+function normalizeDate(data) {
+  if (data.date && typeof data.date === 'string') {
+    const d = new Date(data.date);
+    data.date = !isNaN(d.getTime()) ? d.toISOString() : new Date().toISOString();
+  }
+}
 
 async function list(req, res) {
   try {
@@ -27,12 +33,9 @@ async function list(req, res) {
 
 async function create(req, res) {
   try {
-    const data = { ...req.body, userId: req.user.id };
-    if (data.date && typeof data.date === 'string') {
-      const d = new Date(data.date);
-      if (!isNaN(d.getTime())) data.date = d.toISOString();
-      else data.date = new Date().toISOString();
-    }
+    const { id: _id, userId: _uid, createdAt: _ca, updatedAt: _ua, ...safeBody } = req.body;
+    const data = { ...safeBody, userId: req.user.id };
+    normalizeDate(data);
     const item = await prisma.financial.create({ data });
     res.status(201).json(item);
   } catch (err) {
@@ -45,7 +48,9 @@ async function update(req, res) {
   try {
     const exists = await prisma.financial.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!exists) return res.status(404).json({ error: 'Lancamento nao encontrado' });
-    const item = await prisma.financial.update({ where: { id: req.params.id }, data: req.body });
+    const { id: _id, userId: _uid, patientId: _pid, createdAt: _ca, updatedAt: _ua, ...safeData } = req.body;
+    normalizeDate(safeData);
+    const item = await prisma.financial.update({ where: { id: req.params.id }, data: safeData });
     res.json(item);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao atualizar lancamento' });
