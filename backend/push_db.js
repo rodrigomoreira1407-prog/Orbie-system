@@ -3,7 +3,7 @@ const path = require('path');
 
 console.log("Iniciando Prisma db push...");
 const child = exec('npx prisma db push', {
-  cwd: path.join(__dirname, 'backend'),
+  cwd: __dirname,
   env: { ...process.env, DEBUG: 'prisma:*' }
 });
 

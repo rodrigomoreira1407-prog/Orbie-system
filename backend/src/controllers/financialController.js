@@ -1,5 +1,12 @@
 const prisma = require('../lib/prisma');
 
+function normalizeDate(data) {
+  if (data.date && typeof data.date === 'string') {
+    const d = new Date(data.date);
+    data.date = !isNaN(d.getTime()) ? d.toISOString() : new Date().toISOString();
+  }
+}
+
 async function list(req, res) {
   try {
     const { type, status, month, year } = req.query;
@@ -28,11 +35,7 @@ async function create(req, res) {
   try {
     const { id: _id, userId: _uid, createdAt: _ca, updatedAt: _ua, ...safeBody } = req.body;
     const data = { ...safeBody, userId: req.user.id };
-    if (data.date && typeof data.date === 'string') {
-      const d = new Date(data.date);
-      if (!isNaN(d.getTime())) data.date = d.toISOString();
-      else data.date = new Date().toISOString();
-    }
+    normalizeDate(data);
     const item = await prisma.financial.create({ data });
     res.status(201).json(item);
   } catch (err) {
@@ -46,11 +49,7 @@ async function update(req, res) {
     const exists = await prisma.financial.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!exists) return res.status(404).json({ error: 'Lancamento nao encontrado' });
     const { id: _id, userId: _uid, patientId: _pid, createdAt: _ca, updatedAt: _ua, ...safeData } = req.body;
-    if (safeData.date && typeof safeData.date === 'string') {
-      const d = new Date(safeData.date);
-      if (!isNaN(d.getTime())) safeData.date = d.toISOString();
-      else safeData.date = new Date().toISOString();
-    }
+    normalizeDate(safeData);
     const item = await prisma.financial.update({ where: { id: req.params.id }, data: safeData });
     res.json(item);
   } catch (err) {

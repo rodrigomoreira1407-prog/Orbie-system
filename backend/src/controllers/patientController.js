@@ -1,5 +1,16 @@
 const prisma = require('../lib/prisma');
 
+function normalizeBirthDate(data) {
+  if (data.birthDate && typeof data.birthDate === 'string') {
+    const d = new Date(data.birthDate);
+    if (!isNaN(d.getTime())) {
+      data.birthDate = d.toISOString();
+    } else {
+      delete data.birthDate;
+    }
+  }
+}
+
 async function list(req, res) {
   try {
     const { search, type, status } = req.query;
@@ -51,15 +62,7 @@ async function create(req, res) {
     const { id: _id, userId: _uid, createdAt: _ca, updatedAt: _ua, ...safeBody } = req.body;
     const data = { ...safeBody, userId: req.user.id };
     
-    // Garantir que birthDate seja um objeto Date válido se for enviado
-    if (data.birthDate && typeof data.birthDate === 'string') {
-      const d = new Date(data.birthDate);
-      if (!isNaN(d.getTime())) {
-        data.birthDate = d.toISOString();
-      } else {
-        delete data.birthDate; // Se a data for inválida, remove para evitar erro do Prisma
-      }
-    }
+    normalizeBirthDate(data);
 
     const patient = await prisma.patient.create({ data });
     res.status(201).json(patient);
@@ -76,15 +79,7 @@ async function update(req, res) {
 
     const { id: _id, userId: _uid, createdAt: _ca, updatedAt: _ua, ...safeData } = req.body;
 
-    // Handle birthDate conversion like in create
-    if (safeData.birthDate && typeof safeData.birthDate === 'string') {
-      const d = new Date(safeData.birthDate);
-      if (!isNaN(d.getTime())) {
-        safeData.birthDate = d.toISOString();
-      } else {
-        delete safeData.birthDate;
-      }
-    }
+    normalizeBirthDate(safeData);
 
     const patient = await prisma.patient.update({
       where: { id: req.params.id },
