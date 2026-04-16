@@ -2155,7 +2155,8 @@ async function loadApp() {
     
     STATE.user = await api('GET', '/auth/me');
     updateUserUI();
-    if (STATE.user.plan === 'NONE') {
+    var planExpired = STATE.user.planExpiresAt && new Date(STATE.user.planExpiresAt) < new Date();
+    if (STATE.user.plan === 'NONE' || planExpired) {
       showScreen('plans');
       return;
     }
@@ -2244,10 +2245,12 @@ async function doRegister() {
   if (!name || !email || !pass) { errEl.textContent = 'Preencha todos os campos'; errEl.classList.remove('hidden'); return; }
   btn.disabled = true; btn.textContent = 'Criando conta...';
   try {
-    await api('POST', '/auth/register', { name, email, password: pass });
-    toast('✅ Conta criada com sucesso!');
-    showScreen('login');
-    document.getElementById('login-email').value = email;
+    var data = await api('POST', '/auth/register', { name, email, password: pass });
+    STATE.token = data.token;
+    STATE.user = data.user;
+    localStorage.setItem('orbie_token', data.token);
+    toast('✅ Conta criada! Trial de 14 dias ativado.');
+    await loadApp();
   } catch(e) {
     errEl.textContent = e.message || 'Erro ao criar conta';
     errEl.classList.remove('hidden');

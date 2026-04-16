@@ -24,7 +24,7 @@ async function register(req, res) {
       return res.status(400).json({ error: 'Este email ja esta cadastrado' });
     }
     const hashed = await bcrypt.hash(password, 12);
-    const verifyToken = uuid();
+    const trialExpires = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
     const user = await prisma.user.create({
       data: {
         name,
@@ -32,19 +32,19 @@ async function register(req, res) {
         password: hashed,
         emailVerifyToken: null,
         emailVerified: true,
+        plan: 'BASIC',
+        planExpiresAt: trialExpires,
       },
     });
-    // O envio de email foi desativado temporariamente para facilitar o onboarding
-    /*
-    try {
-      await sendVerificationEmail(user.email, user.name, verifyToken);
-    } catch (emailErr) {
-      console.error('Erro ao enviar email:', emailErr.message);
-    }
-    */
+    const token = generateToken(user.id);
     res.status(201).json({
-      message: 'Conta criada com sucesso! Você já pode fazer login.',
-      userId: user.id,
+      message: 'Conta criada com sucesso!',
+      token,
+      user: {
+        id: user.id, name: user.name, email: user.email,
+        plan: user.plan, planExpiresAt: user.planExpiresAt,
+        crp: user.crp, phone: user.phone, specialty: user.specialty,
+      },
     });
   } catch (err) {
     console.error('Register error:', err);
