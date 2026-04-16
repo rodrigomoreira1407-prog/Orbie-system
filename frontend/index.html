@@ -915,11 +915,14 @@ const ANAMNESIS_FORMS = {
 };
 
 // ══════════════════════════════════════════════
-// CONFIGURAÇÃO — altere para a URL do seu backend
+// CONFIGURAÇÃO — URL do backend
+// Em produção, as chamadas /api/* são proxiadas pelo Vercel para o backend.
+// Se o proxy não estiver configurado no vercel.json, defina a URL completa abaixo:
+// Exemplo: 'https://seu-backend.up.railway.app/api'
 // ══════════════════════════════════════════════
 const API = window.location.hostname === 'localhost'
   ? 'http://localhost:3001/api'
-  : '/api';
+  : (window.ORBIE_BACKEND_URL || '/api');
 
 // ══════════════════════════════════════════════
 // ESTADO GLOBAL
