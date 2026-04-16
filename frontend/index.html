@@ -1235,10 +1235,26 @@ async function api(method, path, body) {
   };
   if (STATE.token) opts.headers['Authorization'] = 'Bearer ' + STATE.token;
   if (body) opts.body = JSON.stringify(body);
-  var res = await fetch(API + path, opts);
-  var data = await res.json().catch(function() { return {}; });
-  if (!res.ok) throw { status: res.status, message: data.error || 'Erro desconhecido', data: data };
-  return data;
+
+  // Timeout de 25 segundos para evitar que a requisição trave indefinidamente
+  // (ex.: cold-start do servidor Render.com free tier pode demorar ~50s)
+  var controller = new AbortController();
+  var timeoutId = setTimeout(function() { controller.abort(); }, 25000);
+  opts.signal = controller.signal;
+
+  try {
+    var res = await fetch(API + path, opts);
+    var data = await res.json().catch(function() { return {}; });
+    if (!res.ok) throw { status: res.status, message: data.error || 'Erro desconhecido', data: data };
+    return data;
+  } catch (err) {
+    if (err && err.name === 'AbortError') {
+      throw { status: 0, message: 'O servidor demorou para responder. Verifique sua conexão ou tente novamente em instantes.', data: {} };
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -2210,10 +2226,17 @@ function updateUserUI() {
   if (!STATE.user) return;
   document.getElementById('user-name').textContent = STATE.user.name;
   document.getElementById('user-av').textContent = STATE.user.name[0].toUpperCase();
-  var planLabel = STATE.user.plan === 'PRO' ? '● PRO+IA Ativo' : STATE.user.plan === 'BASIC' ? '● Basic Ativo' : '● Sem plano';
+  var hasPaidPlan = STATE.user.plan === 'PRO' || STATE.user.plan === 'BASIC';
+  var isPlanExpired = hasPaidPlan && STATE.user.planExpiresAt && new Date(STATE.user.planExpiresAt) < new Date();
+  var planLabel;
+  if (isPlanExpired) {
+    planLabel = '⚠️ Assinatura expirada';
+  } else {
+    planLabel = STATE.user.plan === 'PRO' ? '● PRO+IA Ativo' : STATE.user.plan === 'BASIC' ? '● Basic Ativo' : '● Sem plano';
+  }
   document.getElementById('user-plan').textContent = planLabel;
-  // Show AI features for PRO
-  if (STATE.user.plan === 'PRO') {
+  // Show AI features for PRO only when plan is active (not expired)
+  if (STATE.user.plan === 'PRO' && !isPlanExpired) {
     var aiB = document.getElementById('ai-badge');
     var aiBtn = document.getElementById('ai-gen-btn');
     if (aiB) aiB.classList.remove('hidden');
@@ -2790,7 +2813,10 @@ async function loadAppointments(filter, el, specificDate) {
     renderWeeklyGrid(STATE.weekGridDate || new Date());
     renderDashboardToday();
     updateProgressAndNext();
-  } catch(e) { toast((e.data && e.data.detail) ? 'Erro ao carregar consultas: ' + e.data.detail : 'Erro ao carregar consultas'); }
+  } catch(e) {
+    var errMsg = e.status === 0 ? 'Servidor lento. Recarregue a página.' : (e.data && e.data.detail) ? 'Erro ao carregar consultas: ' + e.data.detail : 'Erro ao carregar consultas';
+    toast(errMsg);
+  }
 }
 
 function updateProgressAndNext() {
@@ -2936,7 +2962,9 @@ async function createAppointment() {
     renderDashboardSessions();
   } catch(e) {
     var msg;
-    if (e.status === 403) {
+    if (e.status === 0) {
+      msg = 'O servidor está demorando para responder. Aguarde alguns segundos e tente novamente.';
+    } else if (e.status === 403) {
       if (e.data && e.data.expired) {
         msg = 'Sua assinatura expirou. Acesse Configurações para renovar.';
       } else {
@@ -3462,9 +3490,9 @@ function renderDashboard() {
     '<div class="sc"><div style="font-size:22px;margin-bottom:6px">📅</div><div style="font-size:22px;font-weight:800">' + today + '</div><div style="font-size:11px;color:var(--mt)">Consultas hoje</div></div>' +
     '<div class="sc"><div style="font-size:22px;margin-bottom:6px">💰</div><div style="font-size:18px;font-weight:800;color:var(--gn)">—</div><div style="font-size:11px;color:var(--mt)">Receita do mês</div></div>' +
     '<div class="sc"><div style="font-size:22px;margin-bottom:6px">⏳</div><div style="font-size:18px;font-weight:800;color:var(--am)">—</div><div style="font-size:11px;color:var(--mt)">A receber</div></div>';
-  renderDashboardToday();
-  renderDashboardPatients();
-  renderDashboardSessions();
+  try { renderDashboardToday(); } catch(e) { console.error('renderDashboardToday error:', e); }
+  try { renderDashboardPatients(); } catch(e) { console.error('renderDashboardPatients error:', e); }
+  try { renderDashboardSessions(); } catch(e) { console.error('renderDashboardSessions error:', e); }
 }
 
 function renderDashboardToday() {
@@ -3630,7 +3658,15 @@ async function loadConvenios() {
     _convenios = await api('GET', '/convenios');
     renderConvenios();
   } catch(e) {
-    document.getElementById('conv-list').innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm)">Erro ao carregar convênios</div>';
+    var msg;
+    if (e.status === 0) {
+      msg = 'Servidor demorando para responder. Tente novamente em instantes.';
+    } else if (e.status === 403) {
+      msg = e.data && e.data.expired ? 'Assinatura expirada. Acesse Configurações para renovar.' : 'Plano não permite acesso a convênios.';
+    } else {
+      msg = 'Erro ao carregar convênios';
+    }
+    document.getElementById('conv-list').innerHTML = '<div style="text-align:center;padding:40px;color:var(--dm)">' + msg + '</div>';
   }
 }
 
@@ -3730,7 +3766,15 @@ async function saveConvenio() {
     closeM('m-convenio');
     loadConvenios();
   } catch(e) {
-    document.getElementById('conv-err').textContent = e.message || 'Erro ao salvar';
+    var convMsg;
+    if (e.status === 0) {
+      convMsg = 'Servidor demorando para responder. Tente novamente.';
+    } else if (e.status === 403) {
+      convMsg = e.data && e.data.expired ? 'Assinatura expirada. Acesse Configurações para renovar.' : 'Plano não permite esta ação.';
+    } else {
+      convMsg = e.message || 'Erro ao salvar';
+    }
+    document.getElementById('conv-err').textContent = convMsg;
     document.getElementById('conv-err').classList.remove('hidden');
   } finally {
     btn.disabled = false; btn.textContent = 'Salvar';
