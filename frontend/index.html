@@ -919,7 +919,7 @@ const ANAMNESIS_FORMS = {
 // ══════════════════════════════════════════════
 const API = window.location.hostname === 'localhost'
   ? 'http://localhost:3001/api'
-  : 'https://orbie-api.onrender.com/api'; //https://orbie-api.onrender.com/api
+  : '/api';
 
 // ══════════════════════════════════════════════
 // ESTADO GLOBAL
@@ -1214,7 +1214,6 @@ async function api(method, path, body) {
   if (body) opts.body = JSON.stringify(body);
 
   // Timeout de 25 segundos para evitar que a requisição trave indefinidamente
-  // (ex.: cold-start do servidor Render.com free tier pode demorar ~50s)
   var controller = new AbortController();
   var timeoutId = setTimeout(function() { controller.abort(); }, 25000);
   opts.signal = controller.signal;
