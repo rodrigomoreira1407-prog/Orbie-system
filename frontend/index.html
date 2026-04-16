@@ -2030,12 +2030,12 @@ function openAppointmentConfirmation(appointmentId) {
 }
 
 function confirmAppointment(appointmentId) {
-  updateAppointmentStatus(appointmentId, 'COMPLETED', 0);
+  updateAppointmentStatus(appointmentId, 'COMPLETED');
   toast('✓ Sessão confirmada!');
 }
 
 function cancelAppointment(appointmentId) {
-  updateAppointmentStatus(appointmentId, 'CANCELLED', 0);
+  updateAppointmentStatus(appointmentId, 'CANCELLED');
   toast('✕ Sessão cancelada!');
 }
 
@@ -2152,7 +2152,12 @@ function updateAppointmentStatus(appointmentId, status, value) {
   appt.status = status;
   if (status === 'MISSED') appt.value = value;
 
-  api('PUT', '/appointments/' + appointmentId, {status: status, value: value}).then(function(res) {
+  // Only include value in the payload for MISSED (where it may be adjusted).
+  // COMPLETED and CANCELLED must not overwrite the stored appointment value.
+  var payload = { status: status };
+  if (status === 'MISSED') payload.value = value;
+
+  api('PUT', '/appointments/' + appointmentId, payload).then(function(res) {
     renderWeeklyGrid(new Date());
     renderAgendaCards();
     renderSessions();
@@ -2930,7 +2935,18 @@ async function createAppointment() {
     renderDashboardToday();
     renderDashboardSessions();
   } catch(e) {
-    var msg = (e.data && (e.data.detail || e.data.error)) ? (e.data.detail || e.data.error) : (e.message || 'Erro ao agendar');
+    var msg;
+    if (e.status === 403) {
+      if (e.data && e.data.expired) {
+        msg = 'Sua assinatura expirou. Acesse Configurações para renovar.';
+      } else {
+        msg = 'Seu plano não permite agendar consultas. Acesse Configurações para assinar.';
+      }
+    } else if (e.status === 401) {
+      msg = 'Sessão expirada. Recarregue a página e faça login novamente.';
+    } else {
+      msg = (e.data && (e.data.detail || e.data.error)) ? (e.data.detail || e.data.error) : (e.message || 'Erro ao agendar');
+    }
     errEl.textContent = msg;
     errEl.classList.remove('hidden');
   } finally { btn.disabled = false; btn.textContent = 'Agendar'; }

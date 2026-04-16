@@ -48,8 +48,21 @@ async function list(req, res) {
 
 async function create(req, res) {
   try {
-    const data = { ...req.body, userId: req.user.id };
-    if (data.type === 'ONLINE' && !data.meetLink) {
+    const { patientId, date, duration, value, type, title, notes } = req.body;
+    if (!patientId || !date) {
+      return res.status(400).json({ error: 'patientId e date são obrigatórios' });
+    }
+    const data = {
+      patientId,
+      date: new Date(date),
+      duration: duration !== undefined ? Number(duration) : 50,
+      value: value !== undefined ? Number(value) : 0,
+      type: type || 'ONLINE',
+      title: title || 'Consulta',
+      userId: req.user.id,
+    };
+    if (notes !== undefined) data.notes = notes;
+    if (data.type === 'ONLINE') {
       data.meetLink = generateMeetLink();
     }
     const appt = await prisma.appointment.create({ data, include: { patient: { select: { id: true, name: true } } } });
