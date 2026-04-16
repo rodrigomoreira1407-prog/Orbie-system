@@ -3,8 +3,11 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // directUrl is required by Prisma when DATABASE_URL uses pgBouncer (?pgbouncer=true).
+  // It points to a direct (non-pooled) connection used only for migrations (prisma db push).
+  directUrl = env("DIRECT_URL")
 }
 
 model User {

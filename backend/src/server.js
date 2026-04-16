@@ -11,6 +11,11 @@ if (!process.env.EMAIL_USER && process.env['USUÁRIO_DE_EMAIL'])
   process.env.EMAIL_USER = process.env['USUÁRIO_DE_EMAIL'];
 if (process.env.NODE_ENV === 'produção')
   process.env.NODE_ENV = 'production';
+// Derive direct (non-pgBouncer) URL for Prisma migrations from the pooler URL.
+// Replaces Supabase pgBouncer port 6543 with session-mode port 5432 and strips query params.
+if (!process.env.DIRECT_URL && process.env.DATABASE_URL)
+  // Replace any port and strip query params, keeping the database name path.
+  process.env.DIRECT_URL = process.env.DATABASE_URL.replace(/:\d+(\/[^?]*)(\?.*)?$/, ':5432$1');
 
 const app = require('./app');
 
