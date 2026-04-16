@@ -2210,7 +2210,8 @@ function updateUserUI() {
   if (!STATE.user) return;
   document.getElementById('user-name').textContent = STATE.user.name;
   document.getElementById('user-av').textContent = STATE.user.name[0].toUpperCase();
-  var planLabel = STATE.user.plan === 'PRO' ? '● PRO+IA Ativo' : STATE.user.plan === 'BASIC' ? '● Basic Ativo' : '● Sem plano';
+  var planExpired = STATE.user.planExpiresAt && new Date(STATE.user.planExpiresAt) < new Date();
+  var planLabel = planExpired ? '● Plano Expirado' : STATE.user.plan === 'PRO' ? '● PRO+IA Ativo' : STATE.user.plan === 'BASIC' ? '● Basic Ativo' : '● Sem plano';
   document.getElementById('user-plan').textContent = planLabel;
   // Show AI features for PRO
   if (STATE.user.plan === 'PRO') {
@@ -2874,7 +2875,7 @@ function checkTimeConflict() {
   var newEnd = new Date(newStart.getTime() + duration * 60000);
   
   var hasConflict = STATE.appointments && STATE.appointments.some(function(a) {
-    if (a.status === 'CANCELLED') return false;
+    if (a.status === 'CANCELLED' || a.status === 'COMPLETED' || a.status === 'MISSED') return false;
     var existStart = new Date(a.date);
     var existEnd = new Date(existStart.getTime() + a.duration * 60000);
     return newStart < existEnd && newEnd > existStart;
@@ -3470,13 +3471,17 @@ function renderDashboard() {
 function renderDashboardToday() {
   updateProgressAndNext();
   var el = document.getElementById('dash-today');
-  if (!STATE.appointments.length) {
+  var todayStr = new Date().toISOString().split('T')[0];
+  var todayAppts = STATE.appointments.filter(function(a) {
+    return a.date && a.date.split('T')[0] === todayStr;
+  });
+  if (!todayAppts.length) {
     el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;font-weight:700">📅 Consultas Hoje</div><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go(\'appointments\',null)">Ver agenda →</button></div>' +
       '<div style="text-align:center;padding:20px;color:var(--dm);font-size:13px">Nenhuma consulta hoje</div>';
     return;
   }
   var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b'];
-  var rows = STATE.appointments.slice(0, 4).map(function(a) {
+  var rows = todayAppts.slice(0, 4).map(function(a) {
     var patName = a.patient ? a.patient.name : 'Paciente';
     var ini = patName.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
     var color = colors[patName.charCodeAt(0) % colors.length];
