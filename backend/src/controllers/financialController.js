@@ -20,7 +20,8 @@ async function list(req, res) {
     const pending = items.filter(i => i.status === 'PENDING' && i.type === 'INCOME').reduce((s, i) => s + i.value, 0);
     res.json({ items, summary: { income, expense, balance: income - expense, pending } });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao listar financeiro' });
+    console.error('Erro ao listar financeiro:', err);
+    res.status(500).json({ error: 'Erro ao listar financeiro', detail: err?.message || String(err) });
   }
 }
 
