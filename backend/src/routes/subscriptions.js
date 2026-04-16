@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
-const prisma = require('../lib/prisma');
+const { PrismaClient } = require('@prisma/client');
 const { sendWelcomeEmail } = require('../services/emailService');
+
+const prisma = new PrismaClient();
 let stripe;
 try { stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); } catch(e) {}
 
