@@ -4,7 +4,7 @@
     "buildCommand": "cd backend && npm install --omit=dev && DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder npx prisma generate"
   },
   "deploy": {
-    "startCommand": "cd backend && node node_modules/.bin/prisma db push --accept-data-loss --skip-generate && node src/server.js",
+    "startCommand": "cd backend && export DATABASE_URL=\"${DATABASE_URL:-${URL_DO_BANCO_DE_DADOS}}\" && export FRONTEND_URL=\"${FRONTEND_URL:-${URL_FRONTEND}}\" && export PORT=\"${PORT:-${PORTA}}\" && export ANTHROPIC_API_KEY=\"${ANTHROPIC_API_KEY:-${ANTROPIC_API_KEY}}\" && node node_modules/.bin/prisma db push --accept-data-loss --skip-generate && node src/server.js",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

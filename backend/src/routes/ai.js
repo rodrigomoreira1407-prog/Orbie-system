@@ -8,14 +8,15 @@ router.post('/generate-record', auth, requirePlan(['PRO']), async (req, res) => 
     if (!content || content.length < 15) {
       return res.status(400).json({ error: 'Descreva o conteudo da sessao' });
     }
-    if (!process.env.ANTHROPIC_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTROPIC_API_KEY) {
       return res.status(500).json({ error: 'API de IA nao configurada' });
     }
+    const anthropicKey = process.env.ANTHROPIC_API_KEY || process.env.ANTROPIC_API_KEY;
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'x-api-key': anthropicKey,
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({

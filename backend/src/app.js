@@ -36,9 +36,10 @@ app.use(helmet({
 app.use(compression());
 
 // ── CORS
+const corsOrigin = process.env.FRONTEND_URL || process.env.URL_FRONTEND || '*';
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true,
+  origin: corsOrigin === '*' ? '*' : corsOrigin,
+  credentials: corsOrigin !== '*',
 }));
 
 // ── Stripe webhook precisa do body raw
