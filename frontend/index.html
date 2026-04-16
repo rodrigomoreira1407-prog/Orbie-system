@@ -2209,6 +2209,13 @@ async function loadApp() {
       showScreen('plans');
       return;
     }
+    var hasPlan = STATE.user.plan === 'BASIC' || STATE.user.plan === 'PRO';
+    var isPlanExpired = hasPlan && STATE.user.planExpiresAt && new Date(STATE.user.planExpiresAt) < new Date();
+    if (isPlanExpired) {
+      toast('⚠️ Sua assinatura expirou. Renove para continuar usando o Orbie.');
+      showScreen('plans');
+      return;
+    }
     showScreen('app');
     await Promise.all([loadPatients(), loadAppointments('today', null), loadFinancial()]);
     renderDashboard();
@@ -2814,6 +2821,13 @@ async function loadAppointments(filter, el, specificDate) {
     renderDashboardToday();
     updateProgressAndNext();
   } catch(e) {
+    if (e.status === 403 && e.data && (e.data.upgrade || e.data.expired)) {
+      if (e.data.expired) {
+        toast('⚠️ Assinatura expirada. Renove seu plano para continuar.');
+      }
+      showScreen('plans');
+      return;
+    }
     var errMsg = e.status === 0 ? 'Servidor lento. Recarregue a página.' : (e.data && e.data.detail) ? 'Erro ao carregar consultas: ' + e.data.detail : 'Erro ao carregar consultas';
     toast(errMsg);
   }
@@ -3363,7 +3377,18 @@ async function loadFinancial() {
           '<td style="color:' + (f.type === 'INCOME' ? 'var(--gn)' : 'var(--rd)') + ';font-weight:700">' + (f.type === 'INCOME' ? '+' : '-') + 'R$' + f.value.toFixed(2) + '</td>' +
           '<td><span class="bx ' + (f.status === 'PAID' ? 'bgn' : 'byw') + '" ' + (f.status === 'PENDING' ? 'style="cursor:pointer" onclick="markPaid(\'' + f.id + '\')"' : '') + '>' + (f.status === 'PAID' ? 'Pago' : 'Pagar') + '</span></td></tr>';
       }).join('') + '</tbody></table></div>';
-  } catch(e) { console.error('Load financial:', e); }
+  } catch(e) {
+    console.error('Load financial:', e);
+    if (e.status === 403 && e.data && (e.data.upgrade || e.data.expired)) {
+      if (e.data.expired) {
+        toast('⚠️ Assinatura expirada. Renove seu plano para continuar.');
+      }
+      showScreen('plans');
+      return;
+    }
+    var errMsg = e.status === 0 ? 'Servidor lento. Recarregue a página.' : (e.data && e.data.detail) ? 'Erro ao carregar financeiro: ' + e.data.detail : 'Erro ao carregar lançamentos financeiros';
+    toast(errMsg);
+  }
 }
 
 async function createFinancial() {
