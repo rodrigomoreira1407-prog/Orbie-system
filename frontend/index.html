@@ -1676,8 +1676,8 @@ function renderAgendaCards() {
     if (STATE.agendaView === 'today') {
       var localDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
       if (localDate !== todayStr) return false;
-      // Only future/current appointments (not already past their start time)
-      return d >= now || localDate === todayStr; // keep today's even if slightly past (user may be running late)
+      // Keep all of today's appointments (even past ones, so user can finalize them)
+      // Fall through to type filter and search checks below
     } else {
       // "Semana": from now onward within the current week view, excluding past
       var startOfToday = new Date(now);
@@ -2123,7 +2123,10 @@ function updateAppointmentStatus(appointmentId, status, value) {
   appt.status = status;
   if (status === 'MISSED') appt.value = value;
 
-  api('PUT', '/appointments/' + appointmentId, {status: status, value: value}).then(function(res) {
+  var data = { status: status };
+  if (status === 'MISSED') data.value = value;
+
+  api('PUT', '/appointments/' + appointmentId, data).then(function(res) {
     renderWeeklyGrid(new Date());
     renderAgendaCards();
     renderSessions();
