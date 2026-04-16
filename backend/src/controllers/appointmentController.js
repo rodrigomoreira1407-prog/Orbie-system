@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 function generateMeetLink() {
   const chars = 'abcdefghijklmnopqrstuvwxyz';
@@ -43,6 +42,7 @@ async function list(req, res) {
     });
     res.json(appointments);
   } catch (err) {
+    console.error('❌ Erro ao listar consultas:', err.message, err.stack);
     res.status(500).json({ error: 'Erro ao listar consultas' });
   }
 }

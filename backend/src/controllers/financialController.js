@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 async function list(req, res) {
   try {
@@ -21,6 +20,7 @@ async function list(req, res) {
     const pending = items.filter(i => i.status === 'PENDING' && i.type === 'INCOME').reduce((s, i) => s + i.value, 0);
     res.json({ items, summary: { income, expense, balance: income - expense, pending } });
   } catch (err) {
+    console.error('❌ Erro ao listar financeiro:', err.message, err.stack);
     res.status(500).json({ error: 'Erro ao listar financeiro' });
   }
 }
