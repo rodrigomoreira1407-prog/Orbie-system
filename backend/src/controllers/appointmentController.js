@@ -62,7 +62,7 @@ async function create(req, res) {
       userId: req.user.id,
     };
     if (notes !== undefined) data.notes = notes;
-    if (data.type === 'ONLINE') {
+    if (data.type === 'ONLINE' && !data.meetLink) {
       data.meetLink = generateMeetLink();
     }
     const appt = await prisma.appointment.create({ data, include: { patient: { select: { id: true, name: true } } } });
