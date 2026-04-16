@@ -31,7 +31,6 @@ model User {
   records              Record[]
   financials           Financial[]
   anamneses            Anamnesis[]
-  convenios            Convenio[]
 }
 
 model Patient {
@@ -149,22 +148,6 @@ model Financial {
   status      String   @default("PENDING")
   method      String?
   notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Convenio {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  cnpj        String?
-  phone       String?
-  email       String?
-  address     String?
-  contactName String?
-  notes       String?
-  active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
