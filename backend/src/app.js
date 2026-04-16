@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const patientRoutes = require('./routes/patients');
@@ -17,7 +18,21 @@ const convenioRoutes = require('./routes/convenios');
 const app = express();
 
 // ── Segurança
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+}));
 app.use(compression());
 
 // ── CORS
@@ -63,9 +78,16 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '1.0.0', service: 'Orbie API' });
 });
 
-// ── 404
-app.use('*', (req, res) => {
+// ── 404 para rotas de API desconhecidas
+app.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'Rota não encontrada' });
+});
+
+// ── Serve frontend estático (build do Railway)
+const frontendPath = path.join(__dirname, '../../frontend');
+app.use(express.static(frontendPath));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 // ── Error handler
