@@ -1,10 +1,14 @@
 {
-  "$schema": "https://schema.railway.app/railway-schema.json",
+  "$schema": "https://railway.com/railway.schema.json",
   "build": {
+    "builder": "RAILPACK",
     "buildCommand": "cd backend && npm install --omit=dev && DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder npx prisma generate"
   },
   "deploy": {
+    "runtime": "V2",
+    "numReplicas": 1,
     "startCommand": "cd backend && export DATABASE_URL=\"${DATABASE_URL:-${URL_DO_BANCO_DE_DADOS}}\" && export FRONTEND_URL=\"${FRONTEND_URL:-${URL_FRONTEND}}\" && export PORT=\"${PORT:-${PORTA}}\" && export ANTHROPIC_API_KEY=\"${ANTHROPIC_API_KEY:-${ANTROPIC_API_KEY}}\" && node node_modules/.bin/prisma db push --accept-data-loss --skip-generate && node src/server.js",
+    "sleepApplication": false,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

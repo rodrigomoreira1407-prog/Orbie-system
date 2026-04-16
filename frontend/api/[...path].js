@@ -32,7 +32,6 @@ export default async function handler(req, res) {
     const bodyStr = JSON.stringify(req.body);
     fetchOptions.body = bodyStr;
     headers['content-type'] = 'application/json';
-    headers['content-length'] = Buffer.byteLength(bodyStr).toString();
   }
 
   const upstream = await fetch(targetUrl, fetchOptions);
