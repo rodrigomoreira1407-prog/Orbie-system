@@ -1,10 +1,21 @@
 {
-  "$schema": "https://schema.railway.app/railway-schema.json",
+  "$schema": "https://railway.com/railway.schema.json",
   "build": {
+    "builder": "RAILPACK",
     "buildCommand": "cd backend && npm install --omit=dev && DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder npx prisma generate"
   },
   "deploy": {
+    "runtime": "V2",
+    "numReplicas": 1,
     "startCommand": "cd backend && node node_modules/.bin/prisma db push --accept-data-loss --skip-generate && node src/server.js",
+    "sleepApplication": false,
+    "useLegacyStacker": false,
+    "ipv6EgressEnabled": false,
+    "multiRegionConfig": {
+      "us-west2": {
+        "numReplicas": 1
+      }
+    },
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
