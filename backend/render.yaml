@@ -2,7 +2,7 @@ services:
   - type: web
     name: orbie-api
     env: node
-    buildCommand: npm install && npx prisma generate && npx prisma db push
+    buildCommand: npm install --omit=dev && npx prisma generate && npx prisma db push
     startCommand: npm start
     envVars:
       - key: NODE_ENV
