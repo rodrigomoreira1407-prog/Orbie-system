@@ -1,8 +1,9 @@
 {
-  "rewrites": [
+  "redirects": [
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "https://orbie-system-production.up.railway.app/$1",
+      "permanent": true
     }
   ]
 }
