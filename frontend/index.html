@@ -2405,7 +2405,7 @@ async function loadPatients() {
     STATE.patients = await api('GET', '/patients');
     renderPatients(STATE.patients);
     populatePatientSelects();
-  } catch(e) { console.error('Load patients:', e); }
+  } catch(e) { toast('Erro ao carregar pacientes'); }
 }
 
 function renderPatients(list) {
@@ -3286,7 +3286,7 @@ async function loadFinancial() {
           '<td style="color:' + (f.type === 'INCOME' ? 'var(--gn)' : 'var(--rd)') + ';font-weight:700">' + (f.type === 'INCOME' ? '+' : '-') + 'R$' + f.value.toFixed(2) + '</td>' +
           '<td><span class="bx ' + (f.status === 'PAID' ? 'bgn' : 'byw') + '" ' + (f.status === 'PENDING' ? 'style="cursor:pointer" onclick="markPaid(\'' + f.id + '\')"' : '') + '>' + (f.status === 'PAID' ? 'Pago' : 'Pagar') + '</span></td></tr>';
       }).join('') + '</tbody></table></div>';
-  } catch(e) { console.error('Load financial:', e); }
+  } catch(e) { toast('Erro ao carregar financeiro'); }
 }
 
 async function createFinancial() {
@@ -3315,7 +3315,7 @@ async function createFinancial() {
       value: val,
       date: formattedDate || new Date().toISOString(),
       status: document.getElementById('fin-status').value,
-      method: document.getElementById('fin-method').value,
+      method: document.getElementById('fin-method').value || null,
       patientId: document.getElementById('fin-pat').value || null,
     });
     await loadFinancial();
