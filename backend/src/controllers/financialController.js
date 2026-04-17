@@ -20,14 +20,14 @@ async function list(req, res) {
     const pending = items.filter(i => i.status === 'PENDING' && i.type === 'INCOME').reduce((s, i) => s + i.value, 0);
     res.json({ items, summary: { income, expense, balance: income - expense, pending } });
   } catch (err) {
-    console.error('❌ Erro ao listar financeiro:', err.message, err.stack);
     res.status(500).json({ error: 'Erro ao listar financeiro' });
   }
 }
 
 async function create(req, res) {
   try {
-    const data = { ...req.body, userId: req.user.id };
+    const { id: _id, userId: _uid, createdAt: _ca, updatedAt: _ua, ...safeBody } = req.body;
+    const data = { ...safeBody, userId: req.user.id };
     if (data.date && typeof data.date === 'string') {
       const d = new Date(data.date);
       if (!isNaN(d.getTime())) data.date = d.toISOString();
@@ -45,7 +45,13 @@ async function update(req, res) {
   try {
     const exists = await prisma.financial.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!exists) return res.status(404).json({ error: 'Lancamento nao encontrado' });
-    const item = await prisma.financial.update({ where: { id: req.params.id }, data: req.body });
+    const { id: _id, userId: _uid, patientId: _pid, createdAt: _ca, updatedAt: _ua, ...safeData } = req.body;
+    if (safeData.date && typeof safeData.date === 'string') {
+      const d = new Date(safeData.date);
+      if (!isNaN(d.getTime())) safeData.date = d.toISOString();
+      else safeData.date = new Date().toISOString();
+    }
+    const item = await prisma.financial.update({ where: { id: req.params.id }, data: safeData });
     res.json(item);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao atualizar lancamento' });
