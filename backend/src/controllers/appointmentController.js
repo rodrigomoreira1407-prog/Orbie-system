@@ -1,5 +1,7 @@
 const prisma = require('../lib/prisma');
 
+const UPDATABLE_APPOINTMENT_FIELDS = ['title', 'date', 'duration', 'type', 'status', 'value', 'meetLink', 'notes'];
+
 function generateMeetLink() {
   const chars = 'abcdefghijklmnopqrstuvwxyz';
   const rand = (n) => Array.from({length: n}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
@@ -67,9 +69,8 @@ async function update(req, res) {
     const exists = await prisma.appointment.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!exists) return res.status(404).json({ error: 'Consulta nao encontrada' });
     
-    const allowed = ['title', 'date', 'duration', 'type', 'status', 'value', 'meetLink', 'notes'];
     const updateData = {};
-    allowed.forEach(function(k) { if (req.body[k] !== undefined) updateData[k] = req.body[k]; });
+    UPDATABLE_APPOINTMENT_FIELDS.forEach(function(k) { if (req.body[k] !== undefined) updateData[k] = req.body[k]; });
     const appt = await prisma.appointment.update({ where: { id: req.params.id }, data: updateData });
     
     if (updateData.status === 'COMPLETED' && exists.status !== 'COMPLETED' && appt.value > 0) {
