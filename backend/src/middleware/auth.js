@@ -23,9 +23,6 @@ const requirePlan = (plans) => async (req, res, next) => {
   if (!plans.includes(user.plan)) {
     return res.status(403).json({ error: 'Plano insuficiente', upgrade: true });
   }
-  if (user.planExpiresAt && new Date(user.planExpiresAt) < new Date()) {
-    return res.status(403).json({ error: 'Assinatura expirada', expired: true });
-  }
   next();
 };
 
