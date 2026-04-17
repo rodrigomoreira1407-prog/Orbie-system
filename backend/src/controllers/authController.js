@@ -33,7 +33,7 @@ async function register(req, res) {
         emailVerifyToken: null,
         emailVerified: true,
         plan: 'BASIC',
-        planExpiresAt: null,
+        planExpiresAt: trialExpires,
       },
     });
     const token = generateToken(user.id);

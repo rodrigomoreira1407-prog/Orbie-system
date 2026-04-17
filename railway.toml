@@ -2,6 +2,6 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "cd backend && node src/server.js"
+startCommand = "cd backend && npx prisma db push --accept-data-loss && node src/server.js"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10

@@ -26,7 +26,20 @@ app.use(compression());
 
 // ── CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, Postman, same-origin)
+    if (!origin) return callback(null, true);
+
+    const allowed = process.env.FRONTEND_URL;
+    // If no FRONTEND_URL configured, allow all origins
+    if (!allowed || allowed === '*') return callback(null, true);
+
+    // Support comma-separated list of allowed origins
+    const allowedList = allowed.split(',').map(s => s.trim());
+    if (allowedList.includes(origin)) return callback(null, true);
+
+    callback(null, false);
+  },
   credentials: true,
 }));
 
