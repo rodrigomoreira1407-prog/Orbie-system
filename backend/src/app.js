@@ -41,6 +41,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/', rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { trustProxy: false },
   message: { error: 'Muitas requisições. Tente novamente em 15 minutos.' }
 }));
 
@@ -48,6 +51,9 @@ app.use('/api/', rateLimit({
 app.use('/api/auth/', rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { trustProxy: false },
   message: { error: 'Muitas tentativas de autenticação.' }
 }));
 
