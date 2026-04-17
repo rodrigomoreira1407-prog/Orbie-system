@@ -25,6 +25,7 @@ async function register(req, res) {
     }
     const hashed = await bcrypt.hash(password, 12);
     const verifyToken = uuid();
+    const trialDays = parseInt(process.env.TRIAL_PERIOD_DAYS || '14', 10);
     const user = await prisma.user.create({
       data: {
         name,
@@ -32,6 +33,8 @@ async function register(req, res) {
         password: hashed,
         emailVerifyToken: null,
         emailVerified: true,
+        plan: 'BASIC',
+        planExpiresAt: new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000),
       },
     });
     // O envio de email foi desativado temporariamente para facilitar o onboarding
@@ -43,7 +46,7 @@ async function register(req, res) {
     }
     */
     res.status(201).json({
-      message: 'Conta criada com sucesso! Você já pode fazer login.',
+      message: `Conta criada com sucesso! Você já pode fazer login. Seu período de teste gratuito de ${trialDays} dias está ativo.`,
       userId: user.id,
     });
   } catch (err) {

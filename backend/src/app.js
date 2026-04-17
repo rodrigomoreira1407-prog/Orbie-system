@@ -31,6 +31,11 @@ const corsOptions = {
     // Allow server-to-server / curl requests that send no Origin header
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
+    // Allow any Vercel preview/production deployment
+    if (/\.vercel\.app$/.test(origin)) return callback(null, true);
+    // Allow local development
+    if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
+    if (/^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) return callback(null, true);
     return callback(new Error(`CORS: origin "${origin}" not allowed`));
   },
   credentials: true,
