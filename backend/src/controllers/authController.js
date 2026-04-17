@@ -66,6 +66,7 @@ async function verifyEmail(req, res) {
     const jwtToken = generateToken(user.id);
     res.json({ message: 'Email confirmado com sucesso!', token: jwtToken });
   } catch (err) {
+    console.error('VerifyEmail error:', err);
     res.status(500).json({ error: 'Erro ao verificar email' });
   }
 }
@@ -100,6 +101,7 @@ async function login(req, res) {
       },
     });
   } catch (err) {
+    console.error('Login error:', err);
     res.status(500).json({ error: 'Erro ao fazer login' });
   }
 }
@@ -122,6 +124,7 @@ async function updateProfile(req, res) {
     });
     res.json({ message: 'Perfil atualizado!', user: { name: user.name, crp: user.crp, phone: user.phone, specialty: user.specialty, bio: user.bio } });
   } catch (err) {
+    console.error('UpdateProfile error:', err);
     res.status(500).json({ error: 'Erro ao atualizar perfil' });
   }
 }
@@ -140,6 +143,7 @@ async function changePassword(req, res) {
     await prisma.user.update({ where: { id: req.user.id }, data: { password: hashed } });
     res.json({ message: 'Senha alterada com sucesso!' });
   } catch (err) {
+    console.error('ChangePassword error:', err);
     res.status(500).json({ error: 'Erro ao alterar senha' });
   }
 }
@@ -158,6 +162,7 @@ async function forgotPassword(req, res) {
     await sendPasswordResetEmail(user.email, user.name, token);
     res.json({ message: 'Email de recuperacao enviado!' });
   } catch (err) {
+    console.error('ForgotPassword error:', err);
     res.status(500).json({ error: 'Erro ao enviar email de recuperacao' });
   }
 }
@@ -180,6 +185,7 @@ async function resetPassword(req, res) {
     });
     res.json({ message: 'Senha redefinida com sucesso!' });
   } catch (err) {
+    console.error('ResetPassword error:', err);
     res.status(500).json({ error: 'Erro ao redefinir senha' });
   }
 }
@@ -196,6 +202,7 @@ async function resendVerification(req, res) {
     await sendVerificationEmail(user.email, user.name, token);
     res.json({ message: 'Email de verificacao reenviado!' });
   } catch (err) {
+    console.error('ResendVerification error:', err);
     res.status(500).json({ error: 'Erro ao reenviar email' });
   }
 }

@@ -13,6 +13,8 @@ const subscriptionRoutes = require('./routes/subscriptions');
 const aiRoutes = require('./routes/ai');
 const clinicalRoutes = require('./routes/clinical');
 
+const prisma = require('./lib/prisma');
+
 const app = express();
 
 // ── Segurança
@@ -57,8 +59,14 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/clinical', clinicalRoutes);
 
 // ── Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', version: '1.0.0', service: 'Orbie API' });
+app.get('/api/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', version: '1.0.0', service: 'Orbie API', db: 'connected' });
+  } catch (err) {
+    console.error('Health check DB error:', err);
+    res.status(503).json({ status: 'error', service: 'Orbie API', db: 'disconnected', error: err.message });
+  }
 });
 
 // ── 404
