@@ -1281,6 +1281,19 @@ async function init() {
 // ===== WEEKLY TIME GRID VIEW =====
 
 /**
+ * Returns a "YYYY-MM-DD" string for the given Date in the browser's local timezone.
+ * Always use this instead of d.toISOString().split('T')[0] for date comparisons,
+ * so that appointments show on the correct local day regardless of UTC offset.
+ * @param {Date} d
+ * @returns {string}
+ */
+function toLocalDateStr(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+/**
  * Computes non-overlapping column positions for a set of appointments in a
  * single day, so that concurrent blocks are placed side-by-side instead of
  * visually stacking on top of each other.
@@ -1509,7 +1522,7 @@ function renderWeeklyGrid(startDate) {
   for (var d = 0; d < 7; d++) {
     var dayDate    = new Date(sunday);
     dayDate.setDate(dayDate.getDate() + d);
-    var dateKey    = dayDate.toISOString().split('T')[0];
+    var dateKey    = toLocalDateStr(dayDate);
     var isTodayCol = dayDate.toDateString() === new Date().toDateString();
 
     // flex:1;min-width:0 → columns fill available space equally and can shrink
@@ -1528,7 +1541,7 @@ function renderWeeklyGrid(startDate) {
 
     // Appointment blocks — absolutely positioned over the hour-divider grid
     var dayAppts = STATE.appointments.filter(function(a) {
-      return new Date(a.date).toISOString().split('T')[0] === dateKey;
+      return toLocalDateStr(new Date(a.date)) === dateKey;
     });
 
     var apptLayout = layoutAppointments(dayAppts);
@@ -2765,9 +2778,9 @@ async function loadAppointments(filter, el, specificDate) {
 }
 
 function updateProgressAndNext() {
-  var today = new Date().toISOString().split('T')[0];
+  var today = toLocalDateStr(new Date());
   var todayAppointments = STATE.appointments.filter(function(a) {
-    return a.date.split('T')[0] === today && a.status !== 'CANCELLED';
+    return toLocalDateStr(new Date(a.date)) === today && a.status !== 'CANCELLED';
   });
   
   var completed = todayAppointments.filter(function(a) { return a.status === 'COMPLETED'; }).length;
@@ -3672,13 +3685,13 @@ function toast(msg) {
   var hdrd = document.getElementById('hdr-d');
   if (hdrd) hdrd.textContent = dias[now.getDay()] + ', ' + now.getDate() + ' ' + meses[now.getMonth()];
   var apptDate = document.getElementById('appt-date');
-  if (apptDate) apptDate.value = now.toISOString().split('T')[0];
+  if (apptDate) apptDate.value = toLocalDateStr(now);
   var finDate = document.getElementById('fin-date');
-  if (finDate) finDate.value = now.toISOString().split('T')[0];
+  if (finDate) finDate.value = toLocalDateStr(now);
   var repFrom = document.getElementById('rep-from');
-  if (repFrom) { repFrom.value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]; }
+  if (repFrom) { repFrom.value = toLocalDateStr(new Date(now.getFullYear(), now.getMonth(), 1)); }
   var repTo = document.getElementById('rep-to');
-  if (repTo) repTo.value = now.toISOString().split('T')[0];
+  if (repTo) repTo.value = toLocalDateStr(now);
 })();
 
 // ══════════════════════════════════════════════
