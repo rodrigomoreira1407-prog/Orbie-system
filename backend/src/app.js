@@ -17,7 +17,9 @@ const convenioRoutes = require('./routes/convenios');
 const app = express();
 
 // ── Segurança
-app.use(helmet());
+// crossOriginResourcePolicy must be 'cross-origin' for an API server so that
+// browser CORS fetch requests are not blocked by helmet's default same-origin policy.
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(compression());
 
 // ── CORS
