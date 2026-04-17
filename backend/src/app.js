@@ -17,6 +17,9 @@ const prisma = require('./lib/prisma');
 
 const app = express();
 
+// ── Trust proxy (Railway / reverse proxy)
+app.set('trust proxy', 1);
+
 // ── Segurança
 app.use(helmet());
 app.use(compression());
