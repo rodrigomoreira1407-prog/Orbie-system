@@ -2867,9 +2867,9 @@ function checkTimeConflict() {
   var newEnd = new Date(newStart.getTime() + duration * 60000);
   
   var hasConflict = STATE.appointments && STATE.appointments.some(function(a) {
-    if (a.status === 'CANCELLED') return false;
+    if (a.status === 'CANCELLED' || a.status === 'COMPLETED' || a.status === 'MISSED') return false;
     var existStart = new Date(a.date);
-    var existEnd = new Date(existStart.getTime() + a.duration * 60000);
+    var existEnd = new Date(existStart.getTime() + (a.duration || 50) * 60000);
     return newStart < existEnd && newEnd > existStart;
   });
   
@@ -2905,6 +2905,16 @@ async function createAppointment() {
     // Navigate to the Agenda page so the user sees the grid
     go('appointments', null);
     closeM('m-appt');
+
+    // Reset form for next use
+    document.getElementById('appt-pat').value = '';
+    document.getElementById('appt-date').value = toLocalDateStr(new Date());
+    document.getElementById('appt-time').value = '09:00';
+    document.getElementById('appt-dur').value = '50';
+    document.getElementById('appt-val').value = '150';
+    document.getElementById('appt-type').value = 'ONLINE';
+    document.getElementById('appt-title').value = 'Consulta';
+    document.getElementById('appt-dow').textContent = '';
 
     // Point the weekly grid at the week containing the new appointment
     STATE.weekGridDate = dt;
@@ -3441,7 +3451,8 @@ function renderDashboard() {
   var greetEl = document.getElementById('dash-greeting');
   greetEl.innerHTML = '<span style="font-size:20px">👋</span><div><div style="font-size:13px;font-weight:700;color:#1d4ed8">' + greeting + ', ' + STATE.user.name.split(' ')[0] + '!</div><div style="font-size:11px;color:#3b82f6;margin-top:2px">' + new Date().toLocaleDateString('pt-BR', {weekday:'long',day:'numeric',month:'long',year:'numeric'}) + '</div></div>';
   var active = STATE.patients.filter(function(p){ return p.status === 'ACTIVE'; }).length;
-  var today = STATE.appointments.length;
+  var todayStr = toLocalDateStr(new Date());
+  var today = STATE.appointments.filter(function(a){ return toLocalDateStr(new Date(a.date)) === todayStr && a.status !== 'CANCELLED'; }).length;
   document.getElementById('dash-stats').innerHTML =
     '<div class="sc"><div style="font-size:22px;margin-bottom:6px">👥</div><div style="font-size:22px;font-weight:800">' + active + '</div><div style="font-size:11px;color:var(--mt)">Pacientes ativos</div></div>' +
     '<div class="sc"><div style="font-size:22px;margin-bottom:6px">📅</div><div style="font-size:22px;font-weight:800">' + today + '</div><div style="font-size:11px;color:var(--mt)">Consultas hoje</div></div>' +
@@ -3455,13 +3466,17 @@ function renderDashboard() {
 function renderDashboardToday() {
   updateProgressAndNext();
   var el = document.getElementById('dash-today');
-  if (!STATE.appointments.length) {
+  var todayStr = toLocalDateStr(new Date());
+  var todayAppts = STATE.appointments.filter(function(a) {
+    return toLocalDateStr(new Date(a.date)) === todayStr && a.status !== 'CANCELLED';
+  }).sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+  if (!todayAppts.length) {
     el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;font-weight:700">📅 Consultas Hoje</div><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="go(\'appointments\',null)">Ver agenda →</button></div>' +
       '<div style="text-align:center;padding:20px;color:var(--dm);font-size:13px">Nenhuma consulta hoje</div>';
     return;
   }
   var colors = ['#5b5ef4','#ec4899','#14b8a6','#f97316','#f59e0b'];
-  var rows = STATE.appointments.slice(0, 4).map(function(a) {
+  var rows = todayAppts.slice(0, 4).map(function(a) {
     var patName = a.patient ? a.patient.name : 'Paciente';
     var ini = patName.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
     var color = colors[patName.charCodeAt(0) % colors.length];

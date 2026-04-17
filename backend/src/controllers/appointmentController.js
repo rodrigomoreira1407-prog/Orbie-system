@@ -35,6 +35,7 @@ async function list(req, res) {
             name: true, 
             type: true, 
             phone: true,
+            cpf: true,
             _count: { select: { records: true } } 
           } 
         } 
@@ -66,9 +67,12 @@ async function update(req, res) {
     const exists = await prisma.appointment.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!exists) return res.status(404).json({ error: 'Consulta nao encontrada' });
     
-    const appt = await prisma.appointment.update({ where: { id: req.params.id }, data: req.body });
+    const allowed = ['title', 'date', 'duration', 'type', 'status', 'value', 'meetLink', 'notes'];
+    const updateData = {};
+    allowed.forEach(function(k) { if (req.body[k] !== undefined) updateData[k] = req.body[k]; });
+    const appt = await prisma.appointment.update({ where: { id: req.params.id }, data: updateData });
     
-    if (req.body.status === 'COMPLETED' && exists.status !== 'COMPLETED' && appt.value > 0) {
+    if (updateData.status === 'COMPLETED' && exists.status !== 'COMPLETED' && appt.value > 0) {
       try {
         await prisma.financial.create({
           data: {
