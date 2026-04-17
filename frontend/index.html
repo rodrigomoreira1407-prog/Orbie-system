@@ -913,7 +913,7 @@ const ANAMNESIS_FORMS = {
 // ══════════════════════════════════════════════
 const API = window.location.hostname === 'localhost'
   ? 'http://localhost:3001/api'
-  : 'https://orbie-api.onrender.com/api'; //https://orbie-api.onrender.com/api
+  : 'https://orbie-system-production.up.railway.app/api';
 
 // ══════════════════════════════════════════════
 // ESTADO GLOBAL
@@ -2769,12 +2769,21 @@ async function editPatient(patientId) {
 // APPOINTMENTS
 // ══════════════════════════════════════════════
 async function loadAppointments(filter, el, specificDate) {
-  try {
-    STATE.appointments = await api('GET', '/appointments');
-    renderWeeklyGrid(STATE.weekGridDate || new Date());
-    renderDashboardToday();
-    updateProgressAndNext();
-  } catch(e) { toast('Erro ao carregar consultas'); }
+  for (var _attempt = 0; _attempt < 3; _attempt++) {
+    try {
+      STATE.appointments = await api('GET', '/appointments');
+      renderWeeklyGrid(STATE.weekGridDate || new Date());
+      renderDashboardToday();
+      updateProgressAndNext();
+      return;
+    } catch(e) {
+      if (_attempt < 2) {
+        await new Promise(function(r) { setTimeout(r, 2000); });
+      } else {
+        toast('Erro ao carregar consultas');
+      }
+    }
+  }
 }
 
 function updateProgressAndNext() {
@@ -3284,6 +3293,7 @@ async function saveClinicalInfo() {
 // ══════════════════════════════════════════════
 async function loadFinancial() {
   var now = new Date();
+  for (var _attempt = 0; _attempt < 3; _attempt++) {
   try {
     var data = await api('GET', '/financial?month=' + (now.getMonth()+1) + '&year=' + now.getFullYear());
     STATE.financials = data.items;
@@ -3302,7 +3312,15 @@ async function loadFinancial() {
           '<td style="color:' + (f.type === 'INCOME' ? 'var(--gn)' : 'var(--rd)') + ';font-weight:700">' + (f.type === 'INCOME' ? '+' : '-') + 'R$' + f.value.toFixed(2) + '</td>' +
           '<td><span class="bx ' + (f.status === 'PAID' ? 'bgn' : 'byw') + '" ' + (f.status === 'PENDING' ? 'style="cursor:pointer" onclick="markPaid(\'' + f.id + '\')"' : '') + '>' + (f.status === 'PAID' ? 'Pago' : 'Pagar') + '</span></td></tr>';
       }).join('') + '</tbody></table></div>';
-  } catch(e) { console.error('Load financial:', e); toast('⚠️ Erro ao carregar financeiro'); }
+    return;
+  } catch(e) {
+    if (_attempt < 2) {
+      await new Promise(function(r) { setTimeout(r, 2000); });
+    } else {
+      console.error('Load financial:', e); toast('⚠️ Erro ao carregar financeiro');
+    }
+  }
+  }
 }
 
 async function createFinancial() {
