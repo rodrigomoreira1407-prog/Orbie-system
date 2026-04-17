@@ -21,10 +21,26 @@ app.use(helmet());
 app.use(compression());
 
 // ── CORS
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+const allowedOrigins = (process.env.FRONTEND_URL || 'https://orbie-system-4a5t.vercel.app')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow server-to-server / curl requests that send no Origin header
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS: origin "${origin}" not allowed`));
+  },
   credentials: true,
-}));
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+// Handle pre-flight OPTIONS for every route before rate-limiters
+app.options('*', cors(corsOptions));
+app.use(cors(corsOptions));
 
 // ── Stripe webhook precisa do body raw
 app.use('/api/subscriptions/webhook', express.raw({ type: 'application/json' }));
