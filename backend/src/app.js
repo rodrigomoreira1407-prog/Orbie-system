@@ -12,13 +12,9 @@ const financialRoutes = require('./routes/financial');
 const subscriptionRoutes = require('./routes/subscriptions');
 const aiRoutes = require('./routes/ai');
 const clinicalRoutes = require('./routes/clinical');
-
-const prisma = require('./lib/prisma');
+const convenioRoutes = require('./routes/convenios');
 
 const app = express();
-
-// ── Trust proxy (Railway / reverse proxy)
-app.set('trust proxy', 1);
 
 // ── Segurança
 app.use(helmet());
@@ -26,20 +22,7 @@ app.use(compression());
 
 // ── CORS
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, Postman, same-origin)
-    if (!origin) return callback(null, true);
-
-    const allowed = process.env.FRONTEND_URL;
-    // If no FRONTEND_URL configured, allow all origins
-    if (!allowed || allowed === '*') return callback(null, true);
-
-    // Support comma-separated list of allowed origins
-    const allowedList = allowed.split(',').map(s => s.trim());
-    if (allowedList.includes(origin)) return callback(null, true);
-
-    callback(null, false);
-  },
+  origin: process.env.FRONTEND_URL || '*',
   credentials: true,
 }));
 
@@ -73,16 +56,11 @@ app.use('/api/financial', financialRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/clinical', clinicalRoutes);
+app.use('/api/convenios', convenioRoutes);
 
 // ── Health check
-app.get('/api/health', async (req, res) => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    res.json({ status: 'ok', version: '1.0.0', service: 'Orbie API', db: 'connected' });
-  } catch (err) {
-    console.error('Health check DB error:', err);
-    res.status(503).json({ status: 'error', service: 'Orbie API', db: 'disconnected', error: err.message });
-  }
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', version: '1.0.0', service: 'Orbie API' });
 });
 
 // ── 404

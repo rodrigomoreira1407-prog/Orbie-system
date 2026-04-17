@@ -1,8 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuid } = require('uuid');
-const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
 const prisma = require('../lib/prisma');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
 
 function generateToken(userId) {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
@@ -24,7 +24,7 @@ async function register(req, res) {
       return res.status(400).json({ error: 'Este email ja esta cadastrado' });
     }
     const hashed = await bcrypt.hash(password, 12);
-    const trialExpires = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+    const verifyToken = uuid();
     const user = await prisma.user.create({
       data: {
         name,
@@ -32,19 +32,19 @@ async function register(req, res) {
         password: hashed,
         emailVerifyToken: null,
         emailVerified: true,
-        plan: 'BASIC',
-        planExpiresAt: trialExpires,
       },
     });
-    const token = generateToken(user.id);
+    // O envio de email foi desativado temporariamente para facilitar o onboarding
+    /*
+    try {
+      await sendVerificationEmail(user.email, user.name, verifyToken);
+    } catch (emailErr) {
+      console.error('Erro ao enviar email:', emailErr.message);
+    }
+    */
     res.status(201).json({
-      message: 'Conta criada com sucesso!',
-      token,
-      user: {
-        id: user.id, name: user.name, email: user.email,
-        plan: user.plan, planExpiresAt: user.planExpiresAt,
-        crp: user.crp, phone: user.phone, specialty: user.specialty,
-      },
+      message: 'Conta criada com sucesso! Você já pode fazer login.',
+      userId: user.id,
     });
   } catch (err) {
     console.error('Register error:', err);
@@ -66,7 +66,6 @@ async function verifyEmail(req, res) {
     const jwtToken = generateToken(user.id);
     res.json({ message: 'Email confirmado com sucesso!', token: jwtToken });
   } catch (err) {
-    console.error('VerifyEmail error:', err);
     res.status(500).json({ error: 'Erro ao verificar email' });
   }
 }
@@ -101,7 +100,6 @@ async function login(req, res) {
       },
     });
   } catch (err) {
-    console.error('Login error:', err);
     res.status(500).json({ error: 'Erro ao fazer login' });
   }
 }
@@ -124,7 +122,6 @@ async function updateProfile(req, res) {
     });
     res.json({ message: 'Perfil atualizado!', user: { name: user.name, crp: user.crp, phone: user.phone, specialty: user.specialty, bio: user.bio } });
   } catch (err) {
-    console.error('UpdateProfile error:', err);
     res.status(500).json({ error: 'Erro ao atualizar perfil' });
   }
 }
@@ -143,7 +140,6 @@ async function changePassword(req, res) {
     await prisma.user.update({ where: { id: req.user.id }, data: { password: hashed } });
     res.json({ message: 'Senha alterada com sucesso!' });
   } catch (err) {
-    console.error('ChangePassword error:', err);
     res.status(500).json({ error: 'Erro ao alterar senha' });
   }
 }
@@ -162,7 +158,6 @@ async function forgotPassword(req, res) {
     await sendPasswordResetEmail(user.email, user.name, token);
     res.json({ message: 'Email de recuperacao enviado!' });
   } catch (err) {
-    console.error('ForgotPassword error:', err);
     res.status(500).json({ error: 'Erro ao enviar email de recuperacao' });
   }
 }
@@ -185,7 +180,6 @@ async function resetPassword(req, res) {
     });
     res.json({ message: 'Senha redefinida com sucesso!' });
   } catch (err) {
-    console.error('ResetPassword error:', err);
     res.status(500).json({ error: 'Erro ao redefinir senha' });
   }
 }
@@ -202,7 +196,6 @@ async function resendVerification(req, res) {
     await sendVerificationEmail(user.email, user.name, token);
     res.json({ message: 'Email de verificacao reenviado!' });
   } catch (err) {
-    console.error('ResendVerification error:', err);
     res.status(500).json({ error: 'Erro ao reenviar email' });
   }
 }

@@ -31,6 +31,7 @@ model User {
   records              Record[]
   financials           Financial[]
   anamneses            Anamnesis[]
+  convenios            Convenio[]
 }
 
 model Patient {
@@ -73,22 +74,21 @@ model Patient {
 }
 
 model Appointment {
-  id         String      @id @default(cuid())
-  userId     String
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  patientId  String
-  patient    Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  title      String      @default("Consulta")
-  date       DateTime
-  duration   Int         @default(50)
-  type       String      @default("ONLINE")
-  status     String      @default("SCHEDULED")
-  value      Float       @default(0)
-  meetLink   String?
-  notes      String?
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  financials Financial[]
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  title     String   @default("Consulta")
+  date      DateTime
+  duration  Int      @default(50)
+  type      String   @default("ONLINE")
+  status    String   @default("SCHEDULED")
+  value     Float    @default(0)
+  meetLink  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Anamnesis {
@@ -137,20 +137,34 @@ model Record {
 }
 
 model Financial {
-  id             String       @id @default(cuid())
-  userId         String
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  patientId      String?
-  patient        Patient?     @relation(fields: [patientId], references: [id], onDelete: SetNull)
-  appointmentId  String?
-  appointment    Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
-  type           String       @default("INCOME")
-  description    String
-  value          Float
-  date           DateTime     @default(now())
-  status         String       @default("PENDING")
-  method         String?
-  notes          String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patientId   String?
+  patient     Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  type        String   @default("INCOME")
+  description String
+  value       Float
+  date        DateTime @default(now())
+  status      String   @default("PENDING")
+  method      String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Convenio {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  cnpj        String?
+  phone       String?
+  email       String?
+  address     String?
+  contactName String?
+  notes       String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
